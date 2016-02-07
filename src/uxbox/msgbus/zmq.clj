@@ -1,3 +1,6 @@
+;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
+;; All rights reserved.
+
 (ns uxbox.msgbus.zmq
   "A lightweigt interop intetface to java zmq library."
   (:refer-clojure :exclude [send])
@@ -60,10 +63,16 @@
   (-unregister [_ socket] "Unregister the socket from the poller.")
   (-poll [_ ms] "Poll."))
 
-(deftype ZContext [^ZMQ$Context ctx])
-(deftype ZSoket [^ZContext context ^ZMQ$Socket socket connections bindings])
+(deftype ZContext [^ZMQ$Context ctx]
+  java.lang.AutoCloseable
+  (close [_] (.destroy ctx)))
+
+(deftype ZSoket [^ZContext context ^ZMQ$Socket socket connections bindings]
+  java.lang.AutoCloseable
+  (close [_] (.destroy socket)))
+
 (deftype ZPoller [^ZContext context ^ZMQ$Poller poller sockets])
-(defrecord ZPollItem [^ZSoket socket readable writable error])
+(defrecord ZPollItem [^ZSoket socket readable? writable? errored?])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Implementation
