@@ -1,7 +1,7 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 ;; All rights reserved.
 
-(ns uxbox.msgbus.executor
+(ns msgbus.executor
   "A basic abstraction for executor services."
   (:import java.util.concurrent.ForkJoinPool
            java.util.concurrent.Executor

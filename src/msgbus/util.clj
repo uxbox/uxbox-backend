@@ -1,4 +1,4 @@
-(ns uxbox.msgbus.util
+(ns msgbus.util
   (:import java.util.UUID))
 
 (defn interrumpted?

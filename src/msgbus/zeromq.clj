@@ -1,12 +1,14 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 ;; All rights reserved.
 
-(ns uxbox.msgbus.zmq
+(ns msgbus.zeromq
   "A lightweigt interop intetface to java zmq library."
   (:refer-clojure :exclude [send])
-  (:require [buddy.core.codecs :as codecs])
+  (:require [buddy.core.codecs :as codecs]
+            [msgbus.atomic :as atomic]
   (:import org.zeromq.ZMQ$Context
            org.zeromq.ZMQ$Poller
+           org.zeromq.ZMQ$PollItem
            org.zeromq.ZMQ$Socket
            org.zeromq.ZMQ
            org.zeromq.ZMsg))
@@ -61,105 +63,82 @@
 (defprotocol IPoller
   (-register [_ socket events] "Register a socket in the poller.")
   (-unregister [_ socket] "Unregister the socket from the poller.")
+  (-empty? [_] "Check if poller is empty.")
   (-poll [_ ms] "Poll."))
-
-(deftype ZContext [^ZMQ$Context ctx]
-  java.lang.AutoCloseable
-  (close [_] (.destroy ctx)))
-
-(deftype ZSoket [^ZContext context ^ZMQ$Socket socket connections bindings]
-  java.lang.AutoCloseable
-  (close [_] (.destroy socket)))
-
-(deftype ZPoller [^ZContext context ^ZMQ$Poller poller sockets])
-(defrecord ZPollItem [^ZSoket socket readable? writable? errored?])
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Implementation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(extend-type ZContext
+(extend-type ZMQ$Context
   IContext
-  (-socket [it type]
-    (let [^ZMQ$Context ctx (.-ctx it)
-          ^ZMQ$Socket sock (.socket ctx (get +socket-types-map+ type))
-          connections (atom #{})
-          bindings (atom #{})]
-      (ZSocket. it sock connections bindings)))
+  (-socket [ctx type]
+    (.socket ctx (get +socket-types-map+ type)))
 
-  (-poller [it num]
-    (let [^ZMQ$Context ctx (.-ctx it)
-          ^ZMQ$Poller poller (.poller ctx (int num))
-          sockets (atom [])]
-      (ZPoller. it poller sockets))))
+  (-poller [ctx num]
+    (let [^ZMQ$Poller poller (.poller ctx (int num))
+          size (atomic/long 0)]
+      (ZPoller. poller size))))
 
-(extend-type ZSocket
+(extend-type ZMQ$Socket
   ISocket
-  (-connect [it endpoint]
-    (let [^ZMQ$Socket socket (.-socket it)
-          connections (.-connections it)]
-      (.connect socket endpoint)
-      (swap! connections conj endpoint)
-      it))
+  (-connect [socket endpoint]
+    (.connect socket endpoint)
+    socket)
 
-  (-bind [it endpoint]
-    (let [^ZMQ$Socket socket (.-socket it)
-          bindings (.-bindings it)]
-      (.bind socket endpoint)
-      (swap! bindings conj endpoint)
-      it))
+  (-bind [socket endpoint]
+    (.bind socket endpoint)
+    socket)
 
-  (-more? [it]
-    (let [^ZMQ$Socket socket (.-socket it)]
-      (pos? (.hasReceiveMore socket))))
+  (-more? [socket]
+    (pos? (.hasReceiveMore socket)))
 
-  (-recv [it]
-    (let [^ZMQ$Socket socket (.-socket it)]
-      (.recv socket 0)))
+  (-recv [socket]
+    (.recv socket 0))
 
-  (-send [it data flags]
+  (-send [socket data flags]
     (when-not (every? +send-flags+ flags)
       (throw (ex-info "Wrong send flags." {:flags flags})))
-    (let [^ZMQ$Socket socket (.-socket it)
-          data (codecs/->byte-array data)
+    (let [data (codecs/->byte-array data)
           flags (apply bit-or 0 0 (keep +send-flags-map+ flags))]
       (.send socket ^bytes data lags))))
 
-(extend-type ZPoller
+(extend-type ZMQ$Poller
   IPoller
-  (-register [it zsocket events]
+  (-register [poller socket events]
     (when-not (every? +poll-flags+ events)
       (throw (ex-info "Wring event types." {:events events})))
+    (let [flags (apply bit-or 0 0 (keep +poll-flags-map+ events))]
+      (.register poller socket flags)
+      poller))
 
-    (let [^ZMQ$Poller poller (.-poller it)
-          ^ZMQ$Socket socket (.-socket zsocket)
-          sockets (.-sockets it)
-          flags (apply bit-or 0 0 (keep +poll-flags-map+ events))
-          index (.register poller socket flags)]
-      (swap! sockets conj [index zsocket events])
-      it))
+  (-unregister [poller socket]
+    (.unregister poller socket)
+    poller)
 
-  (-unregister [it zsocket]
-    (let [^ZMQ$Poller poller (.-poller it)
-          ^ZMQ$Socket socket (.-socket zsocket)
-          sockets (.-sockets it)]
-      (.unregister poller socket)
-      (swap! sockets (fn [coll]
-                       (remove #(= (first %) zsocket) coll)))
-      it))
+  (-empty? [poller]
+    (not (pos? (.getNext poller))))
 
-  (-poll [it n]
-    (let [^ZMQ$Poller poller (.-poller it)
-          sockets @(.-sockets it)]
-      (.poll poller (long n))
-      (persistent!
-       (reduce (fn [acc [index zsocket events]]
-                 (let [readable? (pos? (.pollin poller index))
-                       writable? (pos? (.pollout poller index))
-                       error? (pos? (.pollerr poller index))]
-                   (conj! acc (ZPollItem. zsocket readable? writable? error?))))
-               (transient [])
-               sockets))))
+  (-poll [poller n]
+    (.poll poller (long n))
+    (persistent!
+     (reduce (fn [acc index]
+               (let [^ZMQ$PollItem item (.getItem (int index))
+                     readable? (.isReadable item)
+                     writable? (.isWritable item)
+                     errored? (.isError item)]
+                 (if (and (not readable?)
+                          (not writable?)
+                          (not errored?))
+                   acc
+                   (let [socket (.getSocket item)
+                         item {:socket socket
+                               :readable? readable?
+                               :writable? writable?
+                               :errored? errored?}]
+                     (conj! acc item)))))
+             (transient [])
+             (range 0 (.getNext poller)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context
@@ -169,12 +148,12 @@
   "Create a new zmq context instance."
   ([] (context 1))
   ([n]
-   (ZContext. (ZMQ/context (int n)))))
+   (ZMQ/context (int n))))
 
 (defn context?
   "Return true if `v` is a valid zmq context instance."
   [v]
-  (instance? ZContext v))
+  (instance? ZMQ$Context v))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Socket
@@ -182,25 +161,40 @@
 
 (defn socket
   "Create new socket."
-  [^ZContext context type]
+  [context type]
   {:pre [(contains? +socket-types-map+ type)]}
   (-socket context type))
 
 (defn socket?
   "Return true if `v` is a valid zmq socket instance."
   [v]
-  (instance? ZSocket v))
+  (instance? ZMQ$Context v))
 
 (defn connect!
-  [^ZSocket socket ^String endpoint]
+  [socket endpoint]
   (-connect socket endpoint))
 
 (defn bind!
-  [^ZSocket socket ^String endpoint]
+  [socket endpoint]
   (-bind socket endpoint))
 
+(defn recv!
+  [socket]
+  (-recv socket socket))
+
+(defn send!
+  ([socket data]
+   (-send socket data nil))
+  ([socket data flags]
+   {:pre [(coll? flags)]}
+   (-send socket data flags)))
+
+(defn more?
+  [socket]
+  (-more? socket))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Socket
+;; Poller
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn poller
@@ -225,18 +219,6 @@
   ([poller] (-poll poller -1))
   ([poller timeout] (-poll poller timeout)))
 
-(defn recv!
-  [socket]
-  (-recv socket socket))
-
-(defn send!
-  ([socket data]
-   (-send socket data nil))
-  ([socket data flags]
-   {:pre [(coll? flags)]}
-   (-send socket data flags)))
-
-(defn more?
-  [socket]
-  (-more? socket))
-
+(defn empty?
+  [poller]
+  (-empty? poller))
