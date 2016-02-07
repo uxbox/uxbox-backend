@@ -11,9 +11,6 @@
                  [funcool/promesa "0.7.0"]
                  [funcool/catacumba "0.11.1"]]
   :main ^:skip-aot uxbox.frontend
-  :profiles
-  {:uberjar
-   {:aot [uxbox.frontend]}}
   :plugins [[lein-ancient "0.6.7"]])
 
 
