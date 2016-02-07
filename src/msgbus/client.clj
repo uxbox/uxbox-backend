@@ -22,7 +22,6 @@
 
 (defn- schedule
   [client]
-  (println "schedule")
   (let [active (.-active client)]
     (when (atomic/compare-and-set! active false true)
       (exec/execute! client))))
@@ -56,11 +55,9 @@
 (deftype AsyncClient [context state endpoint poller active]
   Runnable
   (run [this]
-    (println "AsyncClient$run")
     (try
       (let [items (zmq/poll! poller 3000)]
         (when-not (empty? items)
-          (println "AsyncClient$run$1" items)
           (handle-items state poller items)))
       (finally
         (atomic/set! active false)
