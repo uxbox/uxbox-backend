@@ -66,6 +66,8 @@
   (-empty? [_] "Check if poller is empty.")
   (-poll [_ ms] "Poll."))
 
+(deftype ZPoller [^ZMQ$Poller poller size])
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Implementation
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -76,7 +78,9 @@
     (.socket ctx (get +socket-types-map+ type)))
 
   (-poller [ctx num]
-    (.poller ctx (int num))))
+    (let [poller (.poller ctx (int num))
+          size (atomic/long 0)]
+      (ZPoller. poller size))))
 
 (extend-type ZMQ$Socket
   ISocket
@@ -101,44 +105,54 @@
           flags (apply bit-or 0 0 (keep +send-flags-map+ flags))]
       (.send socket ^bytes data flags))))
 
-(extend-type ZMQ$Poller
+(defn- poll-item->map
+  [item]
+  (let [readable? (.isReadable item)
+        writable? (.isWritable item)
+        errored? (.isError item)]
+    {:socket (.getSocket item)
+     :readable? readable?
+     :writable? writable?
+     :errored? errored?}))
+
+(extend-type ZPoller
   IPoller
-  (-register [poller socket events]
+  (-register [zpoller socket events]
     (when-not (every? +poll-flags+ events)
       (throw (ex-info "Wring event types." {:events events})))
-    (let [flags (apply bit-or 0 0 (keep +poll-flags-map+ events))]
+    (let [poller (.-poller zpoller)
+          flags (apply bit-or 0 0 (keep +poll-flags-map+ events))]
       (.register poller socket flags)
-      poller))
+      (atomic/inc-and-get! (.-size zpoller))
+      zpoller))
 
-  (-unregister [poller socket]
-    (.unregister poller socket)
-    poller)
+  (-unregister [zpoller socket]
+    (let [poller (.-poller zpoller)]
+      (.unregister poller socket)
+      (atomic/dec-and-get! (.-size zpoller))
+      zpoller))
 
-  (-empty? [poller]
-    (not (pos? (.getNext poller))))
+  (-empty? [zpoller]
+    (let [size (.-size zpoller)]
+      (not (pos? @size))))
 
-  (-poll [poller n]
-    (.poll poller (long n))
-    (println "-poll" (.getNext poller))
-    (persistent!
-     (reduce (fn [acc index]
-               (if-let [^ZMQ$PollItem item (.getItem poller (int index))]
-                 (let [readable? (.isReadable item)
-                       writable? (.isWritable item)
-                       errored? (.isError item)]
-                   (if (and (not readable?)
-                            (not writable?)
-                            (not errored?))
-                     acc
-                     (let [socket (.getSocket item)
-                           item {:socket socket
-                                 :readable? readable?
-                                 :writable? writable?
-                                 :errored? errored?}]
-                       (conj! acc item))))
-                 acc))
-             (transient [])
-             (range 0 (.getNext poller))))))
+  (-poll [zpoller n]
+    (let [^ZMQ$Poller poller (.-poller zpoller)
+          num-signaled (.poll poller (long n))]
+      (when (pos? (.poll poller (long n)))
+        (let [items (->> (range 0 (.getNext poller))
+                         (map #(.getItem poller (int %)))
+                         (remove nil?))]
+          (persistent!
+           (reduce (fn [acc item]
+                     (let [item (poll-item->map item)]
+                       (if (and (not (:readable? item))
+                                (not (:writable? item))
+                                (not (:errored? item)))
+                         acc
+                         (conj! acc item))))
+                   (transient [])
+                   items)))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context
