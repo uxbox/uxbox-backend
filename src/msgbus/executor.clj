@@ -27,20 +27,20 @@
   (-execute [this task]
     (.execute this ^Runnable task)))
 
-(defn- thread-factory-adapter
-  "Adapt a simple clojure function into a
-  ThreadFactory instance."
-  [func]
-  (reify ThreadFactory
-    (^Thread newThread [_ ^Runnable runnable]
-      (func runnable))))
+;; (defn- thread-factory-adapter
+;;   "Adapt a simple clojure function into a
+;;   ThreadFactory instance."
+;;   [func]
+;;   (reify ThreadFactory
+;;     (^Thread newThread [_ ^Runnable runnable]
+;;       (func runnable))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public Api
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:const +default+ (ForkJoinPool/commonPool))
-(def ^:const +default-thread-factory+ (Executors/defaultThreadFactory))
+(def +default+ (ForkJoinPool/commonPool))
+;; (def ^:const +default-thread-factory+ (Executors/defaultThreadFactory))
 
 (defn execute!
   "Execute a task in a provided executor.

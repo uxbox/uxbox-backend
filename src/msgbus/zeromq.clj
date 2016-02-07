@@ -3,9 +3,9 @@
 
 (ns msgbus.zeromq
   "A lightweigt interop intetface to java zmq library."
-  (:refer-clojure :exclude [send])
+  (:refer-clojure :exclude [empty?])
   (:require [buddy.core.codecs :as codecs]
-            [msgbus.atomic :as atomic]
+            [msgbus.atomic :as atomic])
   (:import org.zeromq.ZMQ$Context
            org.zeromq.ZMQ$Poller
            org.zeromq.ZMQ$PollItem
@@ -58,7 +58,7 @@
   (-bind [_ endpoint] "Bind socket to endpoint")
   (-more? [_] "Check if it has more data to receive.")
   (-recv [_] "Receive data.")
-  (-send [_ data] "Send data"))
+  (-send [_ data flags] "Send data"))
 
 (defprotocol IPoller
   (-register [_ socket events] "Register a socket in the poller.")
@@ -76,9 +76,7 @@
     (.socket ctx (get +socket-types-map+ type)))
 
   (-poller [ctx num]
-    (let [^ZMQ$Poller poller (.poller ctx (int num))
-          size (atomic/long 0)]
-      (ZPoller. poller size))))
+    (.poller ctx (int num))))
 
 (extend-type ZMQ$Socket
   ISocket
@@ -91,7 +89,7 @@
     socket)
 
   (-more? [socket]
-    (pos? (.hasReceiveMore socket)))
+    (.hasReceiveMore socket))
 
   (-recv [socket]
     (.recv socket 0))
@@ -101,7 +99,7 @@
       (throw (ex-info "Wrong send flags." {:flags flags})))
     (let [data (codecs/->byte-array data)
           flags (apply bit-or 0 0 (keep +send-flags-map+ flags))]
-      (.send socket ^bytes data lags))))
+      (.send socket ^bytes data flags))))
 
 (extend-type ZMQ$Poller
   IPoller
@@ -121,24 +119,26 @@
 
   (-poll [poller n]
     (.poll poller (long n))
+    (println "-poll" (.getNext poller))
     (persistent!
      (reduce (fn [acc index]
-               (let [^ZMQ$PollItem item (.getItem (int index))
-                     readable? (.isReadable item)
-                     writable? (.isWritable item)
-                     errored? (.isError item)]
-                 (if (and (not readable?)
-                          (not writable?)
-                          (not errored?))
-                   acc
-                   (let [socket (.getSocket item)
-                         item {:socket socket
-                               :readable? readable?
-                               :writable? writable?
-                               :errored? errored?}]
-                     (conj! acc item)))))
+               (if-let [^ZMQ$PollItem item (.getItem poller (int index))]
+                 (let [readable? (.isReadable item)
+                       writable? (.isWritable item)
+                       errored? (.isError item)]
+                   (if (and (not readable?)
+                            (not writable?)
+                            (not errored?))
+                     acc
+                     (let [socket (.getSocket item)
+                           item {:socket socket
+                                 :readable? readable?
+                                 :writable? writable?
+                                 :errored? errored?}]
+                       (conj! acc item))))
+                 acc))
              (transient [])
-             (range 0 (.getNext poller)))))))
+             (range 0 (.getNext poller))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context
@@ -180,7 +180,7 @@
 
 (defn recv!
   [socket]
-  (-recv socket socket))
+  (-recv socket))
 
 (defn send!
   ([socket data]
@@ -213,7 +213,7 @@
 (defn unregister!
   "Unregister a socket in poller."
   [poller socket]
-  (-unregister socket poller))
+  (-unregister poller socket))
 
 (defn poll!
   ([poller] (-poll poller -1))
