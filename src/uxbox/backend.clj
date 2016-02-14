@@ -1,19 +1,16 @@
 (ns uxbox.backend
   (:require [mount.core :as mount :refer (defstate)]
-            [migrante.core :as mg]
+            [wydra.core :as wyd]
+            [wydra.rpc :as rpc]
             [uxbox.config :as cfg]
-            [uxbox.backend.migrations :as umg]))
+            [uxbox.backend.migrations]
+            [uxbox.backend.services :as services]))
 
-(def ^:private +backend-migrations+
-  {:name :uxbox-backend
-   :steps [[:0001 umg/migration-0001-auth-table]]})
+(defstate msg-conn
+  :start (wyd/connect "rabbitmq://localhost/")
+  :stop (.stop msg-conn))
 
-(defn- migrate
-  []
-  (let [dbspec (:database cfg/config)]
-    (with-open [mctx (mg/context dbspec)]
-      (mg/migrate mctx +backend-migrations+)
-      nil)))
-
-(defstate migrations
-  :start (migrate))
+(defstate rpc-server
+  :start (rpc/server msg-conn {:handler services/-handler
+                               :queue "uxbox.rpc"})
+  :stop (.stop rpc-server))

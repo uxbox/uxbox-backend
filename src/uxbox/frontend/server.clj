@@ -1,12 +1,21 @@
 (ns uxbox.frontend.server
   (:require [mount.core :as mount :refer (defstate)]
+            [clojure.core.async :as a]
             [catacumba.core :as ct]
-            [catacumba.http :as http]))
+            [catacumba.http :as http]
+            [uxbox.frontend.rpc :as rpc]))
 
 (defn hello-world
   [context]
-  (http/ok "<strong>Hello World</strong>"
-           {:content-type "text/html; charset=utf-8"}))
+  (a/go
+    (let [[type response] (a/<! (rpc/ask :test/test))]
+      (case type
+        :rpc/response
+        (http/ok (:message response)
+                 {:content-type "text/html; charset=utf-8"})
+
+        :rpc/timeout
+        (http/bad-request "Timeout")))))
 
 (def app
   (ct/routes [[:all hello-world]]))
