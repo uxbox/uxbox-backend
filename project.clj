@@ -8,9 +8,10 @@
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.slf4j/slf4j-simple "1.7.14"]
                  [mount "0.1.9"]
+                 [environ "1.0.2"]
                  [niwinz/migrante "0.1.0-SNAPSHOT"]
                  [funcool/wydra "0.1.0-SNAPSHOT"]
-                 [funcool/promesa "0.8.0"]
+                 [funcool/promesa "0.8.1"]
                  [funcool/catacumba "0.11.1"]]
-  :main ^:skip-aot uxbox.frontend
+  :main ^:skip-aot uxbox.main
   :plugins [[lein-ancient "0.6.7"]])
