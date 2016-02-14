@@ -9,7 +9,8 @@
                  [org.slf4j/slf4j-simple "1.7.14"]
                  [com.typesafe.akka/akka-actor_2.11 "2.4.1"]
                  [mount "0.1.9"]
-                 [funcool/promesa "0.7.0"]
+                 [funcool/wydra "0.1.0-SNAPSHOT"]
+                 [funcool/promesa "0.8.0"]
                  [funcool/catacumba "0.11.1"]]
   :main ^:skip-aot uxbox.frontend
   :plugins [[lein-ancient "0.6.7"]])
