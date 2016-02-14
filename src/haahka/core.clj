@@ -93,6 +93,27 @@
                               (-post-stop spec this)
                               (proxy-super postStop))))))))))
 
+
+(defmethod actor :actor/channels
+  [factory]
+  (fn [& args]
+    (Props/create UntypedActor
+                  (proxy [Creator] []
+                    (create []
+                      (let [in (a/chan)]
+                        (proxy [UntypedActor] []
+                          (preStart []
+                            (let [self {:sender (.getSender this) :in in}]
+                              (apply factory self args)))
+                          (onReceive [message]
+                            (a/!!> message in)))))))))
+
+(defmacro recv!
+  [self]
+  `(let [in# (:in ~self)]
+     (a/<! in)))
+
+
 (extend-protocol IActorFactory
   ActorRefFactory
   (-actor-of [system spec name]
