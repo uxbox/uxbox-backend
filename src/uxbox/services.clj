@@ -12,19 +12,16 @@
 ;; Impl.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- data->bytes
+(defn- encode
   [data]
-  (sz/encode data :transit+msgpack))
-
-(defn- bytes->data
-  [data]
-  (sz/decode data :transit+msgpack))
+  (-> (sz/encode data :transit+json)
+      (sz/bytes->str)))
 
 (defn- insert-txlog
   [conn data]
   (let [sql (str "INSERT INTO txlog (id, payload, created_at) "
                  "VALUES (?, ?, current_timestamp)")
-        sqlv [sql (uuid/v4) (data->bytes data)]]
+        sqlv [sql (uuid/v4) (encode data)]]
     (sc/execute conn sqlv)))
 
 (defn- handle-novelty

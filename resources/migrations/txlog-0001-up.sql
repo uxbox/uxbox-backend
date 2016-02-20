@@ -2,5 +2,5 @@
 CREATE TABLE IF NOT EXISTS txlog (
   id uuid PRIMARY KEY,
   created_at timestamptz,
-  payload bytea
+  payload text
 ) WITH (OIDS=FALSE);
