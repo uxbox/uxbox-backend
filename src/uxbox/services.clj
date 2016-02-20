@@ -1,0 +1,55 @@
+(ns uxbox.services
+  "Main namespace for access to all uxbox services."
+  (:require [suricatta.core :as sc]
+            [catacumba.serializers :as sz]
+            [catacumba.impl.executor :as exec]
+            [clj-uuid :as uuid]
+            [uxbox.persistence :as up]
+            [uxbox.services.core :as usc]
+            [uxbox.services.auth]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Impl.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- data->bytes
+  [data]
+  (sz/encode data :transit+msgpack))
+
+(defn- bytes->data
+  [data]
+  (sz/decode data :transit+msgpack))
+
+(defn- insert-txlog
+  [conn data]
+  (let [sql (str "INSERT INTO txlog (id, payload, created_at) "
+                 "VALUES (?, ?, current_timestamp)")
+        sqlv [sql (uuid/v4) (data->bytes data)]]
+    (sc/execute conn sqlv)))
+
+(defn- handle-novelty
+  [data]
+  (with-open [conn (sc/context up/datasource)]
+    (sc/atomic conn
+      (binding [up/*ctx* conn]
+        (usc/-novelty data))
+      (insert-txlog conn))))
+
+(defn- handle-query
+  [data]
+  (with-open [conn (sc/context up/datasource)]
+    (sc/atomic conn
+      (binding [up/*ctx* conn]
+        (usc/-query data)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Public Api
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn novelty
+  [data]
+  (exec/submit (partial handle-novelty data)))
+
+(defn query
+  [data]
+  (exec/submit (partial handle-query data)))
