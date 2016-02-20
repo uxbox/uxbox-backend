@@ -1,6 +1,6 @@
 {:database {:adapter "postgresql"
             :username nil
             :password nil
-            :database-name "test"
+            :database-name "uxbox"
             :server-name "localhost"
             :port-number 5432}}
