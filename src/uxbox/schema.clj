@@ -2,8 +2,7 @@
   (:refer-clojure :exclude [keyword uuid vector boolean])
   (:require [bouncer.core :as b]
             [bouncer.validators :as v]
-            [cuerdas.core :as str]
-            [uxbox.shapes :refer (shape?)]))
+            [cuerdas.core :as str]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validators
@@ -14,7 +13,7 @@
   For use with validation functions such as `validate` or `valid?`"
   {:default-message-format "%s must be a keyword"}
   [v]
-  (cljs.core/keyword? v))
+  (keyword? v))
 
 (v/defvalidator uuid
   "Validates maybe-an-int is a valid integer.
@@ -39,6 +38,7 @@
 (def number v/number)
 (def integer v/integer)
 (def boolean v/boolean)
+(def string v/string)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public Api
@@ -65,3 +65,13 @@
             message (str/format message data)]
         (throw (ex-info message {}))))))
 
+(defn extract
+  [schema data]
+  (let [keycoll (keys schema)]
+    (select-keys data keycoll)))
+
+(defn extract!
+  "Extract and validate."
+  [schema data]
+  (validate! schema data)
+  (extract schema data))
