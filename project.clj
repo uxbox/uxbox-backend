@@ -10,6 +10,7 @@
                  [bouncer "1.0.0"]
                  [mount "0.1.9"]
                  [environ "1.0.2"]
+                 [com.github.spullara.mustache.java/compiler "0.9.1"]
                  [niwinz/migrante "0.1.0-SNAPSHOT"]
                  [funcool/wydra "0.1.0-SNAPSHOT"]
                  [funcool/promesa "0.8.1"]
