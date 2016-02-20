@@ -1,15 +1,32 @@
 (ns uxbox.migrations
   (:require [mount.core :as mount :refer (defstate)]
-            [migrante.core :as mg]
+            [migrante.core :as mg :refer (defmigration)]
             [uxbox.persistence :as up]
             [uxbox.config :as ucfg]
-            [uxbox.migrations.misc :as mgmisc]))
+            [uxbox.util.template :as tmpl]))
 
-(def ^:private +migrations+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Migrations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defmigration txlog-0001
+  "Create a initial version of txlog table."
+  :up (mg/resource "migrations/0001.txlog.create.up.sql"))
+
+(defmigration auth-0002
+  "Create initial auth related tables."
+  :up (mg/resource "migrations/0002.auth.tables.up.sql"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Entry point
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(def ^:const +migrations+
   {:name :uxbox-main
-   :steps [[:0001 mgmisc/txlog-0001]]})
+   :steps [[:0001 txlog-0001]
+           [:0002 auth-0002]]})
 
-(defn migrate
+(defn- migrate
   []
   (let [options (:migrations ucfg/config {})]
     (with-open [mctx (mg/context up/datasource options)]
