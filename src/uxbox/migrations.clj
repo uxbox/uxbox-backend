@@ -8,11 +8,13 @@
   {:name :uxbox-main
    :steps [[:0001 mgmisc/txlog-0001]]})
 
-(defn- migrate
-  []
-  (with-open [mctx (mg/context up/datasource)]
-    (mg/migrate mctx +migrations+)
-    nil))
+(defn migrate
+  ([]
+   (migrate {:verbose true}))
+  ([options]
+   (with-open [mctx (mg/context up/datasource options)]
+     (mg/migrate mctx +migrations+)
+     nil)))
 
 (defstate migrations
   :start (migrate))
