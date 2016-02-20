@@ -30,7 +30,7 @@
     (sc/atomic conn
       (binding [up/*ctx* conn]
         (usc/-novelty data))
-      (insert-txlog conn))))
+      (insert-txlog conn data))))
 
 (defn- handle-query
   [data]
