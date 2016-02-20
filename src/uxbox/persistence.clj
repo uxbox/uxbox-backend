@@ -3,6 +3,8 @@
             [hikari-cp.core :as hikari]
             [uxbox.config :as cfg]))
 
+(def ^:dynamic *ctx*)
+
 (def ^:const +defaults+
   {:connection-timeout 30000
    :idle-timeout 600000
@@ -16,7 +18,7 @@
    :server-name "localhost"
    :port-number 5432})
 
-(defn create-datasource
+(defn- create-datasource
   []
   (let [dbconf (:database cfg/config)
         dbconf (merge +defaults+ dbconf)]
