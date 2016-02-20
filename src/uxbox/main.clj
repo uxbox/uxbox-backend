@@ -2,7 +2,8 @@
   (:require [clojure.tools.namespace.repl :as repl]
             [mount.core :as mount]
             [uxbox.config :as cfg]
-            [uxbox.backend]
+            [uxbox.migrations]
+            [uxbox.persistence]
             [uxbox.frontend])
   (:gen-class))
 
