@@ -1,5 +1,5 @@
 (defproject uxbox-backend "0.1.0-SNAPSHOT"
-  :description "UXBox backend + api"
+  :description "UXBox backend."
   :url "http://uxbox.github.io"
   :license {:name "" :url ""}
   :source-paths ["src"]
@@ -10,6 +10,8 @@
                  [bouncer "1.0.0"]
                  [mount "0.1.9"]
                  [environ "1.0.2"]
+                 [buddy/buddy-sign "0.9.0"]
+                 [buddy/buddy-hashers "0.11.0"]
                  [com.github.spullara.mustache.java/compiler "0.9.1"]
                  [niwinz/migrante "0.1.0-SNAPSHOT"]
                  [funcool/suricatta "0.8.1"]
