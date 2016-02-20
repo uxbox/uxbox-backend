@@ -12,8 +12,9 @@
                  [environ "1.0.2"]
                  [com.github.spullara.mustache.java/compiler "0.9.1"]
                  [niwinz/migrante "0.1.0-SNAPSHOT"]
-                 [funcool/wydra "0.1.0-SNAPSHOT"]
+                 [funcool/suricatta "0.8.1"]
                  [funcool/promesa "0.8.1"]
-                 [funcool/catacumba "0.11.1"]]
+                 [hikari-cp "1.5.0"]
+                 [funcool/catacumba "0.11.2-SNAPSHOT"]]
   :main ^:skip-aot uxbox.main
   :plugins [[lein-ancient "0.6.7"]])

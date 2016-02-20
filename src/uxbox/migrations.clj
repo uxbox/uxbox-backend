@@ -1,7 +1,7 @@
 (ns uxbox.migrations
   (:require [mount.core :as mount :refer (defstate)]
             [migrante.core :as mg]
-            [uxbox.config :as cfg]
+            [uxbox.persistence :as up]
             [uxbox.migrations.misc :as mgmisc]))
 
 (def ^:private +migrations+
@@ -10,11 +10,9 @@
 
 (defn- migrate
   []
-  (let [dbspec (:database cfg/config)]
-    (with-open [mctx (mg/context dbspec)]
-      (mg/migrate mctx +migrations+)
-      nil)))
+  (with-open [mctx (mg/context up/datasource)]
+    (mg/migrate mctx +migrations+)
+    nil))
 
 (defstate migrations
   :start (migrate))
-
