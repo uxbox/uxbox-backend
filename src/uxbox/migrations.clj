@@ -2,6 +2,7 @@
   (:require [mount.core :as mount :refer (defstate)]
             [migrante.core :as mg]
             [uxbox.persistence :as up]
+            [uxbox.config :as ucfg]
             [uxbox.migrations.misc :as mgmisc]))
 
 (def ^:private +migrations+
@@ -9,12 +10,11 @@
    :steps [[:0001 mgmisc/txlog-0001]]})
 
 (defn migrate
-  ([]
-   (migrate {:verbose true}))
-  ([options]
-   (with-open [mctx (mg/context up/datasource options)]
-     (mg/migrate mctx +migrations+)
-     nil)))
+  []
+  (let [options (:migrations ucfg/config {})]
+    (with-open [mctx (mg/context up/datasource options)]
+      (mg/migrate mctx +migrations+)
+      nil)))
 
 (defstate migrations
   :start (migrate))
