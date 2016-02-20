@@ -18,12 +18,11 @@
    :server-name "localhost"
    :port-number 5432})
 
-(defn- create-datasource
-  []
-  (let [dbconf (:database cfg/config)
-        dbconf (merge +defaults+ dbconf)]
+(defn create-datasource
+  [config]
+  (let [dbconf (merge +defaults+ config)]
     (hikari/make-datasource dbconf)))
 
 (defstate datasource
-  :start (create-datasource)
+  :start (create-datasource (:database cfg/config))
   :stop (hikari/close-datasource datasource))

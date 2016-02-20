@@ -22,5 +22,13 @@
       (deep-merge defaults (edn/read-string (slurp local)))
       defaults)))
 
+(defn read-test-config
+  []
+  (let [defaults (edn/read-string (slurp (io/resource +default-config+)))
+        local (io/resource (:local-config env "config/test.edn"))]
+    (if local
+      (deep-merge defaults (edn/read-string (slurp local)))
+      defaults)))
+
 (defstate config
   :start (read-config))
