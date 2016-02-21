@@ -23,4 +23,4 @@
   (p/alet [data (us/extract! +auth-frame-schema+ data)
            data (assoc data :type dest)
            resp (p/await (sv/novelty data))]
-    (pc/frame data)))
+    (pc/frame resp)))
