@@ -1,9 +1,8 @@
 (ns uxbox.persistence
   (:require [mount.core :as mount :refer (defstate)]
             [hikari-cp.core :as hikari]
+            [suricatta.core :as sc]
             [uxbox.config :as cfg]))
-
-(def ^:dynamic *ctx*)
 
 (def ^:const +defaults+
   {:connection-timeout 30000
@@ -26,3 +25,7 @@
 (defstate datasource
   :start (create-datasource (:database cfg/config))
   :stop (hikari/close-datasource datasource))
+
+(defn get-conn
+  []
+  (sc/context datasource))
