@@ -1,4 +1,8 @@
-{:database {:adapter "postgresql"
+{;; A secret key used for create tokens
+ ;; WARNING: this is a default secret key and
+ ;; it should be overwritten in production env.
+ :secret "5qjiAn-QUpawUNqGP10UZKklSqbLKcdGY3sJpq0UUACpVXGg2HOFJCBejDWVHskhRyp7iHb4rjOLXX2ZjF-5cw"
+ :database {:adapter "postgresql"
             :username nil
             :password nil
             :database-name "uxbox"
