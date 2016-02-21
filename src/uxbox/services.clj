@@ -19,25 +19,23 @@
 
 (defn- insert-txlog
   [conn data]
-  (let [sql (str "INSERT INTO txlog (id, payload, created_at) "
-                 "VALUES (?, ?, current_timestamp)")
-        sqlv [sql (uuid/v4) (encode data)]]
+  (let [sql (str "INSERT INTO txlog (payload) VALUES (?)")
+        sqlv [sql (encode data)]]
     (sc/execute conn sqlv)))
 
 (defn- handle-novelty
   [data]
-  (with-open [conn (sc/context up/datasource)]
+  (with-open [conn (up/get-conn)]
     (sc/atomic conn
-      (binding [up/*ctx* conn]
-        (usc/-novelty data))
-      (insert-txlog conn data))))
+      (let [result (usc/-novelty conn data)]
+        (insert-txlog conn data)
+        result))))
 
 (defn- handle-query
   [data]
-  (with-open [conn (sc/context up/datasource)]
+  (with-open [conn (up/get-conn)]
     (sc/atomic conn
-      (binding [up/*ctx* conn]
-        (usc/-query data)))))
+      (usc/-query conn data))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public Api
