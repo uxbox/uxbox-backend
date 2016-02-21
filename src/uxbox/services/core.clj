@@ -4,10 +4,12 @@
   (as-> (make-hierarchy) $
     (derive $ :auth/login :command)))
 
-(defmulti -novelty :type
+(defmulti -novelty
+  (fn [conn data] (:type data))
   :hierarchy #'+hierarchy+)
 
-(defmulti -query :type
+(defmulti -query
+  (fn [conn data] (:type data))
   :hierarchy #'+hierarchy+)
 
 (defmethod -novelty :default
