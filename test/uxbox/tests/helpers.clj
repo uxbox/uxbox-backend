@@ -15,5 +15,16 @@
     (sc/execute conn "drop schema if exists public cascade;")
     (sc/execute conn "create schema public;"))
   (mount/start-with {#'uxbox.config/config +config+})
-  (next))
+  (next)
+  (mount/stop))
 
+(defn ex-info?
+  [v]
+  (instance? clojure.lang.ExceptionInfo v))
+
+(defmacro await
+  [expr]
+  `(try
+     (deref ~expr)
+     (catch Exception e#
+       (.getCause e#))))
