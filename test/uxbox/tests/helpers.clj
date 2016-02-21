@@ -1,5 +1,9 @@
 (ns uxbox.tests.helpers
-    (:require [clojure.test :as t]
+  (:refer-clojure :exclude [await])
+  (:require [clojure.test :as t]
+            [clj-http.client :as http]
+            [buddy.core.codecs :as codecs]
+            [catacumba.handlers.postal :as pc]
             [mount.core :as mount]
             [suricatta.core :as sc]
             [uxbox.migrations :as umg]
@@ -28,3 +32,16 @@
      (deref ~expr)
      (catch Exception e#
        (.getCause e#))))
+
+(defn send-frame
+  [uri frame]
+  (let [data (pc/-encode frame :application/transit+json)
+        headers {"content-type" "application/transit+json"}
+        params {:body data :headers headers}
+        response  (http/put uri params)]
+    (if (= (:status response) 200)
+      (-> (:body response)
+          (codecs/str->bytes)
+          (pc/-decode :application/transit+json))
+      (throw (ex-info "Wrong response" response)))))
+
