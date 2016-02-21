@@ -34,6 +34,29 @@
   [v]
   (fn? v))
 
+(def ^:const +email-re+
+  #"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
+
+(v/defvalidator email
+  "Validate if `v` is a valid email."
+  {:default-message-format "% must be a valid email."}
+  [v]
+  (clojure.core/boolean (re-seq +email-re+ v)))
+
+(v/defvalidator max-len
+  "Validate if `v` is at least smaller that `n`."
+  {:default-message-format "% must be lees than the maximum."}
+  [v n]
+  (let [len (count v)]
+    (>= len v)))
+
+(v/defvalidator min-len
+  "Validate if `v` is at least larger that `n`."
+  {:default-message-format "% must be greater than the minimum."}
+  [v n]
+  (let [len (count v)]
+    (>= v len)))
+
 (def required v/required)
 (def number v/number)
 (def integer v/integer)
