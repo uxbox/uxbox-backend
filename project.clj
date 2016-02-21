@@ -19,4 +19,6 @@
                  [hikari-cp "1.5.0"]
                  [funcool/catacumba "0.11.2-SNAPSHOT"]]
   :main ^:skip-aot uxbox.main
-  :plugins [[lein-ancient "0.6.7"]])
+  :profiles
+  {:dev {:plugins [[lein-ancient "0.6.7"]]
+         :dependencies [[clj-http "2.1.0"]]}})
