@@ -1,6 +1,8 @@
 (ns uxbox.main
   (:require [clojure.tools.namespace.repl :as repl]
             [mount.core :as mount]
+            [buddy.core.codecs :as codecs]
+            [buddy.core.nonce :as nonce]
             [uxbox.config :as cfg]
             [uxbox.migrations]
             [uxbox.persistence]
@@ -39,6 +41,11 @@
   []
   (stop)
   (repl/refresh :after 'uxbox.main/start))
+
+(defn make-secret
+  []
+  (let [rdata (nonce/random-bytes 64)]
+    (codecs/bytes->safebase64 rdata)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point (only for uberjar)
