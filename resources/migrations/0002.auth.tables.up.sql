@@ -1,6 +1,8 @@
 CREATE TABLE IF NOT EXISTS users (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at timestamptz DEFAULT current_timestamp,
+  modified_at timestamptz DEFAULT current_timestamp,
+  photo text,
   username text,
   email text,
   password text
