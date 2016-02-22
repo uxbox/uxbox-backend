@@ -18,7 +18,7 @@
                  [funcool/promesa "0.8.1"]
                  [hikari-cp "1.5.0"]
                  [funcool/catacumba "0.11.2-SNAPSHOT"]]
-  :main ^:skip-aot uxbox.main
   :profiles
   {:dev {:plugins [[lein-ancient "0.6.7"]]
-         :dependencies [[clj-http "2.1.0"]]}})
+         :dependencies [[clj-http "2.1.0"]]
+         :main ^:skip-aot uxbox.main}})
