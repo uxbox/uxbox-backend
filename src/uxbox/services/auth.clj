@@ -11,6 +11,9 @@
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]))
 
+(def ^:const +auth-opts+
+  {:alg :a256kw :enc :a256cbc-hs512})
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; State
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -58,7 +61,7 @@
 (defn generate-token
   [user]
   (let [data {:id (:id user)}]
-    (jwe/encrypt data secret {:alg :a256kw :enc :a256cbc-hs512})))
+    (jwe/encrypt data secret +auth-opts+)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Service

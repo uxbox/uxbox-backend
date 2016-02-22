@@ -2,7 +2,9 @@
   (:require [catacumba.core :as ct]
             [catacumba.http :as http]
             [catacumba.serializers :as sz]
+            [catacumba.handlers.auth :as cauth]
             [catacumba.handlers.postal :as pc]
+            [uxbox.services.auth :as auth]
             [uxbox.frontend.core :refer (-handler)]
             [uxbox.frontend.auth]))
 
@@ -19,8 +21,13 @@
   [context]
   (http/see-other "/api"))
 
-(def app
-  (ct/routes [[:get "api" welcome-api]
-              [:put "api" (pc/router -handler)]
-              [:get "" redirect-to-api]]))
+(defn app
+  []
+  (let [props {:secret auth/secret
+               :options auth/+auth-opts+}
+        backend (cauth/jwe-backend props)]
+    (ct/routes [[:any (cauth/auth backend)]
+                [:get "api" welcome-api]
+                [:put "api" (pc/router -handler)]
+                [:get "" redirect-to-api]])))
 
