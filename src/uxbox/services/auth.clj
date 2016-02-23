@@ -43,10 +43,10 @@
 
 (defn create-user
   [conn {:keys [username password email] :as data}]
-  (let [sql (str "INSERT INTO users (username, email, password)"
-                 " VALUES (?, ?, ?) RETURNING *;")
+  (let [sql (str "INSERT INTO users (username, email, password, photo)"
+                 " VALUES (?, ?, ?, ?) RETURNING *;")
         password (hashers/encrypt password)]
-    (sc/fetch-one conn [sql username email password])))
+    (sc/fetch-one conn [sql username email password ""])))
 
 (defn find-user-by-username-or-email
   [conn username]
