@@ -68,7 +68,7 @@
               :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn data))]
-    (with-server {:handler urt/app}
+    (with-server {:handler (urt/app)}
       (let [frame {:dest :auth/login
                    :type :novelty
                    :data {:username "user1"
@@ -87,7 +87,7 @@
               :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn data))]
-    (with-server {:handler urt/app}
+    (with-server {:handler (urt/app)}
       (let [frame {:dest :auth/login
                    :type :novelty
                    :data {:username "user1"

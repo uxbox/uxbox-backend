@@ -9,11 +9,11 @@
 (t/use-fixtures :each th/database-reset)
 
 (defmethod usc/-novelty ::testype1
-  [data]
+  [conn data]
   true)
 
 (t/deftest txlog-spec1
   (let [data {:type ::testype1 :foo 1 :bar "baz"}
         response (usv/novelty data)]
     (t/is (p/promise? response))
-    (t/is (= 1 @response))))
+    (t/is (= true @response))))
