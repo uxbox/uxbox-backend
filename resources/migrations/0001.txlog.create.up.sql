@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- A table that will store the whole transaction log of the database.
 CREATE TABLE IF NOT EXISTS txlog (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
