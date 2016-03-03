@@ -1,7 +1,7 @@
 (defproject uxbox-backend "0.1.0-SNAPSHOT"
   :description "UXBox backend."
   :url "http://uxbox.github.io"
-  :license {:name "" :url ""}
+  :license {:name "MPL 2.0" :url "https://www.mozilla.org/en-US/MPL/2.0/"}
   :source-paths ["src"]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
   :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
