@@ -23,6 +23,10 @@
   "Create initial auth related tables."
   :up (mg/resource "migrations/0002.auth.tables.up.sql"))
 
+(defmigration projects-0003
+  "Create initial tables for projects and pages."
+  :up (mg/resource "migrations/0003.projects.and.pages.up.sql"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -30,7 +34,8 @@
 (def ^:const +migrations+
   {:name :uxbox-main
    :steps [[:0001 txlog-0001]
-           [:0002 auth-0002]]})
+           [:0002 auth-0002
+            :0003 projects-0003]]})
 
 (defn- migrate
   []
