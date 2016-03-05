@@ -4,6 +4,7 @@
             [promesa.core :as p]
             [clj-http.client :as http]
             [catacumba.testing :refer (with-server)]
+            [buddy.hashers :as hashers]
             [uxbox.persistence :as up]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.auth :as usa]
@@ -18,7 +19,7 @@
 
 (t/deftest test-success-auth
   (let [user-data {:username "user1"
-                   :password "user1"
+                   :password  (hashers/encrypt "user1")
                    :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn user-data))
@@ -31,7 +32,7 @@
 
 (t/deftest test-success-by-email
   (let [user-data {:username "user1"
-                   :password "user1"
+                   :password  (hashers/encrypt "user1")
                    :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn user-data))
@@ -44,7 +45,7 @@
 
 (t/deftest test-failed-auth
   (let [user-data {:username "user2"
-                   :password "user2"
+                   :password  (hashers/encrypt "user2")
                    :email "user2@uxbox.io"}
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn user-data))
@@ -64,7 +65,7 @@
 
 (t/deftest test-http-success-auth
   (let [data {:username "user1"
-              :password "user1"
+              :password  (hashers/encrypt "user1")
               :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn data))]
@@ -83,7 +84,7 @@
 
 (t/deftest test-http-failed-auth
   (let [data {:username "user1"
-              :password "user1"
+              :password  (hashers/encrypt "user1")
               :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn data))]
