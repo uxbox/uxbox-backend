@@ -49,29 +49,38 @@
 
 (defn create-user
   [conn {:keys [username password email] :as data}]
-  (let [sql (str "INSERT INTO users (username, email, password, photo)"
-                 " VALUES (?, ?, ?, ?) RETURNING *;")
-        password (hashers/encrypt password)]
-    (sc/fetch-one conn [sql username email password ""])))
+  (let [sql (str "INSERT INTO users (username, email, password)"
+                 " VALUES (?, ?, ?) RETURNING *;")
+        ;; password (hashers/encrypt password)
+        sqlv [sql username email password]]
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs))))
+
+(defn find-user-by-id
+  [conn id]
+  (let [sql (str "SELECT * FROM users WHERE id=?")]
+    (some-> (sc/fetch-one conn [sql id])
+            (usc/normalize-attrs))))
 
 (defn find-user-by-username-or-email
   [conn username]
   (let [sql (str "SELECT * FROM users WHERE username=? OR email=?")
         sqlv [sql username username]]
-    (sc/fetch-one conn sqlv)))
-
-(defn check-user-password
-  [user password]
-  (hashers/check password (:password user)))
-
-(defn generate-token
-  [user]
-  (let [data {:id (:id user)}]
-    (jwe/encrypt data secret +auth-opts+)))
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Service
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn- check-user-password
+  [user password]
+  (hashers/check password (:password user)))
+
+(defn- generate-token
+  [user]
+  (let [data {:id (:id user)}]
+    (jwe/encrypt data secret +auth-opts+)))
 
 (defmethod usc/-novelty :auth/login
   [conn {:keys [username password scope]}]
