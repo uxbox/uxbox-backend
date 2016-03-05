@@ -6,10 +6,10 @@
 
 (ns uxbox.frontend.auth
   (:require [catacumba.handlers.postal :as pc]
+            [promesa.core :as p]
             [uxbox.schema :as us]
             [uxbox.frontend.core :refer (-handler)]
-            [uxbox.services :as sv]
-            [promesa.core :as p]))
+            [uxbox.services :as sv]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Schema
@@ -26,7 +26,7 @@
 
 (defmethod -handler [:novelty :auth/login]
   [context {:keys [data dest]}]
-  (p/alet [data (us/extract! +auth-frame-schema+ data)
+  (p/alet [data (us/extract! data +auth-frame-schema+)
            data (assoc data :type dest)
            resp (p/await (sv/novelty data))]
     (pc/frame resp)))
