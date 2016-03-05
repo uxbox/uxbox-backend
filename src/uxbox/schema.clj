@@ -74,16 +74,15 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn validate
-  ([schema] #(validate schema %))
-  ([schema data] (first (b/validate data schema))))
+  [data schema] (first (b/validate data schema)))
 
 (defn validate!
-  ([schema] #(validate! schema %))
-  ([schema data]
-   (when-let [errors (validate schema data)]
-     (let [data {:type :validation
-                 :payload errors}]
-       (throw (ex-info "Schema validations error." data))))))
+  [data schema]
+  (if-let [errors (validate data schema)]
+    (let [data {:type :validation
+                :payload errors}]
+      (throw (ex-info "Schema validations error." data)))
+    data))
 
 (defn valid?
   [validator data]
@@ -95,12 +94,12 @@
         (throw (ex-info message {}))))))
 
 (defn extract
-  [schema data]
+  [data schema]
   (let [keycoll (keys schema)]
     (select-keys data keycoll)))
 
 (defn extract!
   "Extract and validate."
-  [schema data]
-  (validate! schema data)
-  (extract schema data))
+  [data schema]
+  (validate! data schema)
+  (extract data schema))
