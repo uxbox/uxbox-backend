@@ -7,6 +7,7 @@
 (ns uxbox.services.auth
   (:require [mount.core :as mount :refer (defstate)]
             [suricatta.core :as sc]
+            [clj-uuid :as uuid]
             [buddy.hashers :as hashers]
             [buddy.sign.jwe :as jwe]
             [buddy.core.nonce :as nonce]
@@ -39,7 +40,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def +user-schema+
-  {:username [us/required us/string]
+  {:id [us/uuid]
+   :username [us/required us/string]
    :email [us/required us/email]
    :password [us/required us/string]})
 
@@ -48,11 +50,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn create-user
-  [conn {:keys [username password email] :as data}]
-  (let [sql (str "INSERT INTO users (username, email, password)"
-                 " VALUES (?, ?, ?) RETURNING *;")
-        ;; password (hashers/encrypt password)
-        sqlv [sql username email password]]
+  [conn {:keys [id username password email] :as data}]
+  {:pre [(us/validate! data +user-schema+)]}
+  (let [sql (str "INSERT INTO users (id, username, email, password)"
+                 " VALUES (?, ?, ?, ?) RETURNING *;")
+        id (or id (uuid/v4))
+        sqlv [sql id username email password]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
