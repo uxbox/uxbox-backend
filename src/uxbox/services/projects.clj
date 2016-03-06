@@ -5,8 +5,7 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.services.projects
-  (:require [mount.core :as mount :refer (defstate)]
-            [suricatta.core :as sc]
+  (:require [suricatta.core :as sc]
             [buddy.hashers :as hashers]
             [buddy.sign.jwe :as jwe]
             [buddy.core.nonce :as nonce]
@@ -22,17 +21,19 @@
 ;; Schema
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:const +project-schema+
+(def +project-schema+
   {:id [us/required us/uuid]
    :user [us/required us/uuid]
+   :name [us/required us/string]})
+
+(def +page-schema+
+  {:id [us/required us/uuid]
+   :user [us/required us/uuid]
+   :project [us/required us/uuid]
    :name [us/required us/string]
    :width [us/required us/integer]
    :height [us/required us/integer]
    :layout [us/required us/string]})
-
-(def ^:const +page-schema+
-  (assoc +project-schema+
-         :project [us/required us/uuid]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Repository
@@ -41,20 +42,20 @@
 ;; NOTE: maybe move sql into files?
 
 (defn create-project
-  [conn {:keys [id user name width height layout] :as data}]
+  [conn {:keys [id user name] :as data}]
   {:pre [(us/validate! data +project-schema+)]}
-  (let [sql (str "INSERT INTO projects (id, user, name, width, height, layout)"
-                 " VALUES (?, ?, ?, ?, ?) RETURNING *")
-        sqlv [sql id user name width height layout]]
+  (let [sql (str "INSERT INTO projects (id, \"user\", name)"
+                 " VALUES (?, ?, ?) RETURNING *")
+        sqlv [sql id user name]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
 (defn create-page
   [conn {:keys [id user project name width height layout] :as data}]
   {:pre [(us/validate! data +page-schema+)]}
-  (let [sql (str "INSERT INTO pages (id, user, project, name, width, "
+  (let [sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
                  "                   height, layout)"
-                 " VALUES (?, ?, ?, ?, ?, ?) RETURNING *")
+                 " VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING *")
         sqlv [sql id user project name width height layout]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
