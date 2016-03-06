@@ -31,11 +31,11 @@
 ;; Entry point
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:const +migrations+
+(def +migrations+
   {:name :uxbox-main
    :steps [[:0001 txlog-0001]
-           [:0002 auth-0002
-            :0003 projects-0003]]})
+           [:0002 auth-0002]
+           [:0003 projects-0003]]})
 
 (defn- migrate
   []
