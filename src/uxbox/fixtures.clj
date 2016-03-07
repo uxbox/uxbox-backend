@@ -65,4 +65,5 @@
       (doseq [pi (range 10)]
         (doseq [ui (range 10)]
           (doseq [i (range 10)]
-            (create-page conn (str pi ui i) (str ui i) ui)))))))
+            (create-page conn (str pi ui i) (str ui i) ui))))))
+  (mount/stop))
