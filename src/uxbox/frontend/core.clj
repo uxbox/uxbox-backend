@@ -4,7 +4,23 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.frontend.core)
+(ns uxbox.frontend.core
+  (:require [catacumba.impl.handlers :as cih]
+            [catacumba.serializers :as csz])
+  (:import ratpack.handling.Context
+           ratpack.http.Response
+           ratpack.http.MutableHeaders))
 
-(defmulti -handler
-  (comp (juxt :type :dest) second vector))
+
+(deftype Rsp [data]
+  cih/ISend
+  (-send [_ ctx]
+    (let [^Response response (.getResponse ^Context ctx)
+          ^MutableHeaders headers (.getHeaders response)]
+      (.set headers "content-type" "application/transit+json")
+      (cih/-send (csz/encode data :transit+json) ctx))))
+
+(defn rsp
+  "A shortcut for create a response instance."
+  [data]
+  (Rsp. data))
