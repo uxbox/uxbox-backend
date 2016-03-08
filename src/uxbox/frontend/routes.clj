@@ -9,10 +9,11 @@
             [catacumba.http :as http]
             [catacumba.serializers :as sz]
             [catacumba.handlers.auth :as cauth]
-            [catacumba.handlers.postal :as pc]
+            [catacumba.handlers.parse :as cparse]
+            [catacumba.handlers.misc :as cmisc]
             [uxbox.services.auth :as auth]
-            [uxbox.frontend.core :refer (-handler)]
-            [uxbox.frontend.auth]))
+            [uxbox.frontend.core :as ufc]
+            [uxbox.frontend.auth :as ufa]))
 
 (defn- welcome-api
   "A GET entry point for the api that shows
@@ -27,13 +28,28 @@
   [context]
   (http/see-other "/api"))
 
+(defn- error-handler
+  [context err]
+  (if (instance? clojure.lang.ExceptionInfo err)
+    (let [message (.getMessage err)
+          data (ex-data err)]
+      (-> (ufc/rsp {:message message
+                    :payload data})
+          (http/bad-request)))
+    (let [message (.getMessage err)]
+      (-> (ufc/rsp {:message message})
+          (http/internal-server-error)))))
+
 (defn app
   []
   (let [props {:secret auth/secret
                :options auth/+auth-opts+}
         backend (cauth/jwe-backend props)]
     (ct/routes [[:any (cauth/auth backend)]
-                [:get "api" welcome-api]
-                [:put "api" (pc/router -handler)]
-                [:get "" redirect-to-api]])))
-
+                [:any (cmisc/autoreloader)]
+                [:prefix "api"
+                 [:any (cparse/body-params)]
+                 [:error #'error-handler]
+                 [:post "auth/token" #'ufa/login]
+                 [:get "" #'welcome-api]]
+                [:get "" #'redirect-to-api]])))
