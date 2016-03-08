@@ -5,17 +5,17 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.frontend.auth
-  (:require [catacumba.handlers.postal :as pc]
+  (:require [catacumba.http :as http]
             [promesa.core :as p]
             [uxbox.schema :as us]
-            [uxbox.frontend.core :refer (-handler)]
+            [uxbox.frontend.core :as ufc]
             [uxbox.services :as sv]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Schema
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def +auth-frame-schema+
+(def +auth-schema+
   {:username [us/required us/string]
    :password [us/required us/string]
    :scope [us/required us/string]})
@@ -24,9 +24,9 @@
 ;; Handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defmethod -handler [:novelty :auth/login]
-  [context {:keys [data dest]}]
-  (p/alet [data (us/extract! data +auth-frame-schema+)
-           data (assoc data :type dest)
+(defn login
+  [{:keys [data] :as context}]
+  (p/alet [data (us/extract! data +auth-schema+)
+           data (assoc data :type :auth/login)
            resp (p/await (sv/novelty data))]
-    (pc/frame resp)))
+    (http/ok (ufc/rsp resp))))
