@@ -70,17 +70,14 @@
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn data))]
     (with-server {:handler (urt/app)}
-      (let [frame {:dest :auth/login
-                   :type :novelty
-                   :data {:username "user1"
-                          :password "user1"
-                          :scope "foobar"}}
-            response (th/send-frame (str +base-url "/api") frame)]
+      (let [data {:username "user1"
+                  :password "user1"
+                  :scope "foobar"}
+            uri (str +base-url "/api/auth/token")
+            [status data] (th/post uri data)]
         ;; (println "RESPONSE:" response)
-        (t/is (= (:type response) :response))
-        (t/is (contains? response :data))
-        (t/is (contains? (:data response) :token))))))
-
+        (t/is (= status 200))
+        (t/is (contains? data :token))))))
 
 (t/deftest test-http-failed-auth
   (let [data {:username "user1"
@@ -89,13 +86,12 @@
         user (with-open [conn (up/get-conn)]
                (usa/create-user conn data))]
     (with-server {:handler (urt/app)}
-      (let [frame {:dest :auth/login
-                   :type :novelty
-                   :data {:username "user1"
-                          :password "user2"
-                          :scope "foobar"}}
-            response (th/send-frame (str +base-url "/api") frame)]
-        ;; (println "RESPONSE:" response)
-        (t/is (= (:type response) :error))
-        (t/is (= (:message response) "Invalid credentials"))))))
+      (let [data {:username "user1"
+                  :password "user2"
+                  :scope "foobar"}
+            uri (str +base-url "/api/auth/token")
+            [status data] (th/post uri data)]
+        ;; (println "RESPONSE:" status data)
+        (t/is (= 400 status))
+        (t/is (= (:message data) "Invalid credentials"))))))
 
