@@ -61,5 +61,8 @@ $updt$ LANGUAGE plpgsql;
 CREATE TRIGGER pages_history_tgr BEFORE UPDATE OR DELETE ON pages
   FOR EACH ROW EXECUTE PROCEDURE insert_page_history();
 
+CREATE TRIGGER projects_modified_at_tgr BEFORE UPDATE ON projects
+  FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
+
 CREATE TRIGGER pages_modified_at_tgr BEFORE UPDATE ON pages
   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
