@@ -41,6 +41,62 @@
                 (sz/decode :transit+json))]
     [status body]))
 
+(defn http-get
+  ([uri]
+   (http-get nil uri))
+  ([user uri]
+   (let [headers (when user
+                   {"Authorization" (str "Token " (usa/generate-token user))})
+         params {:headers headers}]
+     (try
+       (strip-response (http/get uri params))
+       (catch clojure.lang.ExceptionInfo e
+         (strip-response (ex-data e)))))))
+
+(defn http-post
+  ([uri params]
+   (http-post nil uri params))
+  ([user uri {:keys [body] :as params}]
+   (let [body (-> (sz/encode body :transit+json)
+                  (codecs/bytes->str))
+         headers (merge
+                  {"content-type" "application/transit+json"}
+                  (when user
+                    {"Authorization" (str "Token " (usa/generate-token user))}))
+         params {:headers headers :body body}]
+     (try
+       (strip-response (http/post uri params))
+       (catch clojure.lang.ExceptionInfo e
+         (strip-response (ex-data e)))))))
+
+(defn http-put
+  ([uri params]
+   (http-put nil uri params))
+  ([user uri {:keys [body] :as params}]
+   (let [body (-> (sz/encode body :transit+json)
+                  (codecs/bytes->str))
+         headers (merge
+                  {"content-type" "application/transit+json"}
+                  (when user
+                    {"Authorization" (str "Token " (usa/generate-token user))}))
+         params {:headers headers :body body}]
+     (try
+       (strip-response (http/put uri params))
+       (catch clojure.lang.ExceptionInfo e
+         (strip-response (ex-data e)))))))
+
+(defn http-delete
+  ([uri]
+   (http-delete nil uri))
+  ([user uri]
+   (let [headers (when user
+                   {"Authorization" (str "Token " (usa/generate-token user))})
+         params {:headers headers}]
+     (try
+       (strip-response (http/delete uri params))
+       (catch clojure.lang.ExceptionInfo e
+         (strip-response (ex-data e)))))))
+
 (defn post
   [uri body]
   (let [body (-> (sz/encode body :transit+json)
