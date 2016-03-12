@@ -48,6 +48,22 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
+(defn update-project
+  [conn {:keys [id user name] :as data}]
+  {:pre [(us/validate! data +project-schema+)]}
+  (let [sql (str "UPDATE projects SET name=?"
+                 " WHERE id=? AND \"user\"=? RETURNING *")
+        sqlv [sql name id user]]
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs))))
+
+(defn delete-project
+  [conn {:keys [id user] :as params}]
+  (let [sql (str "DELETE FROM projects WHERE id=? AND \"user\"=?")
+        sqlv [sql id user]]
+    (sc/execute conn sqlv)
+    nil))
+
 (defn create-page
   [conn {:keys [id user project name width height layout data] :as params}]
   {:pre [(us/validate! params +page-schema+)]}
@@ -56,15 +72,6 @@
                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
         id (or id (uuid/v4))
         sqlv [sql id user project name width height layout data]]
-    (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
-
-(defn update-project
-  [conn {:keys [id user name] :as data}]
-  {:pre [(us/validate! data +project-schema+)]}
-  (let [sql (str "UPDATE projects SET name=?"
-                 " WHERE id=? AND \"user\"=? RETURNING *")
-        sqlv [sql name id user]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
@@ -78,6 +85,13 @@
         sqlv [sql name width height layout data id user project]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
+
+(defn delete-page
+  [conn {:keys [id user] :as params}]
+  (let [sql (str "DELETE FROM pages WHERE id=? AND \"user\"=?")
+        sqlv [sql id user]]
+    (sc/execute conn sqlv)
+    nil))
 
 (defn get-projects-for-user
   [conn user]
@@ -121,6 +135,14 @@
   [conn params]
   (create-project conn params))
 
+(defmethod usc/-novelty :project/update
+  [conn params]
+  (update-project conn params))
+
+(defmethod usc/-novelty :project/delete
+  [conn params]
+  (delete-project conn params))
+
 (defmethod usc/-novelty :page/create
   [conn {:keys [data] :as params}]
   (let [data (-> (sz/encode data :transit+msgpack)
@@ -136,6 +158,10 @@
         params (assoc params :data data)]
     (-> (update-page conn params)
         (decode-page-data))))
+
+(defmethod usc/-novelty :page/delete
+  [conn params]
+  (delete-page conn params))
 
 (defmethod usc/-query :project/list
   [conn {:keys [user] :as params}]

@@ -99,21 +99,51 @@
 (def ^:const +base-url
   "http://localhost:5050")
 
-;; (t/deftest test-http-success-auth
-;;   (let [data {:username "user1"
-;;               :password  (hashers/encrypt "user1")
-;;               :email "user1@uxbox.io"}
-;;         user (with-open [conn (up/get-conn)]
-;;                (usa/create-user conn data))]
-;;     (with-server {:handler (urt/app)}
-;;       (let [data {:username "user1"
-;;                   :password "user1"
-;;                   :scope "foobar"}
-;;             uri (str +base-url "/api/auth/token")
-;;             [status data] (th/post uri data)]
-;;         ;; (println "RESPONSE:" response)
-;;         (t/is (= status 200))
-;;         (t/is (contains? data :token))))))
+(t/deftest test-http-project-list
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url "/api/projects")
+              [status data] (th/http-get user uri)]
+          (println "RESPONSE:" status data)
+          (t/is (= 200 status))
+          (t/is (= 1 (count data))))))))
+
+(t/deftest test-http-project-create
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url "/api/projects")
+              params {:body {:name "proj1"}}
+              [status data] (th/http-post user uri params)]
+          (println "RESPONSE:" status data)
+          (t/is (= 201 status))
+          (t/is (= (:user data) (:id user)))
+          (t/is (= (:name data) "proj1")))))))
+
+(t/deftest test-http-project-update
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url "/api/projects/" (:id proj))
+              params {:body {:name "proj2"}}
+              [status data] (th/http-put user uri params)]
+          (println "RESPONSE:" status data)
+          (t/is (= 200 status))
+          (t/is (= (:user data) (:id user)))
+          (t/is (= (:name data) "proj2")))))))
+
+(t/deftest test-http-project-delete
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url "/api/projects/" (:id proj))
+              [status data] (th/http-delete user uri)]
+          (println "RESPONSE:" status data)
+          (t/is (= 204 status)))))))
 
 ;; (t/deftest test-http-failed-auth
 ;;   (let [data {:username "user1"

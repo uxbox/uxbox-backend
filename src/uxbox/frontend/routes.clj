@@ -60,5 +60,10 @@
                  [:any (cparse/body-params)]
                  [:error #'error-handler]
                  [:post "auth/token" #'ufa/login]
+                 [:any #'authorization]
+                 [:put "projects/:id" #'ufp/project-update]
+                 [:delete "projects/:id" #'ufp/project-delete]
+                 [:post "projects" #'ufp/project-create]
+                 [:get "projects" #'ufp/project-list]
                  [:get "" #'welcome-api]]
                 [:get "" #'redirect-to-api]])))

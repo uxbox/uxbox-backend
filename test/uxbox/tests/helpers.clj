@@ -6,6 +6,7 @@
             [catacumba.serializers :as sz]
             [mount.core :as mount]
             [suricatta.core :as sc]
+            [uxbox.services.auth :as usa]
             [uxbox.migrations :as umg]
             [uxbox.persistence :as up]
             [uxbox.config :as ucfg]))
@@ -32,7 +33,6 @@
      (deref ~expr)
      (catch Exception e#
        (.getCause e#))))
-
 
 (defn- strip-response
   [{:keys [status headers body]}]
