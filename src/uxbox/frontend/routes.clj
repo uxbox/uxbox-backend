@@ -13,7 +13,9 @@
             [catacumba.handlers.misc :as cmisc]
             [uxbox.services.auth :as auth]
             [uxbox.frontend.core :as ufc]
-            [uxbox.frontend.auth :as ufa]))
+            [uxbox.frontend.auth :as ufa]
+            [uxbox.frontend.projects :as ufp])
+  (:import java.util.UUID))
 
 (defn- welcome-api
   "A GET entry point for the api that shows
@@ -27,6 +29,12 @@
   "Endpoint that just redirect to the /api endpoint."
   [context]
   (http/see-other "/api"))
+
+(defn- authorization
+  [{:keys [identity] :as context}]
+  (if identity
+    (ct/delegate {:identity (UUID/fromString (:id identity))})
+    (http/forbidden (ufc/rsp {:message "Forbidden"}))))
 
 (defn- error-handler
   [context err]
