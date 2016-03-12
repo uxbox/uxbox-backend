@@ -33,8 +33,21 @@ CREATE TABLE IF NOT EXISTS pages_history (
   version bigint DEFAULT 0
 ) WITH (OIDS=FALSE);
 
-CREATE OR REPLACE FUNCTION insert_page_history()
-  RETURNS TRIGGER AS $history$
+CREATE OR REPLACE FUNCTION handle_project_change()
+  RETURNS TRIGGER AS $projectchange$
+  BEGIN
+    IF (TG_OP = 'DELETE') THEN
+      DELETE FROM pages WHERE project = OLD.id;
+      RETURN OLD;
+    ELSIF (TG_OP = 'UPDATE') THEN
+      RETURN NEW;
+    END IF;
+    RETURN NULL; -- result is ignored since this is an AFTER trigger
+  END;
+$projectchange$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION handle_page_change()
+  RETURNS TRIGGER AS $pagechange$
   BEGIN
     IF (TG_OP = 'DELETE') THEN
       DELETE FROM pages_history WHERE page = OLD.id;
@@ -43,12 +56,14 @@ CREATE OR REPLACE FUNCTION insert_page_history()
       INSERT INTO pages_history (page, created_at, data, version)
         VALUES (OLD.id, OLD.modified_at, OLD.data, OLD.version);
 
+      -- WARNING: this is unsafe in concurrent operations and should be
+      -- fixed in future; probably a good OCC should be implemented.
       NEW.version := OLD.version + 1;
       RETURN NEW;
     END IF;
     RETURN NULL; -- result is ignored since this is an AFTER trigger
   END;
-$history$ LANGUAGE plpgsql;
+$pagechange$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION update_modified_at()
   RETURNS TRIGGER AS $updt$
@@ -58,8 +73,11 @@ CREATE OR REPLACE FUNCTION update_modified_at()
   END;
 $updt$ LANGUAGE plpgsql;
 
-CREATE TRIGGER pages_history_tgr BEFORE UPDATE OR DELETE ON pages
-  FOR EACH ROW EXECUTE PROCEDURE insert_page_history();
+CREATE TRIGGER project_changes_tgr BEFORE UPDATE OR DELETE ON projects
+  FOR EACH ROW EXECUTE PROCEDURE handle_project_change();
+
+CREATE TRIGGER page_changes_tgr BEFORE UPDATE OR DELETE ON pages
+  FOR EACH ROW EXECUTE PROCEDURE handle_page_change();
 
 CREATE TRIGGER projects_modified_at_tgr BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
