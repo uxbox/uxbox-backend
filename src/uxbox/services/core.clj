@@ -25,11 +25,11 @@
   :hierarchy #'+hierarchy+)
 
 (defmethod -novelty :default
-  [data]
+  [conn data]
   (throw (ex-info "Not implemented" {})))
 
 (defmethod -query :default
-  [data]
+  [conn data]
   (throw (ex-info "Not implemented" {})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
