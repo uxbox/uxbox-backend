@@ -38,6 +38,7 @@
 
 (defn- error-handler
   [context err]
+  (.printStackTrace err)
   (if (instance? clojure.lang.ExceptionInfo err)
     (let [message (.getMessage err)
           data (ex-data err)]
