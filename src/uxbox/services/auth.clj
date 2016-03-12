@@ -80,7 +80,7 @@
   [user password]
   (hashers/check password (:password user)))
 
-(defn- generate-token
+(defn generate-token
   [user]
   (let [data {:id (:id user)}]
     (jwe/encrypt data secret +auth-opts+)))
