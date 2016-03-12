@@ -1,5 +1,4 @@
 (ns uxbox.tests.test-auth
-  "A txlog and services abstraction generic tests."
   (:require [clojure.test :as t]
             [promesa.core :as p]
             [clj-http.client :as http]
