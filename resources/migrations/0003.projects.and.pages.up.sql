@@ -41,7 +41,8 @@ CREATE OR REPLACE FUNCTION handle_occ()
     IF (TG_OP = 'UPDATE') THEN
       IF (NEW.version != OLD.version) THEN
         RAISE EXCEPTION 'Version missmatch: expected % given %',
-              OLD.version, NEW.version;
+              OLD.version, NEW.version
+          USING ERRCODE='P0002';
       ELSE
         NEW.version := NEW.version + 1;
       END IF;
