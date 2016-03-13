@@ -88,7 +88,7 @@
 (defmethod usc/-novelty :auth/login
   [conn {:keys [username password scope]}]
   (let [user (find-user-by-username-or-email conn username)]
-    (when-not user (throw (ex-info "Invalid credentials" {})))
+    (when-not user (throw (ex-info "errors.api.auth.invalid-credentials" {})))
     (if (check-user-password user password)
       {:token (generate-token user)}
       (throw (ex-info "Invalid credentials" {})))))
