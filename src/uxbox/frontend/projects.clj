@@ -14,13 +14,6 @@
   (:import java.util.UUID))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Schema
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (def +projects-schema+
-;;   {:user [us/required us/uuid]})
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -52,6 +45,38 @@
   [{user :identity params :route-params}]
   (let [params {:id (UUID/fromString (:id params))
                 :type :project/delete
+                :user user}]
+    (-> (sv/novelty params)
+        (p/then (fn [v] (http/no-content))))))
+
+(defn page-list
+  [{user :identity}]
+  (let [params {:user user :type :page/list}]
+    (-> (sv/query params)
+        (p/then #(http/ok (ufc/rsp %))))))
+
+(defn page-create
+  [{user :identity params :data}]
+  (p/alet [params (assoc params
+                         :type :page/create
+                         :user user)
+           result (p/await (sv/novelty params))
+           loc (str "/api/pages/" (:id result))]
+    (http/created loc (ufc/rsp result))))
+
+(defn page-update
+  [{user :identity params :route-params data :data}]
+  (let [params (merge data
+                      {:id (UUID/fromString (:id params))
+                       :type :page/update
+                       :user user})]
+    (-> (sv/novelty params)
+        (p/then #(http/ok (ufc/rsp %))))))
+
+(defn page-delete
+  [{user :identity params :route-params}]
+  (let [params {:id (UUID/fromString (:id params))
+                :type :page/delete
                 :user user}]
     (-> (sv/novelty params)
         (p/then (fn [v] (http/no-content))))))

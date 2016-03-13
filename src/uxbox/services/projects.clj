@@ -109,6 +109,14 @@
     (map usc/normalize-attrs
          (sc/fetch conn [sql user]))))
 
+(defn get-pages-for-user
+  [conn user]
+  (let [sql (str "SELECT * FROM pages "
+                 " WHERE \"user\"=?"
+                 " ORDER BY created_at DESC")]
+    (->> (sc/fetch conn [sql user])
+         (map usc/normalize-attrs))))
+
 (defn get-pages-for-project-and-user
   [conn user project]
   (let [sql (str "SELECT * FROM pages "
@@ -177,6 +185,6 @@
   (get-projects-for-user conn user))
 
 (defmethod usc/-query :page/list
-  [conn {:keys [user project] :as params}]
-  (->> (get-pages-for-project-and-user conn user project)
+  [conn {:keys [user] :as params}]
+  (->> (get-pages-for-user conn user)
        (map decode-page-data)))

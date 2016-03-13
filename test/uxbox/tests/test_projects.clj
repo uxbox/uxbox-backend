@@ -4,7 +4,9 @@
             [clj-uuid :as uuid]
             [clj-http.client :as http]
             [catacumba.testing :refer (with-server)]
+            [catacumba.serializers :as sz]
             [buddy.hashers :as hashers]
+            [buddy.core.codecs :as codecs]
             [uxbox.persistence :as up]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.auth :as usa]
@@ -17,6 +19,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Services Tests
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn data-encode
+  [data]
+  (-> (sz/encode data :transit+msgpack)
+      (codecs/bytes->base64)))
 
 (defn create-user
   "Helper for create users"
@@ -145,3 +152,89 @@
               [status data] (th/http-delete user uri)]
           (println "RESPONSE:" status data)
           (t/is (= 204 status)))))))
+
+(t/deftest test-http-page-create
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url "/api/pages")
+              params {:body {:project (:id proj)
+                             :name "page1"
+                             :data [:test]
+                             :width 200
+                             :height 200
+                             :layout "mobile"}}
+              [status data] (th/http-post user uri params)]
+          (println "RESPONSE:" status data)
+          (t/is (= 201 status))
+          (t/is (= (:data params) (:data data)))
+          (t/is (= (:user data) (:id user)))
+          (t/is (= (:name data) "page1")))))))
+
+(t/deftest test-http-page-update
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})
+          data {:id (uuid/v4)
+                :user (:id user)
+                :project (:id proj)
+                :version 0
+                :data (data-encode [:test1])
+                :name "page1"
+                :width 200
+                :height 200
+                :layout "mobil"}
+          page (usp/create-page conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url (str "/api/pages/" (:id page)))
+              params {:body (assoc page :data [:test1 :test2])}
+              [status page'] (th/http-put user uri params)]
+          (println "RESPONSE:" status page')
+          (t/is (= 200 status))
+          (t/is (= [:test1 :test2] (:data page')))
+          (t/is (= 1 (:version page')))
+          (t/is (= (:user page') (:id user)))
+          (t/is (= (:name data) "page1")))))))
+
+(t/deftest test-http-page-delete
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})
+          data {:id (uuid/v4)
+                :user (:id user)
+                :project (:id proj)
+                :version 0
+                :data (data-encode [:test1])
+                :name "page1"
+                :width 200
+                :height 200
+                :layout "mobil"}
+          page (usp/create-page conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url (str "/api/pages/" (:id page)))
+              [status response] (th/http-delete user uri)]
+          (println "RESPONSE:" status response)
+          (t/is (= 204 status)))))))
+
+(t/deftest test-http-page-list
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})
+          data {:id (uuid/v4)
+                :user (:id user)
+                :project (:id proj)
+                :version 0
+                :data (data-encode [:test1])
+                :name "page1"
+                :width 200
+                :height 200
+                :layout "mobil"}
+          page (usp/create-page conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url (str "/api/pages"))
+              [status response] (th/http-get user uri)]
+          (println "RESPONSE:" status response)
+          (t/is (= 200 status))
+          (t/is (= 1 (count response))))))))
+

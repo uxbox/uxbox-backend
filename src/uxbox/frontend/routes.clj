@@ -42,16 +42,26 @@
   (let [props {:secret auth/secret
                :options auth/+auth-opts+}
         backend (cauth/jwe-backend props)]
-    (ct/routes [[:any (cauth/auth backend)]
-                [:any (cmisc/autoreloader)]
-                [:prefix "api"
-                 [:any (cparse/body-params)]
-                 [:error #'ufe/handler]
-                 [:post "auth/token" #'ufa/login]
-                 [:any #'authorization]
-                 [:put "projects/:id" #'ufp/project-update]
-                 [:delete "projects/:id" #'ufp/project-delete]
-                 [:post "projects" #'ufp/project-create]
-                 [:get "projects" #'ufp/project-list]
-                 [:get "" #'welcome-api]]
-                [:get "" #'redirect-to-api]])))
+    (ct/routes
+     [[:any (cauth/auth backend)]
+      [:any (cmisc/autoreloader)]
+      [:prefix "api"
+       [:any (cparse/body-params)]
+       [:error #'ufe/handler]
+       [:post "auth/token" #'ufa/login]
+       [:any #'authorization]
+
+       ;; Projects
+       [:put "projects/:id" #'ufp/project-update]
+       [:delete "projects/:id" #'ufp/project-delete]
+       [:post "projects" #'ufp/project-create]
+       [:get "projects" #'ufp/project-list]
+
+       ;; Pages
+       [:put "pages/:id" #'ufp/page-update]
+       [:delete "pages/:id" #'ufp/page-delete]
+       [:post "pages" #'ufp/page-create]
+       [:get "pages" #'ufp/page-list]
+
+       [:get "" #'welcome-api]]
+      [:get "" #'redirect-to-api]])))
