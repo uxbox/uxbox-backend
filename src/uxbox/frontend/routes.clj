@@ -14,6 +14,7 @@
             [uxbox.services.auth :as auth]
             [uxbox.frontend.core :as ufc]
             [uxbox.frontend.auth :as ufa]
+            [uxbox.frontend.errors :as ufe]
             [uxbox.frontend.projects :as ufp])
   (:import java.util.UUID))
 
@@ -36,19 +37,6 @@
     (ct/delegate {:identity (UUID/fromString (:id identity))})
     (http/forbidden (ufc/rsp {:message "Forbidden"}))))
 
-(defn- error-handler
-  [context err]
-  (.printStackTrace err)
-  (if (instance? clojure.lang.ExceptionInfo err)
-    (let [message (.getMessage err)
-          data (ex-data err)]
-      (-> (ufc/rsp {:message message
-                    :payload data})
-          (http/bad-request)))
-    (let [message (.getMessage err)]
-      (-> (ufc/rsp {:message message})
-          (http/internal-server-error)))))
-
 (defn app
   []
   (let [props {:secret auth/secret
@@ -58,7 +46,7 @@
                 [:any (cmisc/autoreloader)]
                 [:prefix "api"
                  [:any (cparse/body-params)]
-                 [:error #'error-handler]
+                 [:error #'ufe/handler]
                  [:post "auth/token" #'ufa/login]
                  [:any #'authorization]
                  [:put "projects/:id" #'ufp/project-update]
