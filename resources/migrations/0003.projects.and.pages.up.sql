@@ -3,6 +3,8 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at timestamptz DEFAULT current_timestamp,
   modified_at timestamptz DEFAULT current_timestamp,
 
+  version bigint DEFAULT 0,
+
   "user" uuid NOT NULL REFERENCES users(id),
   name text NOT NULL
 ) WITH (OIDS=FALSE);
