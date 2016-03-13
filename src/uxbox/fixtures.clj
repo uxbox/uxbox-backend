@@ -7,6 +7,8 @@
 (ns uxbox.fixtures
   "A initial fixtures."
   (:require [buddy.hashers :as hashers]
+            [buddy.core.codecs :as codecs]
+            [catacumba.serializers :as sz]
             [mount.core :as mount]
             [clj-uuid :as uuid]
             [suricatta.core :as sc]
@@ -20,6 +22,11 @@
 (defn- mk-uuid
   [prefix i]
   (uuid/v5 uuid/+namespace-oid+ (str prefix i)))
+
+(defn- data-encode
+  [data]
+  (-> (sz/encode data :transit+msgpack)
+      (codecs/bytes->base64)))
 
 (defn- create-user
   [conn i]
@@ -45,6 +52,7 @@
                      {:id (mk-uuid "page" i)
                       :user (mk-uuid "user" ui)
                       :project (mk-uuid "project" pi)
+                      :data (data-encode nil)
                       :name (str "page " i)
                       :width 1024
                       :height 768
