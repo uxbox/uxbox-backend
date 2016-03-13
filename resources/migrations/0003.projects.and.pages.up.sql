@@ -73,10 +73,6 @@ CREATE OR REPLACE FUNCTION handle_page_change()
     ELSIF (TG_OP = 'UPDATE') THEN
       INSERT INTO pages_history (page, created_at, data, version)
         VALUES (OLD.id, OLD.modified_at, OLD.data, OLD.version);
-
-      -- WARNING: this is unsafe in concurrent operations and should be
-      -- fixed in future; probably a good OCC should be implemented.
-      NEW.version := OLD.version + 1;
       RETURN NEW;
     END IF;
     RETURN NULL; -- result is ignored since this is an AFTER trigger
@@ -91,11 +87,23 @@ CREATE OR REPLACE FUNCTION update_modified_at()
   END;
 $updt$ LANGUAGE plpgsql;
 
+-- Changes
+
 CREATE TRIGGER project_changes_tgr BEFORE UPDATE OR DELETE ON projects
   FOR EACH ROW EXECUTE PROCEDURE handle_project_change();
 
 CREATE TRIGGER page_changes_tgr BEFORE UPDATE OR DELETE ON pages
   FOR EACH ROW EXECUTE PROCEDURE handle_page_change();
+
+-- OCC
+
+CREATE TRIGGER project_occ_tgr BEFORE UPDATE OR DELETE ON projects
+  FOR EACH ROW EXECUTE PROCEDURE handle_occ();
+
+CREATE TRIGGER page_occ_tgr BEFORE UPDATE OR DELETE ON pages
+  FOR EACH ROW EXECUTE PROCEDURE handle_occ();
+
+-- Modified at
 
 CREATE TRIGGER projects_modified_at_tgr BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
