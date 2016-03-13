@@ -26,16 +26,16 @@
     (-> (sz/encode body :json)
         (http/ok {:content-type "application/json"}))))
 
-(defn- redirect-to-api
-  "Endpoint that just redirect to the /api endpoint."
-  [context]
-  (http/see-other "/api"))
-
 (defn- authorization
   [{:keys [identity] :as context}]
   (if identity
     (ct/delegate {:identity (UUID/fromString (:id identity))})
     (http/forbidden (ufc/rsp {:message "Forbidden"}))))
+
+(def cors-conf
+  {:origin "*"
+   :max-age 3600
+   :allow-headers ["X-Requested-With", "Content-Type"]})
 
 (defn app
   []
@@ -45,9 +45,12 @@
     (ct/routes
      [[:any (cauth/auth backend)]
       [:any (cmisc/autoreloader)]
+      [:get "api" #'welcome-api]
       [:prefix "api"
+       [:any (cmisc/cors cors-conf)]
        [:any (cparse/body-params)]
        [:error #'ufe/handler]
+
        [:post "auth/token" #'ufa/login]
        [:any #'authorization]
 
@@ -61,7 +64,4 @@
        [:put "pages/:id" #'ufp/page-update]
        [:delete "pages/:id" #'ufp/page-delete]
        [:post "pages" #'ufp/page-create]
-       [:get "pages" #'ufp/page-list]
-
-       [:get "" #'welcome-api]]
-      [:get "" #'redirect-to-api]])))
+       [:get "pages" #'ufp/page-list]]])))
