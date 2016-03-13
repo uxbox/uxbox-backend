@@ -61,6 +61,7 @@
                 :type :page/create
                 :user (:id user)
                 :project (:id proj)
+                :version 0
                 :name "test"
                 :width 200
                 :height 200
@@ -128,7 +129,7 @@
           proj (usp/create-project conn {:user (:id user) :name "proj1"})]
       (with-server {:handler (urt/app)}
         (let [uri (str +base-url "/api/projects/" (:id proj))
-              params {:body {:name "proj2"}}
+              params {:body (assoc proj :name "proj2")}
               [status data] (th/http-put user uri params)]
           (println "RESPONSE:" status data)
           (t/is (= 200 status))
@@ -144,20 +145,3 @@
               [status data] (th/http-delete user uri)]
           (println "RESPONSE:" status data)
           (t/is (= 204 status)))))))
-
-;; (t/deftest test-http-failed-auth
-;;   (let [data {:username "user1"
-;;               :password  (hashers/encrypt "user1")
-;;               :email "user1@uxbox.io"}
-;;         user (with-open [conn (up/get-conn)]
-;;                (usa/create-user conn data))]
-;;     (with-server {:handler (urt/app)}
-;;       (let [data {:username "user1"
-;;                   :password "user2"
-;;                   :scope "foobar"}
-;;             uri (str +base-url "/api/auth/token")
-;;             [status data] (th/post uri data)]
-;;         ;; (println "RESPONSE:" status data)
-;;         (t/is (= 400 status))
-;;         (t/is (= (:message data) "Invalid credentials"))))))
-

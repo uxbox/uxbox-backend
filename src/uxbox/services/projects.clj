@@ -13,18 +13,23 @@
             [uxbox.schema :as us]
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]
+            [uxbox.services.locks :as locks]
             [uxbox.services.auth :as usauth]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Schema
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def +project-schema+
+(def +create-project-schema+
   {:id [us/uuid]
    :user [us/required us/uuid]
    :name [us/required us/string]})
 
-(def +page-schema+
+(def +update-project-schema+
+  (assoc +create-project-schema+
+         :version [us/required us/number]))
+
+(def +create-page-schema+
   {:id [us/uuid]
    :user [us/required us/uuid]
    :project [us/required us/uuid]
@@ -34,13 +39,17 @@
    :height [us/required us/integer]
    :layout [us/required us/string]})
 
+(def +update-page-schema+
+  (assoc +update-project-schema+
+         :version [us/required us/number]))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Repository
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn create-project
   [conn {:keys [id user name] :as data}]
-  {:pre [(us/validate! data +project-schema+)]}
+  {:pre [(us/validate! data +create-project-schema+)]}
   (let [sql (str "INSERT INTO projects (id, \"user\", name)"
                  " VALUES (?, ?, ?) RETURNING *")
         id (or id (uuid/v4))
@@ -49,24 +58,24 @@
             (usc/normalize-attrs))))
 
 (defn update-project
-  [conn {:keys [id user name] :as data}]
-  {:pre [(us/validate! data +project-schema+)]}
-  (let [sql (str "UPDATE projects SET name=?"
+  [conn {:keys [id user name version] :as data}]
+  {:pre [(us/validate! data +update-project-schema+)]}
+  (let [sql (str "UPDATE projects SET name=?, version=?"
                  " WHERE id=? AND \"user\"=? RETURNING *")
-        sqlv [sql name id user]]
+        sqlv [sql name version id user]]
+    (locks/acquire! conn id)
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
 (defn delete-project
   [conn {:keys [id user] :as params}]
-  (let [sql (str "DELETE FROM projects WHERE id=? AND \"user\"=?")
-        sqlv [sql id user]]
-    (sc/execute conn sqlv)
+  (let [sql "DELETE FROM projects WHERE id=? AND \"user\"=?"]
+    (sc/execute conn [sql id user])
     nil))
 
 (defn create-page
   [conn {:keys [id user project name width height layout data] :as params}]
-  {:pre [(us/validate! params +page-schema+)]}
+  {:pre [(us/validate! params +create-page-schema+)]}
   (let [sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
                  "                   height, layout, data)"
                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
@@ -76,21 +85,21 @@
             (usc/normalize-attrs))))
 
 (defn update-page
-  [conn {:keys [id user project name width height layout data] :as params}]
-  {:pre [(us/validate! params +page-schema+)]}
+  [conn {:keys [id user project name width height layout data version] :as params}]
+  {:pre [(us/validate! params +update-page-schema+)]}
   (let [sql (str "UPDATE pages SET "
-                 " name=?, width=?, height=?, layout=?, data=?"
+                 " name=?, width=?, height=?, layout=?, data=?, version=?"
                  " WHERE id=? AND \"user\"=? AND project=?"
                  " RETURNING *")
-        sqlv [sql name width height layout data id user project]]
+        sqlv [sql name width height layout data version id user project]]
+    (locks/acquire! conn id)
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
 (defn delete-page
   [conn {:keys [id user] :as params}]
-  (let [sql (str "DELETE FROM pages WHERE id=? AND \"user\"=?")
-        sqlv [sql id user]]
-    (sc/execute conn sqlv)
+  (let [sql "DELETE FROM pages WHERE id=? AND \"user\"=?"]
+    (sc/execute conn [sql id user])
     nil))
 
 (defn get-projects-for-user
