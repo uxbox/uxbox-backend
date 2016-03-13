@@ -27,9 +27,9 @@
 (defmethod handler clojure.lang.ExceptionInfo
   [context err]
   (let [message (.getMessage err)
-        data (ex-data err)]
-    (-> (ufc/rsp {:message message
-                  :payload data})
+        response {:type :error
+                  :code message}]
+    (-> (ufc/rsp (merge response (ex-data err)))
         (http/bad-request))))
 
 (defmethod handler org.jooq.exception.DataAccessException
@@ -39,7 +39,8 @@
         message (.getMessage err)]
     (case state
       "P0002"
-      (-> (ufc/rsp {:message message
+      (-> (ufc/rsp {:type :error
+                    :message message
                     :code "errors.api.occ"})
           (http/bad-request))
 
@@ -51,6 +52,7 @@
   [context err]
   (println "????" (class err))
   (let [message (.getMessage err)]
-    (-> (ufc/rsp {:message message
+    (-> (ufc/rsp {:type :error
+                  :message message
                   :code "errors.api.unexpected"})
         (http/internal-server-error))))
