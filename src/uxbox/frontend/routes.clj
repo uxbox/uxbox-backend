@@ -35,7 +35,8 @@
 (def cors-conf
   {:origin "*"
    :max-age 3600
-   :allow-headers ["X-Requested-With", "Content-Type", "Authorization"]})
+   :allow-methods #{:post :put :get :delete :trace}
+   :allow-headers #{:x-requested-with :content-type :authorization}})
 
 (defn app
   []
