@@ -12,7 +12,8 @@
             [clj-uuid :as uuid]
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]
-            [uxbox.services.auth]))
+            [uxbox.services.auth]
+            [uxbox.services.projects]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Impl.
