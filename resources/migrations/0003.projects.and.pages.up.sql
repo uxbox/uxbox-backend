@@ -72,8 +72,10 @@ CREATE OR REPLACE FUNCTION handle_page_change()
       DELETE FROM pages_history WHERE page = OLD.id;
       RETURN OLD;
     ELSIF (TG_OP = 'UPDATE') THEN
-      INSERT INTO pages_history (page, created_at, data, version)
-        VALUES (OLD.id, OLD.modified_at, OLD.data, OLD.version);
+      IF (OLD.data != NEW.data) THEN
+        INSERT INTO pages_history (page, created_at, data, version)
+          VALUES (OLD.id, OLD.modified_at, OLD.data, OLD.version);
+      END IF;
       RETURN NEW;
     END IF;
     RETURN NULL; -- result is ignored since this is an AFTER trigger
