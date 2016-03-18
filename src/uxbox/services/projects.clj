@@ -43,6 +43,10 @@
   (assoc +update-project-schema+
          :version [us/required us/number]))
 
+(def +delete-page-schema+
+  {:id [us/required us/uuid]
+   :user [us/required us/uuid]})
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Repository
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -69,7 +73,7 @@
 
 (defn delete-project
   [conn {:keys [id user] :as params}]
-  (let [sql "DELETE FROM projects WHERE id=? AND \"user\"=?"]
+  (let [sql "DELETE FROM projects WHERE id=?::uuid AND \"user\"=?::uuid"]
     (sc/execute conn [sql id user])
     nil))
 
@@ -98,6 +102,7 @@
 
 (defn delete-page
   [conn {:keys [id user] :as params}]
+  {:pre [(us/validate! params +delete-page-schema+)]}
   (let [sql "DELETE FROM pages WHERE id=? AND \"user\"=?"]
     (sc/execute conn [sql id user])
     nil))

@@ -38,35 +38,27 @@ CREATE TABLE IF NOT EXISTS pages_history (
 CREATE OR REPLACE FUNCTION handle_occ()
   RETURNS TRIGGER AS $occ$
   BEGIN
-    IF (TG_OP = 'UPDATE') THEN
-      IF (NEW.version != OLD.version) THEN
-        RAISE EXCEPTION 'Version missmatch: expected % given %',
-              OLD.version, NEW.version
-          USING ERRCODE='P0002';
-      ELSE
-        NEW.version := NEW.version + 1;
-      END IF;
-      RETURN NEW;
+    IF (NEW.version != OLD.version) THEN
+      RAISE EXCEPTION 'Version missmatch: expected % given %',
+            OLD.version, NEW.version
+            USING ERRCODE='P0002';
+    ELSE
+      NEW.version := NEW.version + 1;
     END IF;
-    RETURN NULL; -- result is ignored since this is an AFTER trigger
+    RETURN NEW;
   END;
 $occ$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION handle_project_change()
-  RETURNS TRIGGER AS $projectchange$
+CREATE OR REPLACE FUNCTION handle_project_delete()
+  RETURNS TRIGGER AS $projectdelete$
   BEGIN
-    IF (TG_OP = 'DELETE') THEN
-      DELETE FROM pages WHERE project = OLD.id;
-      RETURN OLD;
-    ELSIF (TG_OP = 'UPDATE') THEN
-      RETURN NEW;
-    END IF;
-    RETURN NULL; -- result is ignored since this is an AFTER trigger
+    DELETE FROM pages WHERE project = OLD.id;
+    RETURN OLD;
   END;
-$projectchange$ LANGUAGE plpgsql;
+$projectdelete$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION handle_page_change()
-  RETURNS TRIGGER AS $pagechange$
+CREATE OR REPLACE FUNCTION handle_page_delete()
+  RETURNS TRIGGER AS $pagedelete$
   BEGIN
     IF (TG_OP = 'DELETE') THEN
       DELETE FROM pages_history WHERE page = OLD.id;
@@ -78,7 +70,17 @@ CREATE OR REPLACE FUNCTION handle_page_change()
       END IF;
       RETURN NEW;
     END IF;
-    RETURN NULL; -- result is ignored since this is an AFTER trigger
+  END;
+$pagedelete$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION handle_page_update()
+  RETURNS TRIGGER AS $pagechange$
+  BEGIN
+    IF (OLD.data != NEW.data) THEN
+      INSERT INTO pages_history (page, created_at, data, version)
+        VALUES (OLD.id, OLD.modified_at, OLD.data, OLD.version);
+    END IF;
+    RETURN NEW;
   END;
 $pagechange$ LANGUAGE plpgsql;
 
@@ -92,18 +94,21 @@ $updt$ LANGUAGE plpgsql;
 
 -- Changes
 
-CREATE TRIGGER project_changes_tgr BEFORE UPDATE OR DELETE ON projects
-  FOR EACH ROW EXECUTE PROCEDURE handle_project_change();
+CREATE TRIGGER project_on_delete_tgr BEFORE DELETE ON projects
+  FOR EACH ROW EXECUTE PROCEDURE handle_project_delete();
 
-CREATE TRIGGER page_changes_tgr BEFORE UPDATE OR DELETE ON pages
-  FOR EACH ROW EXECUTE PROCEDURE handle_page_change();
+CREATE TRIGGER page_on_update_tgr BEFORE UPDATE ON pages
+  FOR EACH ROW EXECUTE PROCEDURE handle_page_update();
+
+CREATE TRIGGER page_on_delete_tgr BEFORE DELETE ON pages
+  FOR EACH ROW EXECUTE PROCEDURE handle_page_delete();
 
 -- OCC
 
-CREATE TRIGGER project_occ_tgr BEFORE UPDATE OR DELETE ON projects
+CREATE TRIGGER project_occ_tgr BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE PROCEDURE handle_occ();
 
-CREATE TRIGGER page_occ_tgr BEFORE UPDATE OR DELETE ON pages
+CREATE TRIGGER page_occ_tgr BEFORE UPDATE ON pages
   FOR EACH ROW EXECUTE PROCEDURE handle_occ();
 
 -- Modified at
