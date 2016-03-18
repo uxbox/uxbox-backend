@@ -17,13 +17,13 @@
 ;; Handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn project-list
+(defn list-projects
   [{user :identity}]
   (let [params {:user user :type :project/list}]
     (-> (sv/query params)
         (p/then #(http/ok (ufc/rsp %))))))
 
-(defn project-create
+(defn create-project
   [{user :identity params :data}]
   (p/alet [params (assoc params
                          :type :project/create
@@ -32,7 +32,7 @@
            loc (str "/api/projects/" (:id result))]
     (http/created loc (ufc/rsp result))))
 
-(defn project-update
+(defn update-project
   [{user :identity params :route-params data :data}]
   (let [params (merge data
                       {:id (UUID/fromString (:id params))
@@ -41,7 +41,7 @@
     (-> (sv/novelty params)
         (p/then #(http/ok (ufc/rsp %))))))
 
-(defn project-delete
+(defn delete-project
   [{user :identity params :route-params}]
   (let [params {:id (UUID/fromString (:id params))
                 :type :project/delete
@@ -49,13 +49,13 @@
     (-> (sv/novelty params)
         (p/then (fn [v] (http/no-content))))))
 
-(defn page-list
+(defn list-pages
   [{user :identity}]
   (let [params {:user user :type :page/list}]
     (-> (sv/query params)
         (p/then #(http/ok (ufc/rsp %))))))
 
-(defn page-list-by-project
+(defn list-pages-by-project
   [{user :identity params :route-params}]
   (let [params {:user user
                 :project (UUID/fromString (:id params))
@@ -63,7 +63,7 @@
     (-> (sv/query params)
         (p/then #(http/ok (ufc/rsp %))))))
 
-(defn page-create
+(defn create-page
   [{user :identity params :data}]
   (p/alet [params (assoc params
                          :type :page/create
@@ -72,7 +72,7 @@
            loc (str "/api/pages/" (:id result))]
     (http/created loc (ufc/rsp result))))
 
-(defn page-update
+(defn update-page
   [{user :identity params :route-params data :data}]
   (let [params (merge data
                       {:id (UUID/fromString (:id params))
@@ -81,7 +81,17 @@
     (-> (sv/novelty params)
         (p/then #(http/ok (ufc/rsp %))))))
 
-(defn page-delete
+
+(defn update-page-metadata
+  [{user :identity params :route-params data :data}]
+  (let [params (merge data
+                      {:id (UUID/fromString (:id params))
+                       :type :page/update-metadata
+                       :user user})]
+    (-> (sv/novelty params)
+        (p/then #(http/ok (ufc/rsp %))))))
+
+(defn delete-page
   [{user :identity params :route-params}]
   (let [params {:id (UUID/fromString (:id params))
                 :type :page/delete
