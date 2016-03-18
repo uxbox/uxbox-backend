@@ -171,8 +171,8 @@
 (defn- decode-page-data
   [{:keys [data] :as result}]
   (let [data (some-> data
-                     (codecs/base64->bytes)
-                     (sz/decode :transit+msgpack))]
+                     (codecs/str->bytes)
+                     (sz/decode :transit+json))]
     (assoc result :data data)))
 
 (defmethod usc/-novelty :project/create
@@ -189,24 +189,24 @@
 
 (defmethod usc/-novelty :page/create
   [conn {:keys [data] :as params}]
-  (let [data (-> (sz/encode data :transit+msgpack)
-                 (codecs/bytes->base64))
+  (let [data (-> (sz/encode data :transit+json)
+                 (codecs/bytes->str))
         params (assoc params :data data)]
     (-> (create-page conn params)
         (decode-page-data))))
 
 (defmethod usc/-novelty :page/update
   [conn {:keys [data] :as params}]
-  (let [data (-> (sz/encode data :transit+msgpack)
-                 (codecs/bytes->base64))
+  (let [data (-> (sz/encode data :transit+json)
+                 (codecs/bytes->str))
         params (assoc params :data data)]
     (-> (update-page conn params)
         (decode-page-data))))
 
 (defmethod usc/-novelty :page/update-metadata
   [conn {:keys [data] :as params}]
-  (let [data (-> (sz/encode data :transit+msgpack)
-                 (codecs/bytes->base64))
+  (let [data (-> (sz/encode data :transit+json)
+                 (codecs/bytes->str))
         params (assoc params :data data)]
     (-> (update-page-metadata conn params)
         (decode-page-data))))

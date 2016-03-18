@@ -25,8 +25,8 @@
 
 (defn- data-encode
   [data]
-  (-> (sz/encode data :transit+msgpack)
-      (codecs/bytes->base64)))
+  (-> (sz/encode data :transit+json)
+      (codecs/bytes->str)))
 
 (defn- create-user
   [conn i]
