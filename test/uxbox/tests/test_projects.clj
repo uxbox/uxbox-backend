@@ -34,73 +34,6 @@
               :email (str "user" i "@uxbox.io")}]
     (usa/create-user conn data)))
 
-;; (t/deftest test-create-project
-;;   (with-open [conn (up/get-conn)]
-;;     (let [user (create-user conn 1)
-;;           data {:id (uuid/v4)
-;;                 :type :project/create
-;;                 :user (:id user)
-;;                 :name "test"}
-;;           proj @(usv/novelty data)]
-;;       (t/is (= (:id data) (:id proj)))
-;;       (t/is (= (:name data) (:name proj)))
-;;       (t/is (= (:user data) (:user proj))))))
-
-;; (t/deftest test-list-project
-;;   (with-open [conn (up/get-conn)]
-;;     (let [user (create-user conn 1)
-;;           proj1 (usp/create-project conn {:user (:id user) :name "proj1"})
-;;           proj2 (usp/create-project conn {:user (:id user) :name "proj2"})
-;;           data {:type :project/list :user (:id user)}
-;;           result @(usv/query data)]
-;;       (t/is (= 2 (count result)))
-;;       (t/is (= "proj2" (:name (first result))))
-;;       (t/is (= (:user data) (:user (first result))))
-;;       (t/is (= "proj1" (:name (second result))))
-;;       (t/is (= (:user data) (:user (second result)))))))
-
-;; (t/deftest test-page-crud
-;;   (with-open [conn (up/get-conn)]
-;;     (let [user (create-user conn 1)
-;;           proj (usp/create-project conn {:id (uuid/v4)
-;;                                          :user (:id user)
-;;                                          :name "proj1"})
-;;           data {:id (uuid/v4)
-;;                 :type :page/create
-;;                 :user (:id user)
-;;                 :project (:id proj)
-;;                 :version 0
-;;                 :name "test"
-;;                 :width 200
-;;                 :height 200
-;;                 :layout "mobil"}
-;;           page @(usv/novelty data)]
-
-;;       (t/is (= (:id data) (:id page)))
-;;       (t/is (= (:name data) (:name page)))
-;;       (t/is (= (:user data) (:user page)))
-;;       (t/is (= (:width data) (:width page)))
-;;       (t/is (= (:height data) (:height page)))
-;;       (t/is (= 0 (:version page)))
-
-;;       ;; query
-;;       (let [result @(usv/query {:type :page/list
-;;                                 :project (:id proj)
-;;                                 :user (:id user)})]
-;;         (t/is (= 1 (count result)))
-;;         (t/is (= (:id data) (:id (first result))))
-;;         (t/is (= (:name data) (:name (first result))))
-;;         (t/is (= (:user data) (:user (first result))))
-;;         (t/is (= (:width data) (:width (first result))))
-;;         (t/is (= (:height data) (:height (first result))))
-;;         (t/is (= 0 (:version (first result)))))
-
-;;       (let [page @(usv/novelty (assoc data
-;;                                       :data "test"
-;;                                       :type :page/update))]
-;;         (t/is (= (:id data) (:id page)))
-;;         (t/is (= 1 (:version page)))))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Frontend Test
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -115,7 +48,7 @@
       (with-server {:handler (urt/app)}
         (let [uri (str +base-url "/api/projects")
               [status data] (th/http-get user uri)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= 1 (count data))))))))
 
@@ -126,7 +59,7 @@
         (let [uri (str +base-url "/api/projects")
               params {:body {:name "proj1"}}
               [status data] (th/http-post user uri params)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 201 status))
           (t/is (= (:user data) (:id user)))
           (t/is (= (:name data) "proj1")))))))
@@ -139,7 +72,7 @@
         (let [uri (str +base-url "/api/projects/" (:id proj))
               params {:body (assoc proj :name "proj2")}
               [status data] (th/http-put user uri params)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= (:user data) (:id user)))
           (t/is (= (:name data) "proj2")))))))
@@ -169,9 +102,9 @@
                              :height 200
                              :layout "mobile"}}
               [status data] (th/http-post user uri params)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 201 status))
-          (t/is (= (:data params) (:data data)))
+          (t/is (= (:data (:body params)) (:data data)))
           (t/is (= (:user data) (:id user)))
           (t/is (= (:name data) "page1")))))))
 
@@ -217,7 +150,7 @@
       (with-server {:handler (urt/app)}
         (let [uri (str +base-url (str "/api/pages/" (:id page)))
               [status response] (th/http-delete user uri)]
-          (println "RESPONSE:" status response)
+          ;; (println "RESPONSE:" status response)
           (t/is (= 204 status))
           (let [sqlv ["SELECT * FROM pages WHERE \"user\"=?" (:id user)]
                 result (sc/fetch conn sqlv)]

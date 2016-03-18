@@ -29,20 +29,6 @@
   (assoc +create-project-schema+
          :version [us/required us/number]))
 
-(def +create-page-schema+
-  {:id [us/uuid]
-   :user [us/required us/uuid]
-   :project [us/required us/uuid]
-   :name [us/required us/string]
-   :data [us/required us/string]
-   :width [us/required us/integer]
-   :height [us/required us/integer]
-   :layout [us/required us/string]})
-
-(def +update-page-schema+
-  (assoc +update-project-schema+
-         :version [us/required us/number]))
-
 (def +delete-page-schema+
   {:id [us/required us/uuid]
    :user [us/required us/uuid]})
@@ -77,6 +63,18 @@
     (sc/execute conn [sql id user])
     nil))
 
+;; Create Page
+
+(def ^:private +create-page-schema+
+  {:id [us/uuid]
+   :user [us/required us/uuid]
+   :project [us/required us/uuid]
+   :name [us/required us/string]
+   :data [us/required us/string]
+   :width [us/required us/integer]
+   :height [us/required us/integer]
+   :layout [us/required us/string]})
+
 (defn create-page
   [conn {:keys [id user project name width height layout data] :as params}]
   {:pre [(us/validate! params +create-page-schema+)]}
@@ -87,6 +85,12 @@
         sqlv [sql id user project name width height layout data]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
+
+;; Update Page
+
+(def ^:private +update-page-schema+
+  (assoc +update-project-schema+
+         :version [us/required us/number]))
 
 (defn update-page
   [conn {:keys [id user project name width height layout data version] :as params}]
@@ -223,7 +227,6 @@
   [conn {:keys [user] :as params}]
   (->> (get-pages-for-user conn user)
        (map decode-page-data)))
-
 
 (def +page-list-by-project-schema+
   {:user [us/required us/uuid]
