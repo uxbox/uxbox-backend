@@ -56,14 +56,15 @@
        [:any #'authorization]
 
        ;; Projects
-       [:get "projects/:id/pages" #'ufp/page-list-by-project]
-       [:put "projects/:id" #'ufp/project-update]
-       [:delete "projects/:id" #'ufp/project-delete]
-       [:post "projects" #'ufp/project-create]
-       [:get "projects" #'ufp/project-list]
+       [:get "projects/:id/pages" #'ufp/list-pages-by-project]
+       [:put "projects/:id" #'ufp/update-project]
+       [:delete "projects/:id" #'ufp/delete-project]
+       [:post "projects" #'ufp/create-project]
+       [:get "projects" #'ufp/list-projects]
 
        ;; Pages
-       [:put "pages/:id" #'ufp/page-update]
-       [:delete "pages/:id" #'ufp/page-delete]
-       [:post "pages" #'ufp/page-create]
-       [:get "pages" #'ufp/page-list]]])))
+       [:put "pages/:id/metadata" #'ufp/update-page-metadata]
+       [:put "pages/:id" #'ufp/update-page]
+       [:delete "pages/:id" #'ufp/delete-page]
+       [:post "pages" #'ufp/create-page]
+       [:get "pages" #'ufp/list-pages]]])))
