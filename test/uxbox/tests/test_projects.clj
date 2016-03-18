@@ -126,12 +126,38 @@
         (let [uri (str +base-url (str "/api/pages/" (:id page)))
               params {:body (assoc page :data [:test1 :test2])}
               [status page'] (th/http-put user uri params)]
-          (println "RESPONSE:" status page')
+          ;; (println "RESPONSE:" status page')
           (t/is (= 200 status))
           (t/is (= [:test1 :test2] (:data page')))
           (t/is (= 1 (:version page')))
           (t/is (= (:user page') (:id user)))
           (t/is (= (:name data) "page1")))))))
+
+(t/deftest test-http-page-update-metadata
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj (usp/create-project conn {:user (:id user) :name "proj1"})
+          data {:id (uuid/v4)
+                :user (:id user)
+                :project (:id proj)
+                :version 0
+                :data (data-encode [:test1])
+                :name "page1"
+                :width 200
+                :height 200
+                :layout "mobil"}
+          page (usp/create-page conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url (str "/api/pages/" (:id page) "/metadata"))
+              params {:body (assoc page :data [:test1 :test2])}
+              [status page'] (th/http-put user uri params)]
+          ;; (println "RESPONSE:" status page')
+          (t/is (= 200 status))
+          (t/is (= [:test1] (:data page')))
+          (t/is (= 1 (:version page')))
+          (t/is (= (:user page') (:id user)))
+          (t/is (= (:name data) "page1")))))))
+
 
 (t/deftest test-http-page-delete
   (with-open [conn (up/get-conn)]
