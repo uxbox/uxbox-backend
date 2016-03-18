@@ -60,16 +60,8 @@ $projectdelete$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION handle_page_delete()
   RETURNS TRIGGER AS $pagedelete$
   BEGIN
-    IF (TG_OP = 'DELETE') THEN
-      DELETE FROM pages_history WHERE page = OLD.id;
-      RETURN OLD;
-    ELSIF (TG_OP = 'UPDATE') THEN
-      IF (OLD.data != NEW.data) THEN
-        INSERT INTO pages_history (page, created_at, data, version)
-          VALUES (OLD.id, OLD.modified_at, OLD.data, OLD.version);
-      END IF;
-      RETURN NEW;
-    END IF;
+    DELETE FROM pages_history WHERE page = OLD.id;
+    RETURN OLD;
   END;
 $pagedelete$ LANGUAGE plpgsql;
 
