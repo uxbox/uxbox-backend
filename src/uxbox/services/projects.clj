@@ -100,6 +100,24 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
+;; Update Page Metadata
+
+(def ^:private +update-page-metadata-schema+
+  (dissoc +update-page-schema+ :data))
+
+(defn update-page-metadata
+  [conn {:keys [id user project name width height layout version] :as params}]
+  {:pre [(us/validate! params +update-page-metadata-schema+)]}
+  (let [sql (str "UPDATE pages SET "
+                 " name=?, width=?, height=?, layout=?, version=?"
+                 " WHERE id=? AND \"user\"=? AND project=?"
+                 " RETURNING *")
+        sqlv [sql name width height layout version id user project]]
+    (locks/acquire! conn id)
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs))))
+
+
 (defn delete-page
   [conn {:keys [id user] :as params}]
   {:pre [(us/validate! params +delete-page-schema+)]}
@@ -179,6 +197,14 @@
                  (codecs/bytes->base64))
         params (assoc params :data data)]
     (-> (update-page conn params)
+        (decode-page-data))))
+
+(defmethod usc/-novelty :page/update-metadata
+  [conn {:keys [data] :as params}]
+  (let [data (-> (sz/encode data :transit+msgpack)
+                 (codecs/bytes->base64))
+        params (assoc params :data data)]
+    (-> (update-page-metadata conn params)
         (decode-page-data))))
 
 (defmethod usc/-novelty :page/delete
