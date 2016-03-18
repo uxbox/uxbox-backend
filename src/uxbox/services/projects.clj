@@ -122,7 +122,7 @@
     (->> (sc/fetch conn [sql user])
          (map usc/normalize-attrs))))
 
-(defn get-pages-for-project-and-user
+(defn get-pages-for-user-and-project
   [conn user project]
   (let [sql (str "SELECT * FROM pages "
                  " WHERE \"user\"=? AND project=? "
@@ -143,7 +143,7 @@
             (usc/normalize-attrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Service
+;; Service (novelty)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn- decode-page-data
@@ -185,6 +185,10 @@
   [conn params]
   (delete-page conn params))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Service (novelty)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmethod usc/-query :project/list
   [conn {:keys [user] :as params}]
   (get-projects-for-user conn user))
@@ -192,4 +196,15 @@
 (defmethod usc/-query :page/list
   [conn {:keys [user] :as params}]
   (->> (get-pages-for-user conn user)
+       (map decode-page-data)))
+
+
+(def +page-list-by-project-schema+
+  {:user [us/required us/uuid]
+   :project [us/required us/uuid]})
+
+(defmethod usc/-query :page/list-by-project
+  [conn {:keys [user project] :as params}]
+  {:pre [(us/validate! params +page-list-by-project-schema+)]}
+  (->> (get-pages-for-user-and-project conn user project)
        (map decode-page-data)))

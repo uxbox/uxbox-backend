@@ -56,6 +56,7 @@
        [:any #'authorization]
 
        ;; Projects
+       [:get "projects/:id/pages" #'ufp/page-list-by-project]
        [:put "projects/:id" #'ufp/project-update]
        [:delete "projects/:id" #'ufp/project-delete]
        [:post "projects" #'ufp/project-create]

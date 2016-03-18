@@ -55,6 +55,14 @@
     (-> (sv/query params)
         (p/then #(http/ok (ufc/rsp %))))))
 
+(defn page-list-by-project
+  [{user :identity params :route-params}]
+  (let [params {:user user
+                :project (UUID/fromString (:id params))
+                :type :page/list-by-project}]
+    (-> (sv/query params)
+        (p/then #(http/ok (ufc/rsp %))))))
+
 (defn page-create
   [{user :identity params :data}]
   (p/alet [params (assoc params

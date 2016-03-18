@@ -223,7 +223,6 @@
                 result (sc/fetch conn sqlv)]
             (t/is (empty? result))))))))
 
-
 (t/deftest test-http-page-list
   (with-open [conn (up/get-conn)]
     (let [user (create-user conn 1)
@@ -241,7 +240,30 @@
       (with-server {:handler (urt/app)}
         (let [uri (str +base-url (str "/api/pages"))
               [status response] (th/http-get user uri)]
-          (println "RESPONSE:" status response)
+          ;; (println "RESPONSE:" status response)
           (t/is (= 200 status))
           (t/is (= 1 (count response))))))))
+
+
+(t/deftest test-http-page-list-by-project
+  (with-open [conn (up/get-conn)]
+    (let [user (create-user conn 1)
+          proj1 (usp/create-project conn {:user (:id user) :name "proj1"})
+          proj2 (usp/create-project conn {:user (:id user) :name "proj2"})
+          data {:user (:id user)
+                :version 0
+                :data (data-encode [])
+                :name "page1"
+                :width 200
+                :height 200
+                :layout "mobil"}
+          page1 (usp/create-page conn (assoc data :project (:id proj1)))
+          page2 (usp/create-page conn (assoc data :project (:id proj2)))]
+      (with-server {:handler (urt/app)}
+        (let [uri (str +base-url (str "/api/projects/" (:id proj1) "/pages"))
+              [status response] (th/http-get user uri)]
+          ;; (println "RESPONSE:" status response)
+          (t/is (= 200 status))
+          (t/is (= 1 (count response)))
+          (t/is (= (:id (first response)) (:id page1))))))))
 
