@@ -5,24 +5,44 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.media
-  "A media storage persistence layer.")
+  "A media storage persistence layer."
+  (:require [uxbox.media.proto :as p]
+            [uxbox.media.fs :as fs]
+            [uxbox.media.impl]))
 
-(defprotocol IStorage
-  "A basic abstraction for storage access."
-  (-save [_ path content] "Persist the content under specified path.")
-  (-delete [_ path] "Delete the file by its path.")
-  (-exists? [_ path] "Check if file exists by path."))
+(defn save
+  "Perists a file or bytes in the storage. This function
+  returns a relative path where file is saved.
 
-(defprotocol IPublicStorage
-  (-uri [_ path] "Get a public accessible uri for path."))
+  The final file path can be different to the one provided
+  to this function and the behavior is totally dependen on
+  the storage implementation."
+  [storage path content]
+  (let [[path err] (p/-save storage path content)]
+    (when err (throw err))
+    path))
 
-(defprotocol IStorageIntrospection
-  (-accessed-time [_ path] "Return the last accessed time of the file.")
-  (-created-time [_ path] "Return the creation time of the file.")
-  (-modified-time [_ path] "Return the last modified time of the file."))
+(defn lookup
+  "Resolve provided relative path in the storage and return
+  the local filesystem absolute path to it.
+  This method may be not implemented in all storages."
+  [storage path]
+  {:pre [(satisfies? p/ILocalStorage storage)]}
+  (p/-lookup storage path))
 
-(defprotocol IFSStorage
-  "A local filelsystem storage abstraction."
-  (-path [_ path] "Return the absolute path to the file."))
+(defn exists?
+  "Check if a  relative `path` exists in the storage."
+  [storage path]
+  (p/-exists? storage path))
 
-;; TODO impl
+(defn delete
+  "Delete a file from the storage."
+  [storage path]
+  (p/-delete storage path))
+
+(defn path
+  "Create path from string or more than one string."
+  [fst & more]
+  (if (seq more)
+    (p/-path (cons fst more))
+    (p/-path fst)))
