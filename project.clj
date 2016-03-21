@@ -15,6 +15,7 @@
                  [com.github.spullara.mustache.java/compiler "0.9.1"]
                  [org.postgresql/postgresql "9.4.1208" :scope "provided"]
                  [niwinz/migrante "0.1.0"]
+                 [commons-io/commons-io "2.4"]
                  [funcool/suricatta "0.8.1"]
                  [funcool/promesa "0.8.1"]
                  [hikari-cp "1.6.1"]
