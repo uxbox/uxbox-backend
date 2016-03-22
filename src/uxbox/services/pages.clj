@@ -78,7 +78,6 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
-
 ;; Delete Page
 
 (def +delete-page-schema+
@@ -116,11 +115,14 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
-;; (defn get-page-history
-;;   [conn {:keys [id user since] :as {since nil}}]
-;;   (let [sql (str "SELECT * FROM pages_history "
-;;                  " WHERE \"user\"=? AND id=?"
-;;                  (if since " AND created_at < ?"
+(defn get-page-history
+  [conn {:keys [id user since max] :as {since (dt/now) max 10}}]
+  (let [sql (str "SELECT * FROM pages_history "
+                 " WHERE \"user\"=? AND id=?"
+                 " AND created_at < ?")
+        sqlv [sql user id since]]
+    (->> (sc/fetch conn [sql user project])
+         (map usc/normalize-attrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Service (novelty)
@@ -170,12 +172,24 @@
   (->> (get-pages-for-user conn user)
        (map decode-page-data)))
 
-(def +page-list-by-project-schema+
+(def +query-page-history-list-schema+
+  {:user [us/required us/uuid]
+   :id [us/required us/uuid]
+   :max [us/number]
+   :since [us/datetime]})
+
+(defmethod usc/-query :page/history-list
+  [conn {:keys [id user since] :as params}]
+  {:pre [(us/validate! params +query-page-history-list-schema+)]}
+  (->> (get-page-history conn params)
+       (map decode-page-data)))
+
+(def +query-page-list-by-project-schema+
   {:user [us/required us/uuid]
    :project [us/required us/uuid]})
 
 (defmethod usc/-query :page/list-by-project
   [conn {:keys [user project] :as params}]
-  {:pre [(us/validate! params +page-list-by-project-schema+)]}
+  {:pre [(us/validate! params +query-page-list-by-project-schema+)]}
   (->> (get-pages-for-user-and-project conn user project)
        (map decode-page-data)))
