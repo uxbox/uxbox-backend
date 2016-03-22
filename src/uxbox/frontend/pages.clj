@@ -9,7 +9,7 @@
             [catacumba.http :as http]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
-            [uxbox.util.uuid]
+            [uxbox.util.uuid :as uuid]
             [uxbox.frontend.core :as ufc]
             [uxbox.frontend.auth :as ufa])
   (:import java.util.UUID))
