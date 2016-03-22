@@ -16,7 +16,7 @@
             [uxbox.frontend.auth :as ufa]
             [uxbox.frontend.errors :as ufe]
             [uxbox.frontend.projects :as ufpr]
-            [uxbox.frontend.projects :as ufpg])
+            [uxbox.frontend.pages :as ufpg])
   (:import java.util.UUID))
 
 (defn- welcome-api
