@@ -12,6 +12,8 @@
   (:import java.io.File
            java.io.ByteArrayInputStream
            java.io.InputStream
+           java.net.URL
+           java.net.URI
            java.nio.file.Path
            java.nio.file.Paths
            java.nio.file.Files
