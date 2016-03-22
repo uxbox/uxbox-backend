@@ -4,45 +4,62 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.frontend.projects
+(ns uxbox.frontend.pages
   (:require [promesa.core :as p]
             [catacumba.http :as http]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
-            [uxbox.util.uuid :as uuid]
+            [uxbox.util.uuid]
             [uxbox.frontend.core :as ufc]
             [uxbox.frontend.auth :as ufa])
   (:import java.util.UUID))
 
-(defn list-projects
+(defn list-pages
   [{user :identity}]
-  (let [params {:user user :type :project/list}]
+  (let [params {:user user :type :page/list}]
     (-> (sv/query params)
         (p/then #(http/ok (ufc/rsp %))))))
 
-(defn create-project
+(defn list-pages-by-project
+  [{user :identity params :route-params}]
+  (let [params {:user user
+                :project (uuid/from-string (:id params))
+                :type :page/list-by-project}]
+    (-> (sv/query params)
+        (p/then #(http/ok (ufc/rsp %))))))
+
+(defn create-page
   [{user :identity params :data}]
   (p/alet [params (assoc params
-                         :type :project/create
+                         :type :page/create
                          :user user)
            result (p/await (sv/novelty params))
-           loc (str "/api/projects/" (:id result))]
+           loc (str "/api/pages/" (:id result))]
     (http/created loc (ufc/rsp result))))
 
-(defn update-project
+(defn update-page
   [{user :identity params :route-params data :data}]
   (let [params (merge data
                       {:id (uuid/from-string (:id params))
-                       :type :project/update
+                       :type :page/update
                        :user user})]
     (-> (sv/novelty params)
         (p/then #(http/ok (ufc/rsp %))))))
 
-(defn delete-project
+
+(defn update-page-metadata
+  [{user :identity params :route-params data :data}]
+  (let [params (merge data
+                      {:id (uuid/from-string (:id params))
+                       :type :page/update-metadata
+                       :user user})]
+    (-> (sv/novelty params)
+        (p/then #(http/ok (ufc/rsp %))))))
+
+(defn delete-page
   [{user :identity params :route-params}]
   (let [params {:id (uuid/from-string (:id params))
-                :type :project/delete
+                :type :page/delete
                 :user user}]
     (-> (sv/novelty params)
         (p/then (fn [v] (http/no-content))))))
-

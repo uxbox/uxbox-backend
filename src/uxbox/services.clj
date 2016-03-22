@@ -13,7 +13,8 @@
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]
             [uxbox.services.auth]
-            [uxbox.services.projects]))
+            [uxbox.services.projects]
+            [uxbox.services.pages]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Impl.

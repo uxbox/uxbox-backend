@@ -16,7 +16,8 @@
             [uxbox.persistence :as up]
             [uxbox.migrations]
             [uxbox.services.auth :as sauth]
-            [uxbox.services.projects :as sproj])
+            [uxbox.services.projects :as sproj]
+            [uxbox.services.pages :as spag])
   (:import java.util.UUID))
 
 (defn- mk-uuid
@@ -48,15 +49,15 @@
 (defn- create-page
   [conn i pi ui]
   (println "create page" i "for user" ui "for project" pi)
-  (sproj/create-page conn
-                     {:id (mk-uuid "page" i)
-                      :user (mk-uuid "user" ui)
-                      :project (mk-uuid "project" pi)
-                      :data (data-encode nil)
-                      :name (str "page " i)
-                      :width 1024
-                      :height 768
-                      :layout "tablet"}))
+  (spag/create-page conn
+                    {:id (mk-uuid "page" i)
+                     :user (mk-uuid "user" ui)
+                     :project (mk-uuid "project" pi)
+                     :data (data-encode nil)
+                     :name (str "page " i)
+                     :width 1024
+                     :height 768
+                     :layout "tablet"}))
 
 (defn init
   []

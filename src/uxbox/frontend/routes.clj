@@ -15,7 +15,8 @@
             [uxbox.frontend.core :as ufc]
             [uxbox.frontend.auth :as ufa]
             [uxbox.frontend.errors :as ufe]
-            [uxbox.frontend.projects :as ufp])
+            [uxbox.frontend.projects :as ufpr]
+            [uxbox.frontend.projects :as ufpg])
   (:import java.util.UUID))
 
 (defn- welcome-api
@@ -56,15 +57,15 @@
        [:any #'authorization]
 
        ;; Projects
-       [:get "projects/:id/pages" #'ufp/list-pages-by-project]
-       [:put "projects/:id" #'ufp/update-project]
-       [:delete "projects/:id" #'ufp/delete-project]
-       [:post "projects" #'ufp/create-project]
-       [:get "projects" #'ufp/list-projects]
+       [:get "projects/:id/pages" #'ufpg/list-pages-by-project]
+       [:put "projects/:id" #'ufpr/update-project]
+       [:delete "projects/:id" #'ufpr/delete-project]
+       [:post "projects" #'ufpr/create-project]
+       [:get "projects" #'ufpr/list-projects]
 
        ;; Pages
-       [:put "pages/:id/metadata" #'ufp/update-page-metadata]
-       [:put "pages/:id" #'ufp/update-page]
-       [:delete "pages/:id" #'ufp/delete-page]
-       [:post "pages" #'ufp/create-page]
-       [:get "pages" #'ufp/list-pages]]])))
+       [:put "pages/:id/metadata" #'ufpg/update-page-metadata]
+       [:put "pages/:id" #'ufpg/update-page]
+       [:delete "pages/:id" #'ufpg/delete-page]
+       [:post "pages" #'ufpg/create-page]
+       [:get "pages" #'ufpg/list-pages]]])))
