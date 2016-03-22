@@ -7,11 +7,11 @@
 (ns uxbox.services.pages
   (:require [suricatta.core :as sc]
             [clj-uuid :as uuid]
-            [catacumba.serializers :as sz]
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.persistence :as up]
+            [uxbox.util.transit :as t]
             [uxbox.services.core :as usc]
             [uxbox.services.locks :as locks]
             [uxbox.services.auth :as usauth]))
@@ -130,12 +130,12 @@
   [{:keys [data] :as result}]
   (let [data (some-> data
                      (codecs/str->bytes)
-                     (sz/decode :transit+json))]
+                     (t/decode))]
     (assoc result :data data)))
 
 (defmethod usc/-novelty :page/create
   [conn {:keys [data] :as params}]
-  (let [data (-> (sz/encode data :transit+json)
+  (let [data (-> (t/encode data)
                  (codecs/bytes->str))
         params (assoc params :data data)]
     (-> (create-page conn params)
@@ -143,7 +143,7 @@
 
 (defmethod usc/-novelty :page/update
   [conn {:keys [data] :as params}]
-  (let [data (-> (sz/encode data :transit+json)
+  (let [data (-> (t/encode data)
                  (codecs/bytes->str))
         params (assoc params :data data)]
     (-> (update-page conn params)
@@ -151,7 +151,7 @@
 
 (defmethod usc/-novelty :page/update-metadata
   [conn {:keys [data] :as params}]
-  (let [data (-> (sz/encode data :transit+json)
+  (let [data (-> (t/encode data)
                  (codecs/bytes->str))
         params (assoc params :data data)]
     (-> (update-page-metadata conn params)

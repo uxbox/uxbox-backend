@@ -10,6 +10,7 @@
             [catacumba.serializers :as sz]
             [catacumba.impl.executor :as exec]
             [clj-uuid :as uuid]
+            [uxbox.util.transit :as t]
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]
             [uxbox.services.auth]
@@ -20,10 +21,7 @@
 ;; Impl.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn- encode
-  [data]
-  (-> (sz/encode data :transit+json)
-      (sz/bytes->str)))
+(def encode (comp sz/bytes->str t/encode))
 
 (defn- insert-txlog
   [conn data]

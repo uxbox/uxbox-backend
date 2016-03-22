@@ -8,7 +8,6 @@
   "A errors handling for frontend api."
   (:require [catacumba.core :as ct]
             [catacumba.http :as http]
-            [catacumba.serializers :as sz]
             [catacumba.handlers.auth :as cauth]
             [catacumba.handlers.parse :as cparse]
             [catacumba.handlers.misc :as cmisc]

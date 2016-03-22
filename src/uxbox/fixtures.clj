@@ -15,6 +15,7 @@
             [uxbox.config :as cfg]
             [uxbox.persistence :as up]
             [uxbox.migrations]
+            [uxbox.util.transit :as t]
             [uxbox.services.auth :as sauth]
             [uxbox.services.projects :as sproj]
             [uxbox.services.pages :as spag])
@@ -26,7 +27,7 @@
 
 (defn- data-encode
   [data]
-  (-> (sz/encode data :transit+json)
+  (-> (t/encode data)
       (codecs/bytes->str)))
 
 (defn- create-user

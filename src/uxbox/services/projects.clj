@@ -7,11 +7,11 @@
 (ns uxbox.services.projects
   (:require [suricatta.core :as sc]
             [clj-uuid :as uuid]
-            [catacumba.serializers :as sz]
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.persistence :as up]
+            [uxbox.util.transit :as t]
             [uxbox.services.core :as usc]
             [uxbox.services.locks :as locks]
             [uxbox.services.auth :as usauth]))

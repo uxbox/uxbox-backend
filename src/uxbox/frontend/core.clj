@@ -6,7 +6,7 @@
 
 (ns uxbox.frontend.core
   (:require [catacumba.impl.handlers :as cih]
-            [catacumba.serializers :as csz])
+            [uxbox.util.transit :as t])
   (:import ratpack.handling.Context
            ratpack.http.Response
            ratpack.http.MutableHeaders))
@@ -18,7 +18,7 @@
     (let [^Response response (.getResponse ^Context ctx)
           ^MutableHeaders headers (.getHeaders response)]
       (.set headers "content-type" "application/transit+json")
-      (cih/-send (csz/encode data :transit+json) ctx))))
+      (cih/-send (t/encode data) ctx))))
 
 (defn rsp
   "A shortcut for create a response instance."
