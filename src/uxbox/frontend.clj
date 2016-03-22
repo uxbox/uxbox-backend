@@ -10,5 +10,5 @@
             [uxbox.frontend.routes :as urt]))
 
 (defstate server
-  :start (ct/run-server (urt/app) {:port 5050})
+  :start (ct/run-server (urt/app) {:port 6060})
   :stop (.stop server))
