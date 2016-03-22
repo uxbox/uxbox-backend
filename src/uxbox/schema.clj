@@ -8,7 +8,8 @@
   (:refer-clojure :exclude [keyword uuid vector boolean])
   (:require [bouncer.core :as b]
             [bouncer.validators :as v]
-            [cuerdas.core :as str]))
+            [cuerdas.core :as str])
+  (:import java.time.Instant))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validators
@@ -62,6 +63,12 @@
   [v n]
   (let [len (count v)]
     (>= v len)))
+
+(v/defvalidator datetime
+  "Validat if `v` is a valid java.time.Instant instance."
+  {:default-message-format "% must be a Instant instance."}
+  [v]
+  (instance? Instant v))
 
 (def required v/required)
 (def number v/number)
