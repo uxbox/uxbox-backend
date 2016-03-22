@@ -76,6 +76,22 @@
   (-input-stream [v]
     (ByteArrayInputStream. (codecs/str->bytes v)))
 
+  Path
+  (-input-stream [v]
+    (io/input-stream v))
+
+  File
+  (-input-stream [v]
+    (io/input-stream v))
+
+  URI
+  (-input-stream [v]
+    (io/input-stream v))
+
+  URL
+  (-input-stream [v]
+    (io/input-stream v))
+
   InputStream
   (-input-stream [v]
     v)
