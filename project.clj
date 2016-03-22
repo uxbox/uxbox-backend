@@ -19,4 +19,4 @@
                  [funcool/suricatta "0.8.1"]
                  [funcool/promesa "0.8.1"]
                  [hikari-cp "1.6.1"]
-                 [funcool/catacumba "0.11.3-SNAPSHOT"]])
+                 [funcool/catacumba "0.13.0-SNAPSHOT"]])
