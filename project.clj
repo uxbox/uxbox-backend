@@ -6,7 +6,7 @@
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
   :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
-                 [org.slf4j/slf4j-simple "1.7.18"]
+                 [org.slf4j/slf4j-simple "1.7.19"]
                  [bouncer "1.0.0"]
                  [mount "0.1.10"]
                  [environ "1.0.2"]
@@ -16,7 +16,7 @@
                  [org.postgresql/postgresql "9.4.1208" :scope "provided"]
                  [niwinz/migrante "0.1.0"]
                  [commons-io/commons-io "2.4"]
-                 [funcool/suricatta "0.8.1"]
-                 [funcool/promesa "0.8.1"]
+                 [funcool/suricatta "0.9.0"]
+                 [funcool/promesa "1.1.1"]
                  [hikari-cp "1.6.1"]
                  [funcool/catacumba "0.13.0-SNAPSHOT"]])
