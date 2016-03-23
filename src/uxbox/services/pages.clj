@@ -117,12 +117,12 @@
             (usc/normalize-attrs))))
 
 (defn get-page-history
-  [conn {:keys [id user since max] :as {since (dt/now) max 10}}]
+  [conn {:keys [id user since max] :or {since (dt/now) max 10}}]
   (let [sql (str "SELECT * FROM pages_history "
                  " WHERE \"user\"=? AND id=?"
                  " AND created_at < ?")
         sqlv [sql user id since]]
-    (->> (sc/fetch conn [sql user project])
+    (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
