@@ -6,7 +6,7 @@
 
 (ns uxbox.util.transit
   (:require [catacumba.serializers :as sz]
-            [uxbox.util.datetime :as dt]))
+            [uxbox.util.time :as dt]))
 
 (defn decode
   [data]

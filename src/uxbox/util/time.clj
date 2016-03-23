@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.util.datetime
+(ns uxbox.util.time
   (:require [suricatta.proto :as proto]
             [cognitect.transit :as t])
   (:import java.time.Instant

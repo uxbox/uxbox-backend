@@ -1,1 +1,1 @@
-{instant uxbox.util.datetime/from-string}
+{instant uxbox.util.time/from-string}
