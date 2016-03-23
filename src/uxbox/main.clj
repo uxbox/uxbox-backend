@@ -6,6 +6,8 @@
 
 (ns uxbox.main
   (:require [clojure.tools.namespace.repl :as repl]
+            [clojure.walk :refer [macroexpand-all]]
+            [clojure.pprint :refer [pprint]]
             [mount.core :as mount]
             [buddy.core.codecs :as codecs]
             [buddy.core.nonce :as nonce]
