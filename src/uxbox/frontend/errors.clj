@@ -18,9 +18,8 @@
 (defmethod handler clojure.lang.ExceptionInfo
   [context err]
   (let [message (.getMessage err)
-        response {:type :error
-                  :code message}]
-    (-> (rsp (merge response (ex-data err)))
+        response {:code message :payload (ex-data err)}]
+    (-> (rsp response)
         (http/bad-request))))
 
 (defmethod handler org.jooq.exception.DataAccessException
@@ -30,8 +29,7 @@
         message (.getMessage err)]
     (case state
       "P0002"
-      (-> (rsp {:type :error
-                :message message
+      (-> (rsp {:message message
                 :code "errors.api.occ"})
           (http/bad-request))
 

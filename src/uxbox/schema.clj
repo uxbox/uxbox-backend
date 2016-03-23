@@ -86,9 +86,7 @@
 (defn validate!
   [data schema]
   (if-let [errors (validate data schema)]
-    (let [data {:type :validation
-                :payload errors}]
-      (throw (ex-info "Schema validations error." data)))
+    (throw (ex-info "errors.api.schema" errors))
     data))
 
 (defn valid?

@@ -91,4 +91,4 @@
     (when-not user (throw (ex-info "errors.api.auth.invalid-credentials" {})))
     (if (check-user-password user password)
       {:token (generate-token user)}
-      (throw (ex-info "Invalid credentials" {})))))
+      (throw (ex-info "errors.api.auth.invalid-credentials" {})))))
