@@ -59,9 +59,6 @@
 ;; Frontend Test
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def ^:const +base-url
-  "http://localhost:5050")
-
 (t/deftest test-http-success-auth
   (let [data {:username "user1"
               :password  (hashers/encrypt "user1")
@@ -72,8 +69,8 @@
       (let [data {:username "user1"
                   :password "user1"
                   :scope "foobar"}
-            uri (str +base-url "/api/auth/token")
-            [status data] (th/post uri data)]
+            uri (str th/+base-url+ "/api/auth/token")
+            [status data] (th/http-post uri {:body data})]
         ;; (println "RESPONSE:" response)
         (t/is (= status 200))
         (t/is (contains? data :token))))))
@@ -88,9 +85,9 @@
       (let [data {:username "user1"
                   :password "user2"
                   :scope "foobar"}
-            uri (str +base-url "/api/auth/token")
-            [status data] (th/post uri data)]
+            uri (str th/+base-url+ "/api/auth/token")
+            [status data] (th/http-post uri {:body data})]
         ;; (println "RESPONSE:" status data)
         (t/is (= 400 status))
-        (t/is (= (:message data) "Invalid credentials"))))))
+        (t/is (= (:code data) "errors.api.auth.invalid-credentials"))))))
 

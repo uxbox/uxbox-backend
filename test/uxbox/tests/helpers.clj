@@ -2,15 +2,18 @@
   (:refer-clojure :exclude [await])
   (:require [clojure.test :as t]
             [clj-http.client :as http]
+            [buddy.hashers :as hashers]
             [buddy.core.codecs :as codecs]
             [catacumba.serializers :as sz]
             [mount.core :as mount]
             [suricatta.core :as sc]
             [uxbox.services.auth :as usa]
+            [uxbox.util.transit :as transit]
             [uxbox.migrations :as umg]
             [uxbox.persistence :as up]
             [uxbox.config :as ucfg]))
 
+(def +base-url+ "http://localhost:5050")
 (def +config+ (ucfg/read-test-config))
 (def +ds+ (up/create-datasource (:database +config+)))
 
@@ -38,7 +41,7 @@
   [{:keys [status headers body]}]
   (if (= (get headers "content-type") "application/transit+json")
     [status (-> (codecs/str->bytes body)
-                (sz/decode :transit+json))]
+                (transit/decode))]
     [status body]))
 
 (defn http-get
@@ -57,7 +60,7 @@
   ([uri params]
    (http-post nil uri params))
   ([user uri {:keys [body] :as params}]
-   (let [body (-> (sz/encode body :transit+json)
+   (let [body (-> (transit/encode body)
                   (codecs/bytes->str))
          headers (merge
                   {"content-type" "application/transit+json"}
@@ -73,7 +76,7 @@
   ([uri params]
    (http-put nil uri params))
   ([user uri {:keys [body] :as params}]
-   (let [body (-> (sz/encode body :transit+json)
+   (let [body (-> (transit/encode body)
                   (codecs/bytes->str))
          headers (merge
                   {"content-type" "application/transit+json"}
@@ -97,13 +100,15 @@
        (catch clojure.lang.ExceptionInfo e
          (strip-response (ex-data e)))))))
 
-(defn post
-  [uri body]
-  (let [body (-> (sz/encode body :transit+json)
-                 (codecs/bytes->str))
-        headers {"content-type" "application/transit+json"}
-        params {:body body :headers headers}]
-    (try
-      (strip-response (http/post uri params))
-      (catch clojure.lang.ExceptionInfo e
-        (strip-response (ex-data e))))))
+(defn data-encode
+  [data]
+  (-> (transit/encode data)
+      (codecs/bytes->str)))
+
+(defn create-user
+  "Helper for create users"
+  [conn i]
+  (let [data {:username (str "user" i)
+              :password  (hashers/encrypt (str "user" i))
+              :email (str "user" i "@uxbox.io")}]
+    (usa/create-user conn data)))
