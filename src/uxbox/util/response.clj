@@ -4,21 +4,28 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.frontend.core
-  (:require [catacumba.impl.handlers :as cih]
+(ns uxbox.util.response
+  "A lightweigt reponse type definition.
+
+  At first instance it allows set the appropriate
+  content-type headers and encode the body using
+  the builtin transit abstraction.
+
+  In future it will allow easy adapt for the content
+  negotiation that is coming to catacumba."
+  (:require [catacumba.impl.handlers :as ch]
             [uxbox.util.transit :as t])
   (:import ratpack.handling.Context
            ratpack.http.Response
            ratpack.http.MutableHeaders))
 
-
 (deftype Rsp [data]
-  cih/ISend
+  ch/ISend
   (-send [_ ctx]
     (let [^Response response (.getResponse ^Context ctx)
           ^MutableHeaders headers (.getHeaders response)]
       (.set headers "content-type" "application/transit+json")
-      (cih/-send (t/encode data) ctx))))
+      (ch/-send (t/encode data) ctx))))
 
 (defn rsp
   "A shortcut for create a response instance."

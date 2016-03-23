@@ -8,15 +8,7 @@
   "A errors handling for frontend api."
   (:require [catacumba.core :as ct]
             [catacumba.http :as http]
-            [catacumba.handlers.auth :as cauth]
-            [catacumba.handlers.parse :as cparse]
-            [catacumba.handlers.misc :as cmisc]
-            [uxbox.services.auth :as auth]
-            [uxbox.frontend.core :as ufc]
-            [uxbox.frontend.auth :as ufa]
-            [uxbox.frontend.projects :as ufp])
-  (:import java.util.UUID))
-
+            [uxbox.util.response :refer (rsp)]))
 
 (defmulti handler
   (fn [_ err]
@@ -28,7 +20,7 @@
   (let [message (.getMessage err)
         response {:type :error
                   :code message}]
-    (-> (ufc/rsp (merge response (ex-data err)))
+    (-> (rsp (merge response (ex-data err)))
         (http/bad-request))))
 
 (defmethod handler org.jooq.exception.DataAccessException
@@ -38,20 +30,19 @@
         message (.getMessage err)]
     (case state
       "P0002"
-      (-> (ufc/rsp {:type :error
-                    :message message
-                    :code "errors.api.occ"})
+      (-> (rsp {:type :error
+                :message message
+                :code "errors.api.occ"})
           (http/bad-request))
 
-      (-> (ufc/rsp {:message message
-                    :code (str "errors.api." state)})
+      (-> (rsp {:message message
+                :code (str "errors.api." state)})
           (http/internal-server-error)))))
 
 (defmethod handler :default
   [context err]
-  (println "????" (class err))
   (let [message (.getMessage err)]
-    (-> (ufc/rsp {:type :error
-                  :message message
-                  :code "errors.api.unexpected"})
+    (-> (rsp {:type :error
+              :message message
+              :code "errors.api.unexpected"})
         (http/internal-server-error))))

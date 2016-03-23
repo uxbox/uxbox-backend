@@ -21,7 +21,7 @@
 ;; Repository
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; Create Page
+;; --- Create Page
 
 (def ^:private +create-page-schema+
   {:id [us/uuid]
@@ -44,7 +44,7 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
-;; Update Page
+;; --- Update Page
 
 (def ^:private +update-page-schema+
   (assoc +create-page-schema+
@@ -62,7 +62,7 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
-;; Update Page Metadata
+;; --- Update Page Metadata
 
 (def ^:private +update-page-metadata-schema+
   (dissoc +update-page-schema+ :data))
@@ -79,7 +79,7 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
-;; Delete Page
+;; --- Delete Page
 
 (def +delete-page-schema+
   {:id [us/required us/uuid]
@@ -92,7 +92,7 @@
     (sc/execute conn [sql id user])
     nil))
 
-;; Query Pages
+;; --- Query Pages
 
 (defn get-pages-for-user
   [conn user]
@@ -119,8 +119,9 @@
 (defn get-page-history
   [conn {:keys [id user since max] :or {since (dt/now) max 10}}]
   (let [sql (str "SELECT * FROM pages_history "
-                 " WHERE \"user\"=? AND id=?"
-                 " AND created_at < ?")
+                 " WHERE \"user\"=? AND page=?"
+                 " AND created_at < ?"
+                 " ORDER BY created_at DESC")
         sqlv [sql user id since]]
     (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs))))
@@ -180,7 +181,7 @@
    :since [us/datetime]})
 
 (defmethod usc/-query :page/history-list
-  [conn {:keys [id user since] :as params}]
+  [conn params]
   {:pre [(us/validate! params +query-page-history-list-schema+)]}
   (->> (get-page-history conn params)
        (map decode-page-data)))

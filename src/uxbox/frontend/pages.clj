@@ -9,16 +9,15 @@
             [catacumba.http :as http]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
-            [uxbox.util.uuid :as uuid]
-            [uxbox.frontend.core :as ufc]
-            [uxbox.frontend.auth :as ufa])
-  (:import java.util.UUID))
+            [uxbox.util.response :refer (rsp)]
+            [uxbox.util.querystring :as qs]
+            [uxbox.util.uuid :as uuid]))
 
 (defn list-pages
   [{user :identity}]
   (let [params {:user user :type :page/list}]
     (-> (sv/query params)
-        (p/then #(http/ok (ufc/rsp %))))))
+        (p/then #(http/ok (rsp %))))))
 
 (defn list-pages-by-project
   [{user :identity params :route-params}]
@@ -26,7 +25,7 @@
                 :project (uuid/from-string (:id params))
                 :type :page/list-by-project}]
     (-> (sv/query params)
-        (p/then #(http/ok (ufc/rsp %))))))
+        (p/then #(http/ok (rsp %))))))
 
 (defn create-page
   [{user :identity params :data}]
@@ -35,7 +34,7 @@
                          :user user)
            result (p/await (sv/novelty params))
            loc (str "/api/pages/" (:id result))]
-    (http/created loc (ufc/rsp result))))
+    (http/created loc (rsp result))))
 
 (defn update-page
   [{user :identity params :route-params data :data}]
@@ -44,7 +43,7 @@
                        :type :page/update
                        :user user})]
     (-> (sv/novelty params)
-        (p/then #(http/ok (ufc/rsp %))))))
+        (p/then #(http/ok (rsp %))))))
 
 
 (defn update-page-metadata
@@ -54,7 +53,7 @@
                        :type :page/update-metadata
                        :user user})]
     (-> (sv/novelty params)
-        (p/then #(http/ok (ufc/rsp %))))))
+        (p/then #(http/ok (rsp %))))))
 
 (defn delete-page
   [{user :identity params :route-params}]
@@ -63,3 +62,13 @@
                 :user user}]
     (-> (sv/novelty params)
         (p/then (fn [v] (http/no-content))))))
+
+(defn retrieve-page-history
+  [{user :identity params :route-params query :query-params}]
+  (let [params (merge params
+                      (qs/parse-params query)
+                      {:type :page/history-list
+                       :id (uuid/from-string (:id params))
+                       :user user})]
+    (->> (sv/query params)
+         (p/map #(http/ok (rsp %))))))

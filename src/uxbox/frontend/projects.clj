@@ -9,16 +9,14 @@
             [catacumba.http :as http]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
-            [uxbox.util.uuid :as uuid]
-            [uxbox.frontend.core :as ufc]
-            [uxbox.frontend.auth :as ufa])
-  (:import java.util.UUID))
+            [uxbox.util.response :refer (rsp)]
+            [uxbox.util.uuid :as uuid]))
 
 (defn list-projects
   [{user :identity}]
   (let [params {:user user :type :project/list}]
     (-> (sv/query params)
-        (p/then #(http/ok (ufc/rsp %))))))
+        (p/then #(http/ok (rsp %))))))
 
 (defn create-project
   [{user :identity params :data}]
@@ -27,16 +25,16 @@
                          :user user)
            result (p/await (sv/novelty params))
            loc (str "/api/projects/" (:id result))]
-    (http/created loc (ufc/rsp result))))
+    (http/created loc (rsp result))))
 
 (defn update-project
   [{user :identity params :route-params data :data}]
-  (let [params (merge data
-                      {:id (uuid/from-string (:id params))
-                       :type :project/update
-                       :user user})]
+  (let [params (assoc data
+                      :id (uuid/from-string (:id params))
+                      :type :project/update
+                      :user user)]
     (-> (sv/novelty params)
-        (p/then #(http/ok (ufc/rsp %))))))
+        (p/then #(http/ok (rsp %))))))
 
 (defn delete-project
   [{user :identity params :route-params}]

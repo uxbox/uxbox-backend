@@ -8,8 +8,8 @@
   (:require [catacumba.http :as http]
             [promesa.core :as p]
             [uxbox.schema :as us]
-            [uxbox.frontend.core :as ufc]
-            [uxbox.services :as sv]))
+            [uxbox.services :as sv]
+            [uxbox.util.response :refer (rsp)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Schema
@@ -29,4 +29,4 @@
   (p/alet [data (us/extract! data +auth-schema+)
            data (assoc data :type :auth/login)
            resp (p/await (sv/novelty data))]
-    (http/ok (ufc/rsp resp))))
+    (http/ok (rsp resp))))

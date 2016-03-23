@@ -11,13 +11,13 @@
             [catacumba.handlers.auth :as cauth]
             [catacumba.handlers.parse :as cparse]
             [catacumba.handlers.misc :as cmisc]
-            [uxbox.services.auth :as auth]
-            [uxbox.frontend.core :as ufc]
-            [uxbox.frontend.auth :as ufa]
-            [uxbox.frontend.errors :as ufe]
-            [uxbox.frontend.projects :as ufpr]
-            [uxbox.frontend.pages :as ufpg])
-  (:import java.util.UUID))
+            [uxbox.services.auth :as sauth]
+            [uxbox.frontend.auth :as auth]
+            [uxbox.frontend.errors :as errors]
+            [uxbox.frontend.projects :as projects]
+            [uxbox.frontend.pages :as pages]
+            [uxbox.util.response :refer (rsp)]
+            [uxbox.util.uuid :as uuid]))
 
 (defn- welcome-api
   "A GET entry point for the api that shows
@@ -30,8 +30,8 @@
 (defn- authorization
   [{:keys [identity] :as context}]
   (if identity
-    (ct/delegate {:identity (UUID/fromString (:id identity))})
-    (http/forbidden (ufc/rsp {:message "Forbidden"}))))
+    (ct/delegate {:identity (uuid/from-string (:id identity))})
+    (http/forbidden (rsp {:message "Forbidden"}))))
 
 (def cors-conf
   {:origin "*"
@@ -41,8 +41,8 @@
 
 (defn app
   []
-  (let [props {:secret auth/secret
-               :options auth/+auth-opts+}
+  (let [props {:secret sauth/secret
+               :options sauth/+auth-opts+}
         backend (cauth/jwe-backend props)]
     (ct/routes
      [[:any (cauth/auth backend)]
@@ -51,21 +51,22 @@
       [:prefix "api"
        [:any (cmisc/cors cors-conf)]
        [:any (cparse/body-params)]
-       [:error #'ufe/handler]
+       [:error #'errors/handler]
 
-       [:post "auth/token" #'ufa/login]
+       [:post "auth/token" #'auth/login]
        [:any #'authorization]
 
        ;; Projects
-       [:get "projects/:id/pages" #'ufpg/list-pages-by-project]
-       [:put "projects/:id" #'ufpr/update-project]
-       [:delete "projects/:id" #'ufpr/delete-project]
-       [:post "projects" #'ufpr/create-project]
-       [:get "projects" #'ufpr/list-projects]
+       [:get "projects/:id/pages" #'pages/list-pages-by-project]
+       [:put "projects/:id" #'projects/update-project]
+       [:delete "projects/:id" #'projects/delete-project]
+       [:post "projects" #'projects/create-project]
+       [:get "projects" #'projects/list-projects]
 
        ;; Pages
-       [:put "pages/:id/metadata" #'ufpg/update-page-metadata]
-       [:put "pages/:id" #'ufpg/update-page]
-       [:delete "pages/:id" #'ufpg/delete-page]
-       [:post "pages" #'ufpg/create-page]
-       [:get "pages" #'ufpg/list-pages]]])))
+       [:put "pages/:id/metadata" #'pages/update-page-metadata]
+       [:get "pages/:id/history" #'pages/retrieve-page-history]
+       [:put "pages/:id" #'pages/update-page]
+       [:delete "pages/:id" #'pages/delete-page]
+       [:post "pages" #'pages/create-page]
+       [:get "pages" #'pages/list-pages]]])))
