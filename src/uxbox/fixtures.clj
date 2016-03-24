@@ -41,6 +41,7 @@
 
 (defn- create-project
   [conn i ui]
+  (Thread/sleep 20)
   (println "create project" i "for user" ui)
   (sproj/create-project conn
                         {:id (mk-uuid "project" i)
@@ -49,6 +50,7 @@
 
 (defn- create-page
   [conn i pi ui]
+  (Thread/sleep 20)
   (println "create page" i "for user" ui "for project" pi)
   (spag/create-page conn
                     {:id (mk-uuid "page" i)
