@@ -121,8 +121,9 @@
   (let [sql (str "SELECT * FROM pages_history "
                  " WHERE \"user\"=? AND page=?"
                  " AND created_at < ?"
-                 " ORDER BY created_at DESC")
-        sqlv [sql user id since]]
+                 " ORDER BY created_at DESC"
+                 " LIMIT ?")
+        sqlv [sql user id since max]]
     (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs))))
 
