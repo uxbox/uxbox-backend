@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS pages (
 CREATE TABLE IF NOT EXISTS pages_history (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   page uuid REFERENCES pages(id),
+  "user" uuid REFERENCES users(id),
   created_at timestamptz,
 
   data text,
@@ -69,8 +70,8 @@ CREATE OR REPLACE FUNCTION handle_page_update()
   RETURNS TRIGGER AS $pagechange$
   BEGIN
     IF (OLD.data != NEW.data) THEN
-      INSERT INTO pages_history (page, created_at, data, version)
-        VALUES (OLD.id, OLD.modified_at, OLD.data, OLD.version);
+      INSERT INTO pages_history (page, "user", created_at, data, version)
+        VALUES (OLD.id, OLD."user", OLD.modified_at, OLD.data, OLD.version);
     END IF;
     RETURN NEW;
   END;
