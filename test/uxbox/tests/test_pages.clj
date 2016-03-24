@@ -87,7 +87,6 @@
           (t/is (= (:user page') (:id user)))
           (t/is (= (:name data) "page1")))))))
 
-
 (t/deftest test-http-page-delete
   (with-open [conn (up/get-conn)]
     (let [user (th/create-user conn 1)

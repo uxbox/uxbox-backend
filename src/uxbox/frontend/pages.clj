@@ -45,7 +45,6 @@
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
 
-
 (defn update-page-metadata
   [{user :identity params :route-params data :data}]
   (let [params (merge data
