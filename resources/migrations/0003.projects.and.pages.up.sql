@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS projects (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  created_at timestamptz DEFAULT current_timestamp,
-  modified_at timestamptz DEFAULT current_timestamp,
+  created_at timestamptz DEFAULT clock_timestamp(),
+  modified_at timestamptz DEFAULT clock_timestamp(),
 
   version bigint DEFAULT 0,
 
@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS projects (
 
 CREATE TABLE IF NOT EXISTS pages (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  created_at timestamptz DEFAULT current_timestamp,
-  modified_at timestamptz DEFAULT current_timestamp,
+  created_at timestamptz DEFAULT clock_timestamp(),
+  modified_at timestamptz DEFAULT clock_timestamp(),
 
   "user" uuid NOT NULL REFERENCES users(id),
   project uuid NOT NULL REFERENCES projects(id),
@@ -80,7 +80,7 @@ $pagechange$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION update_modified_at()
   RETURNS TRIGGER AS $updt$
   BEGIN
-    NEW.modified_at := current_timestamp;
+    NEW.modified_at := clock_timestamp();
     RETURN NEW;
   END;
 $updt$ LANGUAGE plpgsql;
