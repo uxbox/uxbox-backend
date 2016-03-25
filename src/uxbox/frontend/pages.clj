@@ -62,12 +62,20 @@
     (-> (sv/novelty params)
         (p/then (fn [v] (http/no-content))))))
 
+;; --- Retrieve Page History
+
+(def retrieve-page-history-query-schema
+  {:max [us/required us/integer-like [us/in-range 0 100]]
+   :since [us/required us/integer-like us/positive]})
+
+(def retrieve-page-history-params-schema
+  {:id [us/required us/uuid-like]})
+
 (defn retrieve-page-history
   [{user :identity params :route-params query :query-params}]
-  (let [params (merge params
-                      (qs/parse-params query)
-                      {:type :page/history-list
-                       :id (uuid/from-string (:id params))
-                       :user user})]
+  (let [query (us/validate! query retrieve-page-history-query-schema)
+        params (us/validate! params retrieve-page-history-params-schema)
+        params (-> (merge query params)
+                   (assoc :type :page/history-list :user user))]
     (->> (sv/query params)
          (p/map #(http/ok (rsp %))))))
