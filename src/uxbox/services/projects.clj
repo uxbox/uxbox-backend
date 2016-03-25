@@ -29,7 +29,7 @@
 
 (defn create-project
   [conn {:keys [id user name] :as data}]
-  (us/validate! data +create-project-schema+)
+  (usc/validate! data +create-project-schema+)
   (let [sql (str "INSERT INTO projects (id, \"user\", name)"
                  " VALUES (?, ?, ?) RETURNING *")
         id (or id (uuid/v4))
@@ -45,7 +45,7 @@
 
 (defn update-project
   [conn {:keys [id user name version] :as data}]
-  (us/validate! data +update-project-schema+)
+  (usc/validate! data +update-project-schema+)
   (let [sql (str "UPDATE projects SET name=?, version=?"
                  " WHERE id=? AND \"user\"=? RETURNING *")
         sqlv [sql name version id user]]

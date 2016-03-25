@@ -10,20 +10,26 @@
             [catacumba.http :as http]
             [uxbox.util.response :refer (rsp)]))
 
-(defmulti handler
-  (fn [_ err]
-    (.printStackTrace err)
-    (class err)))
+(defmulti handle-exception #(:type (ex-data %)))
 
-(defmethod handler clojure.lang.ExceptionInfo
-  [context err]
-  (let [message (.getMessage err)
-        response {:code message :payload (ex-data err)}]
-    (-> (rsp response)
-        (http/bad-request))))
+(defmethod handle-exception :validation
+  [err]
+  (let [response (select-keys (ex-data err) [:type :payload])]
+    (http/bad-request (rsp response))))
 
-(defmethod handler org.jooq.exception.DataAccessException
-  [context err]
+(defmethod handle-exception :auth/wrong-credentials
+  [err]
+  (let [response (select-keys (ex-data err) [:type :payload])]
+    (http/bad-request (rsp response))))
+
+(defmethod handle-exception :default
+  [err]
+  (let [response (select-keys (ex-data err) [:type :payload])
+        response (assoc response :message (.getMessage err))]
+    (http/internal-server-error (rsp response))))
+
+(defn handle-data-access-exception
+  [err]
   (let [err (.getCause err)
         state (.getSQLState err)
         message (.getMessage err)]
@@ -33,14 +39,31 @@
                 :code "errors.api.occ"})
           (http/bad-request))
 
-      (-> (rsp {:message message
-                :code (str "errors.api." state)})
-          (http/internal-server-error)))))
+      (do
+        (.printStackTrace err)
+        (-> (rsp {:message message
+                  :code (str "errors.api." state)})
+            (http/internal-server-error))))))
 
-(defmethod handler :default
-  [context err]
+(defn handle-unexpected-exception
+  [err]
+  (.printStackTrace err)
   (let [message (.getMessage err)]
-    (-> (rsp {:type :error
-              :message message
+    (-> (rsp {:message message
               :code "errors.api.unexpected"})
         (http/internal-server-error))))
+
+
+;; --- Entry Point
+
+(defn handler
+  [context err]
+  (cond
+    (instance? clojure.lang.ExceptionInfo err)
+    (handle-exception err)
+
+    (instance? org.jooq.exception.DataAccessException)
+    (handle-data-access-exception err)
+
+    :else
+    (handle-unexpected-exception err)))

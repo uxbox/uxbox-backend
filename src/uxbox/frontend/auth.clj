@@ -9,24 +9,17 @@
             [promesa.core :as p]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
+            [uxbox.frontend.core :refer (validate!)]
             [uxbox.util.response :refer (rsp)]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Schema
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def +auth-schema+
+(def ^:const ^:private +auth-schema+
   {:username [us/required us/string]
    :password [us/required us/string]
    :scope [us/required us/string]})
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Handlers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (defn login
   [{:keys [data] :as context}]
-  (p/alet [data (us/validate! data +auth-schema+)
+  (p/alet [data (validate! data +auth-schema+)
            data (assoc data :type :auth/login)
            resp (p/await (sv/novelty data))]
     (http/ok (rsp resp))))

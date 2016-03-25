@@ -89,5 +89,5 @@
             [status data] (th/http-post uri {:body data})]
         ;; (println "RESPONSE:" status data)
         (t/is (= 400 status))
-        (t/is (= (:code data) "errors.api.auth.invalid-credentials"))))))
+        (t/is (= (:type data) :auth/wrong-credentials))))))
 

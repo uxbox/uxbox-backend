@@ -6,7 +6,8 @@
 
 (ns uxbox.schema
   (:refer-clojure :exclude [keyword uuid vector boolean])
-  (:require [struct.core :as st])
+  (:require [struct.core :as st]
+            [uxbox.util.exceptions :as ex])
   (:import java.time.Instant))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -47,16 +48,4 @@
 (def uuid st/uuid)
 (def integer-like st/integer-like)
 (def email st/email)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Public Api
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (def validate st/validate)
-
-(defn validate!
-  [data schema]
-  (let [[errors data] (st/validate data schema)]
-    (if (seq errors)
-      (throw (ex-info "errors.api.schema" errors))
-      data)))

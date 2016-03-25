@@ -153,7 +153,6 @@
           (t/is (= 1 (count response)))
           (t/is (= (:id (first response)) (:id page1))))))))
 
-
 (t/deftest test-http-page-history-retrieve
   (with-open [conn (up/get-conn)]
     (let [user (th/create-user conn 1)
@@ -186,7 +185,7 @@
           (t/is (= 200 status))
           (t/is (= 99 (:version (first result))))
 
-          (let [params {:query {:since (:created-at (last result))
+          (let [params {:query {:since (:version (last result))
                                 :max 20}}
                 [status result] (th/http-get user uri params)]
             ;; (println "RESPONSE:" status result)

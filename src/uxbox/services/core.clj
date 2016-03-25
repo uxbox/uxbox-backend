@@ -6,7 +6,9 @@
 
 (ns uxbox.services.core
   (:require [clojure.walk :as walk]
-            [cuerdas.core :as str]))
+            [cuerdas.core :as str]
+            [struct.core :as st]
+            [uxbox.util.exceptions :as ex]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Main Api
@@ -31,6 +33,13 @@
 (defmethod -query :default
   [conn data]
   (throw (ex-info "Not implemented" {})))
+
+(defn validate!
+  [data schema]
+  (let [[errors data] (st/validate data schema)]
+    (if (seq errors)
+      (throw (ex/ex-info :internal/validation errors))
+      data)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Common Helpers

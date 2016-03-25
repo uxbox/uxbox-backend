@@ -16,7 +16,9 @@
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.persistence :as up]
-            [uxbox.services.core :as usc]))
+            [uxbox.services.core :as usc]
+            [uxbox.util.exceptions :as ex]))
+
 
 (def ^:const +auth-opts+
   {:alg :a256kw :enc :a256cbc-hs512})
@@ -51,7 +53,7 @@
 
 (defn create-user
   [conn {:keys [id username password email] :as data}]
-  {:pre [(us/validate! data +user-schema+)]}
+  (usc/validate! data +user-schema+)
   (let [sql (str "INSERT INTO users (id, username, email, password)"
                  " VALUES (?, ?, ?, ?) RETURNING *;")
         id (or id (uuid/v4))
@@ -88,7 +90,8 @@
 (defmethod usc/-novelty :auth/login
   [conn {:keys [username password scope]}]
   (let [user (find-user-by-username-or-email conn username)]
-    (when-not user (throw (ex-info "errors.api.auth.invalid-credentials" {})))
+    (when-not user
+      (throw (ex/ex-info :auth/wrong-crendentials {})))
     (if (check-user-password user password)
       {:token (generate-token user)}
-      (throw (ex-info "errors.api.auth.invalid-credentials" {})))))
+      (throw (ex/ex-info :auth/wrong-credentials {})))))

@@ -35,7 +35,7 @@
 
 (defn create-page
   [conn {:keys [id user project name width height layout data] :as params}]
-  {:pre [(us/validate! params +create-page-schema+)]}
+  (usc/validate! params +create-page-schema+)
   (let [sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
                  "                   height, layout, data)"
                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
@@ -52,7 +52,7 @@
 
 (defn update-page
   [conn {:keys [id user project name width height layout data version] :as params}]
-  {:pre [(us/validate! params +update-page-schema+)]}
+  (usc/validate! params +update-page-schema+)
   (let [sql (str "UPDATE pages SET "
                  " name=?, width=?, height=?, layout=?, data=?, version=?"
                  " WHERE id=? AND \"user\"=? AND project=?"
@@ -69,7 +69,7 @@
 
 (defn update-page-metadata
   [conn {:keys [id user project name width height layout version] :as params}]
-  {:pre [(us/validate! params +update-page-metadata-schema+)]}
+  (usc/validate! params +update-page-metadata-schema+)
   (let [sql (str "UPDATE pages SET "
                  " name=?, width=?, height=?, layout=?, version=?"
                  " WHERE id=? AND \"user\"=? AND project=?"
@@ -87,7 +87,7 @@
 
 (defn delete-page
   [conn {:keys [id user] :as params}]
-  {:pre [(us/validate! params +delete-page-schema+)]}
+  (usc/validate! params +delete-page-schema+)
   (let [sql "DELETE FROM pages WHERE id=? AND \"user\"=?"]
     (sc/execute conn [sql id user])
     nil))
@@ -117,11 +117,11 @@
             (usc/normalize-attrs))))
 
 (defn get-page-history
-  [conn {:keys [id user since max] :or {since (dt/now) max 10}}]
+  [conn {:keys [id user since max] :or {since Long/MAX_VALUE max 10}}]
   (let [sql (str "SELECT * FROM pages_history "
                  " WHERE \"user\"=? AND page=?"
-                 " AND created_at < ?"
-                 " ORDER BY created_at DESC"
+                 " AND version < ?"
+                 " ORDER BY version DESC"
                  " LIMIT ?")
         sqlv [sql user id since max]]
     (->> (sc/fetch conn sqlv)
@@ -178,12 +178,12 @@
 (def +query-page-history-list-schema+
   {:user [us/required us/uuid]
    :id [us/required us/uuid]
-   :max [us/number]
-   :since [us/datetime]})
+   :max [us/integer]
+   :since [us/integer]})
 
 (defmethod usc/-query :page/history-list
   [conn params]
-  {:pre [(us/validate! params +query-page-history-list-schema+)]}
+  (usc/validate! params +query-page-history-list-schema+)
   (->> (get-page-history conn params)
        (map decode-page-data)))
 
@@ -193,6 +193,6 @@
 
 (defmethod usc/-query :page/list-by-project
   [conn {:keys [user project] :as params}]
-  {:pre [(us/validate! params +query-page-list-by-project-schema+)]}
+  (usc/validate! params +query-page-list-by-project-schema+)
   (->> (get-pages-for-user-and-project conn user project)
        (map decode-page-data)))

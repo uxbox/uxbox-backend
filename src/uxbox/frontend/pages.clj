@@ -9,8 +9,8 @@
             [catacumba.http :as http]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
+            [uxbox.frontend.core :refer (validate!)]
             [uxbox.util.response :refer (rsp)]
-            [uxbox.util.querystring :as qs]
             [uxbox.util.uuid :as uuid]))
 
 (defn list-pages
@@ -65,16 +65,16 @@
 ;; --- Retrieve Page History
 
 (def retrieve-page-history-query-schema
-  {:max [us/required us/integer-like [us/in-range 0 100]]
-   :since [us/required us/integer-like us/positive]})
+  {:max [us/integer-like [us/in-range 0 100]]
+   :since [us/integer-like us/positive]})
 
 (def retrieve-page-history-params-schema
   {:id [us/required us/uuid-like]})
 
 (defn retrieve-page-history
   [{user :identity params :route-params query :query-params}]
-  (let [query (us/validate! query retrieve-page-history-query-schema)
-        params (us/validate! params retrieve-page-history-params-schema)
+  (let [query (validate! query retrieve-page-history-query-schema)
+        params (validate! params retrieve-page-history-params-schema)
         params (-> (merge query params)
                    (assoc :type :page/history-list :user user))]
     (->> (sv/query params)
