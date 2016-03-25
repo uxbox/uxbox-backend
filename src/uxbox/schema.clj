@@ -6,105 +6,57 @@
 
 (ns uxbox.schema
   (:refer-clojure :exclude [keyword uuid vector boolean])
-  (:require [bouncer.core :as b]
-            [bouncer.validators :as v]
-            [cuerdas.core :as str])
+  (:require [struct.core :as st])
   (:import java.time.Instant))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Validators
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(v/defvalidator keyword
-  "Validates maybe-an-int is a valid integer.
-  For use with validation functions such as `validate` or `valid?`"
-  {:default-message-format "%s must be a keyword"}
-  [v]
-  (keyword? v))
+;; (v/defvalidator max-len
+;;   "Validate if `v` is at least smaller that `n`."
+;;   {:default-message-format "% must be lees than the maximum."}
+;;   [v n]
+;;   (let [len (count v)]
+;;     (>= len v)))
 
-(v/defvalidator uuid
-  "Validates maybe-an-int is a valid integer.
-  For use with validation functions such as `validate` or `valid?`"
-  {:default-message-format "%s must be a uuid instance"}
-  [v]
-  (instance? java.util.UUID v))
+;; (v/defvalidator min-len
+;;   "Validate if `v` is at least larger that `n`."
+;;   {:default-message-format "% must be greater than the minimum."}
+;;   [v n]
+;;   (let [len (count v)]
+;;     (>= v len)))
 
-(v/defvalidator vector
-  "Validats if `v` is vector."
-  {:default-message-format "%s must be a vector instance."}
-  [v]
-  (vector? v))
+(def datetime
+  {:message "must be an instant"
+   :optional true
+   :validate #(instance? Instant %)})
 
-(v/defvalidator function
-  "Validats if `v` is function."
-  {:default-message-format "%s must be a function."}
-  [v]
-  (fn? v))
+(def positive
+  {:message "should be positive"
+   :optional true
+   :validate pos?})
 
-(def ^:const +email-re+
-  #"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-
-(v/defvalidator email
-  "Validate if `v` is a valid email."
-  {:default-message-format "% must be a valid email."}
-  [v]
-  (clojure.core/boolean (re-seq +email-re+ v)))
-
-(v/defvalidator max-len
-  "Validate if `v` is at least smaller that `n`."
-  {:default-message-format "% must be lees than the maximum."}
-  [v n]
-  (let [len (count v)]
-    (>= len v)))
-
-(v/defvalidator min-len
-  "Validate if `v` is at least larger that `n`."
-  {:default-message-format "% must be greater than the minimum."}
-  [v n]
-  (let [len (count v)]
-    (>= v len)))
-
-(v/defvalidator datetime
-  "Validat if `v` is a valid java.time.Instant instance."
-  {:default-message-format "% must be a Instant instance."}
-  [v]
-  (instance? Instant v))
-
-(def required v/required)
-(def number v/number)
-(def integer v/integer)
-(def boolean v/boolean)
-(def string v/string)
+(def required st/required)
+(def number st/number)
+(def integer st/integer)
+(def boolean st/boolean)
+(def string st/string)
+(def in-range st/in-range)
+(def uuid-like st/uuid-like)
+(def uuid st/uuid)
+(def integer-like st/integer-like)
+(def email st/email)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Public Api
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn validate
-  [data schema] (first (b/validate data schema)))
+(def validate st/validate)
 
 (defn validate!
   [data schema]
-  (if-let [errors (validate data schema)]
-    (throw (ex-info "errors.api.schema" errors))
-    data))
-
-(defn valid?
-  [validator data]
-  (let [result (validator data)]
-    (if result
-      result
-      (let [message (:default-message-format (meta validator))
-            message (str/format message data)]
-        (throw (ex-info message {}))))))
-
-(defn extract
-  [data schema]
-  (let [keycoll (keys schema)]
-    (select-keys data keycoll)))
-
-(defn extract!
-  "Extract and validate."
-  [data schema]
-  (validate! data schema)
-  (extract data schema))
+  (let [[errors data] (st/validate data schema)]
+    (if (seq errors)
+      (throw (ex-info "errors.api.schema" errors))
+      data)))

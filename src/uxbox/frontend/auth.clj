@@ -26,7 +26,7 @@
 
 (defn login
   [{:keys [data] :as context}]
-  (p/alet [data (us/extract! data +auth-schema+)
+  (p/alet [data (us/validate! data +auth-schema+)
            data (assoc data :type :auth/login)
            resp (p/await (sv/novelty data))]
     (http/ok (rsp resp))))
