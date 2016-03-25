@@ -13,6 +13,8 @@
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
+;; --- List Pages
+
 (defn list-pages
   [{user :identity}]
   (let [params {:user user :type :page/list}]
@@ -27,6 +29,8 @@
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
+;; --- Create Page
+
 (defn create-page
   [{user :identity params :data}]
   (p/alet [params (assoc params
@@ -36,12 +40,16 @@
            loc (str "/api/pages/" (:id result))]
     (http/created loc (rsp result))))
 
+;; --- Update Page
+
+;; TODO: add validations
+
 (defn update-page
   [{user :identity params :route-params data :data}]
-  (let [params (merge data
-                      {:id (uuid/from-string (:id params))
-                       :type :page/update
-                       :user user})]
+  (let [params (assoc data
+                      :id (uuid/from-string (:id params))
+                      :type :page/update
+                      :user user)]
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
 
@@ -53,6 +61,8 @@
                        :user user})]
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
+
+;; --- Delete Page
 
 (defn delete-page
   [{user :identity params :route-params}]
@@ -76,6 +86,22 @@
   (let [query (validate! query retrieve-page-history-query-schema)
         params (validate! params retrieve-page-history-params-schema)
         params (-> (merge query params)
-                   (assoc :type :page/history-list :user user))]
+                   (assoc :type :page-history/list :user user))]
     (->> (sv/query params)
+         (p/map #(http/ok (rsp %))))))
+
+;; --- Update Page History
+
+(def update-page-history-schema
+  {:label [us/required us/string]
+   :pinned [us/required us/boolean]})
+
+(defn update-page-history
+  [{user :identity params :route-params data :data}]
+  (let [data (validate! data update-page-history-schema)
+        params (assoc data
+                      :type :page-history/update
+                      :id (uuid/from-string (:hid params))
+                      :user user)]
+    (->> (sv/novelty params)
          (p/map #(http/ok (rsp %))))))

@@ -116,17 +116,6 @@
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
-(defn get-page-history
-  [conn {:keys [id user since max] :or {since Long/MAX_VALUE max 10}}]
-  (let [sql (str "SELECT * FROM pages_history "
-                 " WHERE \"user\"=? AND page=?"
-                 " AND version < ?"
-                 " ORDER BY version DESC"
-                 " LIMIT ?")
-        sqlv [sql user id since max]]
-    (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Service (novelty)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -175,18 +164,6 @@
   (->> (get-pages-for-user conn user)
        (map decode-page-data)))
 
-(def +query-page-history-list-schema+
-  {:user [us/required us/uuid]
-   :id [us/required us/uuid]
-   :max [us/integer]
-   :since [us/integer]})
-
-(defmethod usc/-query :page/history-list
-  [conn params]
-  (usc/validate! params +query-page-history-list-schema+)
-  (->> (get-page-history conn params)
-       (map decode-page-data)))
-
 (def +query-page-list-by-project-schema+
   {:user [us/required us/uuid]
    :project [us/required us/uuid]})
@@ -196,3 +173,54 @@
   (usc/validate! params +query-page-list-by-project-schema+)
   (->> (get-pages-for-user-and-project conn user project)
        (map decode-page-data)))
+
+
+;; --- Page History (Query)
+
+(def +query-page-history-list-schema+
+  {:user [us/required us/uuid]
+   :id [us/required us/uuid]
+   :max [us/integer]
+   :pinned [us/boolean]
+   :since [us/integer]})
+
+(defn get-page-history
+  [conn {:keys [id user since max pinned] :or {since Long/MAX_VALUE max 10}}]
+  (let [sql (str "SELECT * FROM pages_history "
+                 " WHERE \"user\"=? AND page=? AND version < ?"
+                 (if pinned " AND pinned = true " "")
+                 " ORDER BY version DESC"
+                 " LIMIT ?")
+        sqlv [sql user id since max]]
+    (->> (sc/fetch conn sqlv)
+         (map usc/normalize-attrs))))
+
+(defmethod usc/-query :page-history/list
+  [conn params]
+  (->> (usc/validate! params +query-page-history-list-schema+)
+       (get-page-history conn)
+       (map decode-page-data)))
+
+;; --- Page History (Novelty)
+
+(def +novelty-page-history-update-schema+
+  {:user [us/required us/uuid]
+   :id [us/required us/uuid]
+   :label [us/required us/string]
+   :pinned [us/required us/boolean]})
+
+(defn update-page-history
+  [conn {:keys [user id label pinned]}]
+  (let [sql (str "UPDATE pages_history SET "
+                 " label=?, pinned=? "
+                 " WHERE id=? AND \"user\"=? "
+                 " RETURNING *")]
+    (->> (sc/fetch-one conn [sql label pinned id user])
+         (usc/normalize-attrs)
+         (decode-page-data))))
+
+(defmethod usc/-novelty :page-history/update
+  [conn params]
+  (->> (usc/validate! params +novelty-page-history-update-schema+)
+       (update-page-history conn)))
+

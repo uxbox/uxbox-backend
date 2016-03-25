@@ -66,6 +66,7 @@
        ;; Pages
        [:put "pages/:id/metadata" #'pages/update-page-metadata]
        [:get "pages/:id/history" #'pages/retrieve-page-history]
+       [:put "pages/:id/history/:hid" #'pages/update-page-history]
        [:put "pages/:id" #'pages/update-page]
        [:delete "pages/:id" #'pages/delete-page]
        [:post "pages" #'pages/create-page]

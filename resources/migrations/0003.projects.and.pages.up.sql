@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS pages_history (
   "user" uuid REFERENCES users(id),
   created_at timestamptz,
 
+  pinned bool NOT NULL DEFAULT false,
+  label text DEFAULT '',
+
   data text,
   version bigint DEFAULT 0
 ) WITH (OIDS=FALSE);
