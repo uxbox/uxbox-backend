@@ -45,14 +45,13 @@
     [status body]))
 
 (defn http-get
-  ([uri opts] (http-get nil uri opts))
+  ([user uri] (http-get user uri nil))
   ([user uri {:keys [query] :as opts}]
    (let [headers (when user
                    {"Authorization" (str "Token " (usa/generate-token user))})
          params (merge {:headers headers}
                        (when query
-                         {:query-params {:params (-> (transit/encode query)
-                                                     (codecs/bytes->base64))}}))]
+                         {:query-params query}))]
      (try
        (strip-response (http/get uri params))
        (catch clojure.lang.ExceptionInfo e
