@@ -18,6 +18,7 @@
             [uxbox.services.auth :as usauth]))
 
 (declare decode-page-data)
+(declare decode-page-options)
 
 ;; --- Create Page
 
@@ -45,7 +46,8 @@
               height layout data options]]
     (->> (sc/fetch-one conn sqlv)
          (usc/normalize-attrs)
-         (decode-page-data))))
+         (decode-page-data)
+         (decode-page-options))))
 
 (defmethod usc/-novelty :create/page
   [conn {:keys [data] :as params}]
@@ -71,7 +73,8 @@
               version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
-            (decode-page-data))))
+            (decode-page-data)
+            (decode-page-options))))
 
 (defmethod usc/-novelty :update/page
   [conn {:keys [data] :as params}]
@@ -95,7 +98,8 @@
               version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
-            (decode-page-data))))
+            (decode-page-data)
+            (decode-page-options))))
 
 (defmethod usc/-novelty :update/page-metadata
   [conn params]
@@ -121,6 +125,8 @@
 
 ;; --- List Pages
 
+;; TODO: consider using transducers
+
 (defn get-pages-for-user
   [conn user]
   (let [sql (str "SELECT * FROM pages "
@@ -128,12 +134,12 @@
                  " ORDER BY created_at ASC")]
     (->> (sc/fetch conn [sql user])
          (map usc/normalize-attrs)
-         (map decode-page-data))))
+         (map decode-page-data)
+         (map decode-page-options))))
 
 (defmethod usc/-query :list/pages
   [conn {:keys [user] :as params}]
   (get-pages-for-user conn user))
-
 
 ;; --- List Pages by Project
 
@@ -148,7 +154,8 @@
                  " ORDER BY created_at ASC")]
     (->> (sc/fetch conn [sql user project])
          (map usc/normalize-attrs)
-         (map decode-page-data))))
+         (map decode-page-data)
+         (map decode-page-options))))
 
 (defmethod usc/-query :list/pages-by-project
   [conn {:keys [user project] :as params}]
@@ -206,22 +213,26 @@
 
 ;; --- Helpers
 
-(defn- decode-page-data
-  [{:keys [data options] :as result}]
-  (let [data (some-> data
-                     (codecs/str->bytes)
-                     (t/decode))
-        options (some-> options
+(defn- decode-page-options
+  [{:keys [options] :as result}]
+  (let [options (some-> options
                         (codecs/str->bytes)
                         (t/decode))]
+    (assoc result :options options)))
 
-    (assoc result :data data :options options)))
+(defn- decode-page-data
+  [{:keys [data] :as result}]
+  (let [data (some-> data
+                     (codecs/str->bytes)
+                     (t/decode))]
+    (assoc result :data data)))
 
 (defn get-page-by-id
   [conn id]
   (let [sqlv ["SELECT * FROM pages WHERE id=?" id]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
-            (decode-page-data))))
+            (decode-page-data)
+            (decode-page-options))))
 
 
