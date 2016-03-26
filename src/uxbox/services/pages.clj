@@ -17,82 +17,109 @@
             [uxbox.services.locks :as locks]
             [uxbox.services.auth :as usauth]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Repository
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(declare decode-page-data)
 
 ;; --- Create Page
 
-(def ^:private +create-page-schema+
+(def ^:private create-page-schema
   {:id [us/uuid]
+   :data [us/coll]
+   :options [us/coll]
    :user [us/required us/uuid]
    :project [us/required us/uuid]
    :name [us/required us/string]
-   :data [us/required us/string]
    :width [us/required us/integer]
    :height [us/required us/integer]
    :layout [us/required us/string]})
 
 (defn create-page
-  [conn {:keys [id user project name width height layout data] :as params}]
-  (usc/validate! params +create-page-schema+)
-  (let [sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
-                 "                   height, layout, data)"
-                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
+  [conn {:keys [id user project name width
+                height layout data options] :as params}]
+  (let [data (codecs/bytes->str (t/encode data))
+        options (codecs/bytes->str (t/encode options))
+        sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
+                 "                   height, layout, data, options)"
+                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
         id (or id (uuid/v4))
-        sqlv [sql id user project name width height layout data]]
-    (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+        sqlv [sql id user project name width
+              height layout data options]]
+    (->> (sc/fetch-one conn sqlv)
+         (usc/normalize-attrs)
+         (decode-page-data))))
+
+(defmethod usc/-novelty :create/page
+  [conn {:keys [data] :as params}]
+  (->> (usc/validate! params create-page-schema)
+       (create-page conn)))
 
 ;; --- Update Page
 
-(def ^:private +update-page-schema+
-  (assoc +create-page-schema+
+(def ^:private update-page-schema
+  (assoc create-page-schema
          :version [us/required us/number]))
 
 (defn update-page
-  [conn {:keys [id user project name width height layout data version] :as params}]
-  (usc/validate! params +update-page-schema+)
-  (let [sql (str "UPDATE pages SET "
-                 " name=?, width=?, height=?, layout=?, data=?, version=?"
+  [conn {:keys [id user project name width height
+                layout data version options] :as params}]
+  (let [data (codecs/bytes->str (t/encode data))
+        options (codecs/bytes->str (t/encode options))
+        sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
+                 "                 data=?, version=?, options=? "
                  " WHERE id=? AND \"user\"=? AND project=?"
                  " RETURNING *")
-        sqlv [sql name width height layout data version id user project]]
-    (locks/acquire! conn id)
+        sqlv [sql name width height layout data
+              version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (usc/normalize-attrs)
+            (decode-page-data))))
+
+(defmethod usc/-novelty :update/page
+  [conn {:keys [data] :as params}]
+  (->> (usc/validate! params update-page-schema)
+       (update-page conn)))
 
 ;; --- Update Page Metadata
 
-(def ^:private +update-page-metadata-schema+
-  (dissoc +update-page-schema+ :data))
+(def ^:private update-page-metadata-schema
+  (dissoc update-page-schema :data))
 
 (defn update-page-metadata
-  [conn {:keys [id user project name width height layout version] :as params}]
-  (usc/validate! params +update-page-metadata-schema+)
-  (let [sql (str "UPDATE pages SET "
-                 " name=?, width=?, height=?, layout=?, version=?"
+  [conn {:keys [id user project name width
+                height layout version options] :as params}]
+  (let [options (codecs/bytes->str (t/encode options))
+        sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
+                 "                 version=?, options=? "
                  " WHERE id=? AND \"user\"=? AND project=?"
                  " RETURNING *")
-        sqlv [sql name width height layout version id user project]]
-    (locks/acquire! conn id)
+        sqlv [sql name width height layout
+              version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (usc/normalize-attrs)
+            (decode-page-data))))
+
+(defmethod usc/-novelty :update/page-metadata
+  [conn params]
+  (->> (usc/validate! params update-page-metadata-schema)
+       (update-page-metadata conn)))
 
 ;; --- Delete Page
 
-(def +delete-page-schema+
+(def ^:private delete-page-schema
   {:id [us/required us/uuid]
    :user [us/required us/uuid]})
 
 (defn delete-page
   [conn {:keys [id user] :as params}]
-  (usc/validate! params +delete-page-schema+)
   (let [sql "DELETE FROM pages WHERE id=? AND \"user\"=?"]
     (sc/execute conn [sql id user])
     nil))
 
-;; --- Query Pages
+(defmethod usc/-novelty :delete/page
+  [conn params]
+  (usc/validate! params delete-page-schema)
+  (delete-page conn params))
+
+;; --- List Pages
 
 (defn get-pages-for-user
   [conn user]
@@ -100,7 +127,19 @@
                  " WHERE \"user\"=?"
                  " ORDER BY created_at ASC")]
     (->> (sc/fetch conn [sql user])
-         (map usc/normalize-attrs))))
+         (map usc/normalize-attrs)
+         (map decode-page-data))))
+
+(defmethod usc/-query :list/pages
+  [conn {:keys [user] :as params}]
+  (get-pages-for-user conn user))
+
+
+;; --- List Pages by Project
+
+(def ^:private list-pages-by-project-schema
+  {:user [us/required us/uuid]
+   :project [us/required us/uuid]})
 
 (defn get-pages-for-user-and-project
   [conn user project]
@@ -108,76 +147,17 @@
                  " WHERE \"user\"=? AND project=? "
                  " ORDER BY created_at ASC")]
     (->> (sc/fetch conn [sql user project])
-         (map usc/normalize-attrs))))
+         (map usc/normalize-attrs)
+         (map decode-page-data))))
 
-(defn get-page-by-id
-  [conn id]
-  (let [sqlv ["SELECT * FROM pages WHERE id=?" id]]
-    (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Service (novelty)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn- decode-page-data
-  [{:keys [data] :as result}]
-  (let [data (some-> data
-                     (codecs/str->bytes)
-                     (t/decode))]
-    (assoc result :data data)))
-
-(defmethod usc/-novelty :page/create
-  [conn {:keys [data] :as params}]
-  (let [data (-> (t/encode data)
-                 (codecs/bytes->str))
-        params (assoc params :data data)]
-    (-> (create-page conn params)
-        (decode-page-data))))
-
-(defmethod usc/-novelty :page/update
-  [conn {:keys [data] :as params}]
-  (let [data (-> (t/encode data)
-                 (codecs/bytes->str))
-        params (assoc params :data data)]
-    (-> (update-page conn params)
-        (decode-page-data))))
-
-(defmethod usc/-novelty :page/update-metadata
-  [conn {:keys [data] :as params}]
-  (let [data (-> (t/encode data)
-                 (codecs/bytes->str))
-        params (assoc params :data data)]
-    (-> (update-page-metadata conn params)
-        (decode-page-data))))
-
-(defmethod usc/-novelty :page/delete
-  [conn params]
-  (delete-page conn params))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Service (query)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defmethod usc/-query :page/list
-  [conn {:keys [user] :as params}]
-  (->> (get-pages-for-user conn user)
-       (map decode-page-data)))
-
-(def +query-page-list-by-project-schema+
-  {:user [us/required us/uuid]
-   :project [us/required us/uuid]})
-
-(defmethod usc/-query :page/list-by-project
+(defmethod usc/-query :list/pages-by-project
   [conn {:keys [user project] :as params}]
-  (usc/validate! params +query-page-list-by-project-schema+)
-  (->> (get-pages-for-user-and-project conn user project)
-       (map decode-page-data)))
-
+  (usc/validate! params list-pages-by-project-schema)
+  (get-pages-for-user-and-project conn user project))
 
 ;; --- Page History (Query)
 
-(def +query-page-history-list-schema+
+(def ^:private list-page-history-schema
   {:user [us/required us/uuid]
    :id [us/required us/uuid]
    :max [us/integer]
@@ -193,17 +173,17 @@
                  " LIMIT ?")
         sqlv [sql user id since max]]
     (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs))))
+         (map usc/normalize-attrs)
+         (map decode-page-data))))
 
-(defmethod usc/-query :page-history/list
+(defmethod usc/-query :list/page-history
   [conn params]
-  (->> (usc/validate! params +query-page-history-list-schema+)
-       (get-page-history conn)
-       (map decode-page-data)))
+  (->> (usc/validate! params list-page-history-schema)
+       (get-page-history conn)))
 
-;; --- Page History (Novelty)
+;; --- Update Page History
 
-(def +novelty-page-history-update-schema+
+(def ^:private update-page-history-schema
   {:user [us/required us/uuid]
    :id [us/required us/uuid]
    :label [us/required us/string]
@@ -215,12 +195,33 @@
                  " label=?, pinned=? "
                  " WHERE id=? AND \"user\"=? "
                  " RETURNING *")]
-    (->> (sc/fetch-one conn [sql label pinned id user])
-         (usc/normalize-attrs)
-         (decode-page-data))))
+    (some-> (sc/fetch-one conn [sql label pinned id user])
+            (usc/normalize-attrs)
+            (decode-page-data))))
 
-(defmethod usc/-novelty :page-history/update
+(defmethod usc/-novelty :update/page-history
   [conn params]
-  (->> (usc/validate! params +novelty-page-history-update-schema+)
+  (->> (usc/validate! params update-page-history-schema)
        (update-page-history conn)))
+
+;; --- Helpers
+
+(defn- decode-page-data
+  [{:keys [data options] :as result}]
+  (let [data (some-> data
+                     (codecs/str->bytes)
+                     (t/decode))
+        options (some-> options
+                        (codecs/str->bytes)
+                        (t/decode))]
+
+    (assoc result :data data :options options)))
+
+(defn get-page-by-id
+  [conn id]
+  (let [sqlv ["SELECT * FROM pages WHERE id=?" id]]
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs)
+            (decode-page-data))))
+
 

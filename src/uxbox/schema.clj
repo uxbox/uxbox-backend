@@ -5,7 +5,7 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.schema
-  (:refer-clojure :exclude [keyword uuid vector boolean])
+  (:refer-clojure :exclude [keyword uuid vector boolean map])
   (:require [struct.core :as st]
             [uxbox.util.exceptions :as ex])
   (:import java.time.Instant))
@@ -34,9 +34,19 @@
    :validate #(instance? Instant %)})
 
 (def positive
-  {:message "should be positive"
+  {:message "must be positive"
    :optional true
    :validate pos?})
+
+(def map
+  {:message "must be a map"
+   :optional true
+   :validate map?})
+
+(def coll
+  {:message "must be a collection"
+   :optional true
+   :validate coll?})
 
 (def required st/required)
 (def number st/number)

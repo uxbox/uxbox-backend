@@ -14,14 +14,14 @@
 
 (defn list-projects
   [{user :identity}]
-  (let [params {:user user :type :project/list}]
+  (let [params {:user user :type :list/projects}]
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
 (defn create-project
   [{user :identity params :data}]
   (p/alet [params (assoc params
-                         :type :project/create
+                         :type :create/project
                          :user user)
            result (p/await (sv/novelty params))
            loc (str "/api/projects/" (:id result))]
@@ -31,7 +31,7 @@
   [{user :identity params :route-params data :data}]
   (let [params (assoc data
                       :id (uuid/from-string (:id params))
-                      :type :project/update
+                      :type :update/project
                       :user user)]
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
@@ -39,7 +39,7 @@
 (defn delete-project
   [{user :identity params :route-params}]
   (let [params {:id (uuid/from-string (:id params))
-                :type :project/delete
+                :type :delete/project
                 :user user}]
     (-> (sv/novelty params)
         (p/then (fn [v] (http/no-content))))))

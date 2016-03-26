@@ -70,7 +70,7 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data (th/data-encode [:test1])
+                :data [:test1]
                 :name "page1"
                 :width 200
                 :height 200
@@ -80,7 +80,7 @@
         (let [uri (str th/+base-url+ (str "/api/pages/" (:id page) "/metadata"))
               params {:body (assoc page :data [:test1 :test2])}
               [status page'] (th/http-put user uri params)]
-          ;; (println "RESPONSE:" status page')
+          (println "RESPONSE:" status page')
           (t/is (= 200 status))
           (t/is (= [:test1] (:data page')))
           (t/is (= 1 (:version page')))
@@ -161,16 +161,15 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data (th/data-encode [:test1])
+                :data [:test1]
                 :name "page1"
                 :width 200
                 :height 200
                 :layout "mobil"}
           page (uspg/create-page conn data)]
-
       (dotimes [i 100]
         (let [page (uspg/get-page-by-id conn (:id data))]
-          (uspg/update-page conn (assoc page :data (th/data-encode [i])))))
+          (uspg/update-page conn (assoc page :data [i]))))
 
       ;; Check inserted history
       (let [sqlv ["SELECT * FROM pages_history WHERE page=?" (:id data)]

@@ -8,6 +8,7 @@
   (:require [clojure.tools.namespace.repl :as repl]
             [clojure.walk :refer [macroexpand-all]]
             [clojure.pprint :refer [pprint]]
+            [clojure.test :as test]
             [mount.core :as mount]
             [buddy.core.codecs :as codecs]
             [buddy.core.nonce :as nonce]
@@ -54,6 +55,31 @@
   []
   (let [rdata (nonce/random-bytes 64)]
     (codecs/bytes->safebase64 rdata)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Entry point (only for uberjar)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defonce +vars+ nil)
+
+(defn run-all-tests
+  ([] (test/run-all-tests #"^uxbox.tests.*"))
+  ([re] (test/run-all-tests re)))
+
+(defn test-vars
+  []
+  (test/test-vars +vars+))
+
+(defn run-tests
+  [& vars]
+  (cond
+    (pos? (count vars))
+    (do
+      (alter-var-root #'+vars+ (constantly vars))
+      (repl/refresh :after 'uxbox.main/test-vars))
+
+    :else
+    (repl/refresh :after 'uxbox.main/run-all-tests)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point (only for uberjar)

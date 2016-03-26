@@ -16,7 +16,7 @@
             [uxbox.persistence :as up]
             [uxbox.migrations]
             [uxbox.util.transit :as t]
-            [uxbox.services.auth :as sauth]
+            [uxbox.services.users :as susers]
             [uxbox.services.projects :as sproj]
             [uxbox.services.pages :as spag])
   (:import java.util.UUID))
@@ -33,11 +33,11 @@
 (defn- create-user
   [conn i]
   (println "create user" i)
-  (sauth/create-user conn
-                     {:username (str "user" i)
-                      :id (mk-uuid "user" i)
-                      :password (hashers/encrypt "123123")
-                      :email (str "user" i ".test@uxbox.io")}))
+  (susers/create-user conn
+                      {:username (str "user" i)
+                       :id (mk-uuid "user" i)
+                       :password (hashers/encrypt "123123")
+                       :email (str "user" i ".test@uxbox.io")}))
 
 (defn- create-project
   [conn i ui]

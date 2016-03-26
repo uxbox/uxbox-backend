@@ -8,6 +8,7 @@
             [mount.core :as mount]
             [suricatta.core :as sc]
             [uxbox.services.auth :as usa]
+            [uxbox.services.users :as usu]
             [uxbox.util.transit :as transit]
             [uxbox.migrations :as umg]
             [uxbox.persistence :as up]
@@ -23,8 +24,10 @@
     (sc/execute conn "drop schema if exists public cascade;")
     (sc/execute conn "create schema public;"))
   (mount/start-with {#'uxbox.config/config +config+})
-  (next)
-  (mount/stop))
+  (try
+    (next)
+    (finally
+      (mount/stop))))
 
 (defn ex-info?
   [v]
@@ -111,5 +114,7 @@
   [conn i]
   (let [data {:username (str "user" i)
               :password  (hashers/encrypt (str "user" i))
+              :metadata nil
+              :fullname (str "User " i)
               :email (str "user" i "@uxbox.io")}]
-    (usa/create-user conn data)))
+    (usu/create-user conn data)))

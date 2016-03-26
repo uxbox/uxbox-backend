@@ -17,8 +17,8 @@
             [uxbox.schema :as us]
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]
+            [uxbox.services.users :as users]
             [uxbox.util.exceptions :as ex]))
-
 
 (def ^:const +auth-opts+
   {:alg :a256kw :enc :a256cbc-hs512})
@@ -38,45 +38,10 @@
   :start (initialize-auth-secret))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Schema
+;; Services
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def +user-schema+
-  {:id [us/uuid]
-   :username [us/required us/string]
-   :email [us/required us/email]
-   :password [us/required us/string]})
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Repository
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn create-user
-  [conn {:keys [id username password email] :as data}]
-  (usc/validate! data +user-schema+)
-  (let [sql (str "INSERT INTO users (id, username, email, password)"
-                 " VALUES (?, ?, ?, ?) RETURNING *;")
-        id (or id (uuid/v4))
-        sqlv [sql id username email password]]
-    (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
-
-(defn find-user-by-id
-  [conn id]
-  (let [sql (str "SELECT * FROM users WHERE id=?")]
-    (some-> (sc/fetch-one conn [sql id])
-            (usc/normalize-attrs))))
-
-(defn find-user-by-username-or-email
-  [conn username]
-  (let [sql (str "SELECT * FROM users WHERE username=? OR email=?")
-        sqlv [sql username username]]
-    (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Service
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Login
 
 (defn- check-user-password
   [user password]
@@ -89,7 +54,7 @@
 
 (defmethod usc/-novelty :auth/login
   [conn {:keys [username password scope]}]
-  (let [user (find-user-by-username-or-email conn username)]
+  (let [user (users/find-user-by-username-or-email conn username)]
     (when-not user
       (throw (ex/ex-info :auth/wrong-crendentials {})))
     (if (check-user-password user password)

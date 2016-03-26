@@ -17,7 +17,7 @@
 
 (defn list-pages
   [{user :identity}]
-  (let [params {:user user :type :page/list}]
+  (let [params {:user user :type :list/pages}]
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
@@ -25,16 +25,18 @@
   [{user :identity params :route-params}]
   (let [params {:user user
                 :project (uuid/from-string (:id params))
-                :type :page/list-by-project}]
+                :type :list/pages-by-project}]
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
 ;; --- Create Page
 
+;; TODO: add validations
+
 (defn create-page
   [{user :identity params :data}]
   (p/alet [params (assoc params
-                         :type :page/create
+                         :type :create/page
                          :user user)
            result (p/await (sv/novelty params))
            loc (str "/api/pages/" (:id result))]
@@ -48,7 +50,7 @@
   [{user :identity params :route-params data :data}]
   (let [params (assoc data
                       :id (uuid/from-string (:id params))
-                      :type :page/update
+                      :type :update/page
                       :user user)]
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
@@ -57,7 +59,7 @@
   [{user :identity params :route-params data :data}]
   (let [params (merge data
                       {:id (uuid/from-string (:id params))
-                       :type :page/update-metadata
+                       :type :update/page-metadata
                        :user user})]
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
@@ -67,7 +69,7 @@
 (defn delete-page
   [{user :identity params :route-params}]
   (let [params {:id (uuid/from-string (:id params))
-                :type :page/delete
+                :type :delete/page
                 :user user}]
     (-> (sv/novelty params)
         (p/then (fn [v] (http/no-content))))))
@@ -86,7 +88,7 @@
   (let [query (validate! query retrieve-page-history-query-schema)
         params (validate! params retrieve-page-history-params-schema)
         params (-> (merge query params)
-                   (assoc :type :page-history/list :user user))]
+                   (assoc :type :list/page-history :user user))]
     (->> (sv/query params)
          (p/map #(http/ok (rsp %))))))
 
@@ -100,7 +102,7 @@
   [{user :identity params :route-params data :data}]
   (let [data (validate! data update-page-history-schema)
         params (assoc data
-                      :type :page-history/update
+                      :type :update/page-history
                       :id (uuid/from-string (:hid params))
                       :user user)]
     (->> (sv/novelty params)
