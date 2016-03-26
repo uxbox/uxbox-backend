@@ -24,6 +24,7 @@
 
 (defmethod handle-exception :default
   [err]
+  (.printStackTrace err)
   (let [response (select-keys (ex-data err) [:type :payload])
         response (assoc response :message (.getMessage err))]
     (http/internal-server-error (rsp response))))
