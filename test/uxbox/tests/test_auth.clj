@@ -12,58 +12,6 @@
 
 (t/use-fixtures :each th/database-reset)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Services Tests
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (t/deftest test-success-auth
-;;   (let [user-data {:username "user1"
-;;                    :fullname "user 1"
-;;                    :password  (hashers/encrypt "user1")
-;;                    :email "user1@uxbox.io"}
-;;         user (with-open [conn (up/get-conn)]
-;;                (usu/create-user conn user-data))
-;;         data {:type :auth/login
-;;               :scope "foobar"
-;;               :username "user1"
-;;               :password "user1"}
-;;         result @(usv/novelty data)]
-;;     (t/is (contains? result :token))
-;;     (t/is (string? (:token result)))))
-
-;; (t/deftest test-success-by-email
-;;   (let [user-data {:username "user1"
-;;                    :password  (hashers/encrypt "user1")
-;;                    :fullname "user 1"
-;;                    :email "user1@uxbox.io"}
-;;         user (with-open [conn (up/get-conn)]
-;;                (usu/create-user conn user-data))
-;;         data {:type :auth/login
-;;               :username "user1@uxbox.io"
-;;               :fullname "user 1"
-;;               :password "user1"}
-;;         result @(usv/novelty data)]
-;;     (t/is (contains? result :token))
-;;     (t/is (string? (:token result)))))
-
-;; (t/deftest test-failed-auth
-;;   (let [user-data {:username "user2"
-;;                    :fullname "user 2"
-;;                    :password  (hashers/encrypt "user2")
-;;                    :email "user2@uxbox.io"}
-;;         user (with-open [conn (up/get-conn)]
-;;                (usu/create-user conn user-data))
-;;         data {:type :auth/login
-;;               :username "user1"
-;;               :password "user1"}
-;;         result (th/await (usv/novelty data))]
-;;     (t/is (th/ex-info? result))))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Frontend Test
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (t/deftest test-http-success-auth
   (let [data {:username "user1"
               :fullname "user 1"
