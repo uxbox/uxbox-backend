@@ -4,7 +4,13 @@
   :license {:name "MPL 2.0" :url "https://www.mozilla.org/en-US/MPL/2.0/"}
   :source-paths ["src"]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
-  :jvm-opts ["-Dclojure.compiler.direct-linking=true"]
+  :jvm-opts ["-Dclojure.compiler.direct-linking=true"
+             "-Dcom.sun.management.jmxremote.port=9090"
+             "-Dcom.sun.management.jmxremote.authenticate=false"
+             "-Dcom.sun.management.jmxremote.ssl=false"
+             "-Dcom.sun.management.jmxremote.rmi.port=9090"
+             "-Djava.rmi.server.hostname=0.0.0.0"
+             "-XX:+UseG1GC" "-Xms3G" "-Xmx3G"]
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.slf4j/slf4j-simple "1.7.19"]
                  [funcool/struct "0.1.0-SNAPSHOT"]
