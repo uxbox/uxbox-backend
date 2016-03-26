@@ -6,3 +6,11 @@ CREATE TABLE IF NOT EXISTS txlog (
   created_at timestamptz DEFAULT clock_timestamp(),
   payload text
 ) WITH (OIDS=FALSE);
+
+CREATE OR REPLACE FUNCTION update_modified_at()
+  RETURNS TRIGGER AS $updt$
+  BEGIN
+    NEW.modified_at := clock_timestamp();
+    RETURN NEW;
+  END;
+$updt$ LANGUAGE plpgsql;

@@ -1,9 +1,9 @@
 CREATE TABLE IF NOT EXISTS projects (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  created_at timestamptz DEFAULT clock_timestamp(),
-  modified_at timestamptz DEFAULT clock_timestamp(),
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
 
-  version bigint DEFAULT 0,
+  version bigint NOT NULL DEFAULT 0,
 
   "user" uuid NOT NULL REFERENCES users(id),
   name text NOT NULL
@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS pages (
   "user" uuid NOT NULL REFERENCES users(id),
   project uuid NOT NULL REFERENCES projects(id),
   name text NOT NULL,
-  data text,
+  data text NOT NULL,
+  options text NOT NULL,
 
   version bigint DEFAULT 0,
 
@@ -28,15 +29,15 @@ CREATE TABLE IF NOT EXISTS pages (
 
 CREATE TABLE IF NOT EXISTS pages_history (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  page uuid REFERENCES pages(id),
-  "user" uuid REFERENCES users(id),
-  created_at timestamptz,
+  page uuid NOT NULL REFERENCES pages(id),
+  "user" uuid NOT NULL REFERENCES users(id),
+  created_at timestamptz NOT NULL,
 
   pinned bool NOT NULL DEFAULT false,
-  label text DEFAULT '',
+  label text NOT NULL DEFAULT '',
 
-  data text,
-  version bigint DEFAULT 0
+  data text NOT NULL,
+  version bigint NOT NULL DEFAULT 0
 ) WITH (OIDS=FALSE);
 
 CREATE OR REPLACE FUNCTION handle_occ()
@@ -79,14 +80,6 @@ CREATE OR REPLACE FUNCTION handle_page_update()
     RETURN NEW;
   END;
 $pagechange$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION update_modified_at()
-  RETURNS TRIGGER AS $updt$
-  BEGIN
-    NEW.modified_at := clock_timestamp();
-    RETURN NEW;
-  END;
-$updt$ LANGUAGE plpgsql;
 
 -- Changes
 
