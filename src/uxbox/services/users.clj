@@ -24,7 +24,7 @@
 (declare find-user-by-id)
 (declare find-user-by-username-or-email)
 
-;; --- Query User Profile (own)
+;; --- Retrieve User Profile (own)
 
 (def ^:private retrieve-profile-schema
   {:user [us/required us/uuid]})
@@ -46,19 +46,21 @@
 
 (defn update-profile
   [conn {:keys [id username email fullname metadata]}]
-  (let [mdata (codecs/bytes->str (t/encode metadata))
+  (let [metadata (codecs/bytes->str (t/encode metadata))
         sql (str "UPDATE users SET "
                  " username=?,fullname=?,email=?,metadata=? "
                  " WHERE id = ? "
                  " RETURNING *")]
     (some-> (sc/fetch-one conn [sql username fullname email metadata id])
             (usc/normalize-attrs)
-            (decode-user-data))))
+            (decode-user-data)
+            (dissoc :password))))
 
 (defmethod usc/-novelty :update/profile
   [conn params]
   (some->> (usc/validate! params update-profile-schema)
            (update-profile conn)))
+
 
 ;; --- Update Password
 

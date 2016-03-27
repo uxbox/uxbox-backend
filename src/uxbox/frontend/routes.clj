@@ -13,6 +13,7 @@
             [catacumba.handlers.misc :as cmisc]
             [uxbox.services.auth :as sauth]
             [uxbox.frontend.auth :as auth]
+            [uxbox.frontend.users :as users]
             [uxbox.frontend.errors :as errors]
             [uxbox.frontend.projects :as projects]
             [uxbox.frontend.pages :as pages]
@@ -70,4 +71,7 @@
        [:put "pages/:id" #'pages/update-page]
        [:delete "pages/:id" #'pages/delete-page]
        [:post "pages" #'pages/create-page]
-       [:get "pages" #'pages/list-pages]]])))
+       [:get "pages" #'pages/list-pages]
+
+       [:get "profile/me" #'users/retrieve-profile]
+       [:put "profile/me" #'users/update-profile]]])))
