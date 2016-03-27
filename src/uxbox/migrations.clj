@@ -15,6 +15,10 @@
 ;; Migrations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defmigration utils-0000
+  "Create a initial version of txlog table."
+  :up (mg/resource "migrations/0000.main.utils.up.sql"))
+
 (defmigration txlog-0001
   "Create a initial version of txlog table."
   :up (mg/resource "migrations/0001.txlog.create.up.sql"))
@@ -33,7 +37,8 @@
 
 (def +migrations+
   {:name :uxbox-main
-   :steps [[:0001 txlog-0001]
+   :steps [[:0000 utils-0000]
+           [:0001 txlog-0001]
            [:0002 auth-0002]
            [:0003 projects-0003]]})
 

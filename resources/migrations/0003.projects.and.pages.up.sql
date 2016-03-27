@@ -40,20 +40,6 @@ CREATE TABLE IF NOT EXISTS pages_history (
   version bigint NOT NULL DEFAULT 0
 ) WITH (OIDS=FALSE);
 
-CREATE OR REPLACE FUNCTION handle_occ()
-  RETURNS TRIGGER AS $occ$
-  BEGIN
-    IF (NEW.version != OLD.version) THEN
-      RAISE EXCEPTION 'Version missmatch: expected % given %',
-            OLD.version, NEW.version
-            USING ERRCODE='P0002';
-    ELSE
-      NEW.version := NEW.version + 1;
-    END IF;
-    RETURN NEW;
-  END;
-$occ$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION handle_project_delete()
   RETURNS TRIGGER AS $projectdelete$
   BEGIN
