@@ -36,6 +36,8 @@
   (susers/create-user conn
                       {:username (str "user" i)
                        :id (mk-uuid "user" i)
+                       :fullname (str "User " i)
+                       :metadata {}
                        :password (hashers/encrypt "123123")
                        :email (str "user" i ".test@uxbox.io")}))
 
