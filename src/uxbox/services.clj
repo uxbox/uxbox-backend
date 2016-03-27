@@ -15,7 +15,8 @@
             [uxbox.services.core :as usc]
             [uxbox.services.auth]
             [uxbox.services.projects]
-            [uxbox.services.pages]))
+            [uxbox.services.pages]
+            [uxbox.services.library]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Impl.

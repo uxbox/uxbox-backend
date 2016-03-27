@@ -5,7 +5,7 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.schema
-  (:refer-clojure :exclude [keyword uuid vector boolean map])
+  (:refer-clojure :exclude [keyword uuid vector boolean map set])
   (:require [struct.core :as st]
             [uxbox.util.exceptions :as ex])
   (:import java.time.Instant))
@@ -42,6 +42,11 @@
   {:message "must be a map"
    :optional true
    :validate map?})
+
+(def set
+  {:message "must be a set"
+   :optional true
+   :validate set?})
 
 (def coll
   {:message "must be a collection"

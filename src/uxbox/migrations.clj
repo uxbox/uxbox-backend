@@ -31,6 +31,10 @@
   "Create initial tables for projects and pages."
   :up (mg/resource "migrations/0003.projects.and.pages.up.sql"))
 
+(defmigration color-collections-0004
+  "Create initial tables for color collections."
+  :up (mg/resource "migrations/0004.color.collections.up.sql"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -40,7 +44,8 @@
    :steps [[:0000 utils-0000]
            [:0001 txlog-0001]
            [:0002 auth-0002]
-           [:0003 projects-0003]]})
+           [:0003 projects-0003]
+           [:0004 color-collections-0004]]})
 
 (defn- migrate
   []

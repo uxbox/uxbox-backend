@@ -17,6 +17,7 @@
             [uxbox.frontend.errors :as errors]
             [uxbox.frontend.projects :as projects]
             [uxbox.frontend.pages :as pages]
+            [uxbox.frontend.library :as library]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
@@ -74,4 +75,9 @@
        [:get "pages" #'pages/list-pages]
 
        [:get "profile/me" #'users/retrieve-profile]
-       [:put "profile/me" #'users/update-profile]]])))
+       [:put "profile/me" #'users/update-profile]
+
+       [:put "library/colors/:id" #'library/update-color-collection]
+       [:delete "library/colors/:id" #'library/delete-color-collection]
+       [:get "library/colors" #'library/list-color-collections]
+       [:post "library/colors" #'library/create-color-collection]]])))

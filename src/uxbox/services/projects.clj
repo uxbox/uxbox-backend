@@ -41,7 +41,7 @@
 
 (def ^:private update-project-schema
   (assoc create-project-schema
-         :version [us/required us/number]))
+         :version [us/required us/integer]))
 
 (defmethod usc/-novelty :update/project
   [conn {:keys [name version id user] :as data}]
@@ -61,9 +61,8 @@
 (defmethod usc/-novelty :delete/project
   [conn {:keys [id user] :as data}]
   (usc/validate! data delete-project-schema)
-  (let [sql "DELETE FROM projects WHERE id=?::uuid AND \"user\"=?::uuid"]
-    (sc/execute conn [sql id user])
-    nil))
+  (let [sql "DELETE FROM projects WHERE id=? AND \"user\"=?"]
+    (pos? (sc/execute conn [sql id user]))))
 
 ;; --- List Projects
 
