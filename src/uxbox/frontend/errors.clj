@@ -63,7 +63,7 @@
     (instance? clojure.lang.ExceptionInfo err)
     (handle-exception err)
 
-    (instance? org.jooq.exception.DataAccessException)
+    (instance? org.jooq.exception.DataAccessException err)
     (handle-data-access-exception err)
 
     :else
