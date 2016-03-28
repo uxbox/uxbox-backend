@@ -62,5 +62,6 @@
 (def uuid-like st/uuid-like)
 (def uuid st/uuid)
 (def integer-like st/integer-like)
+(def boolean-like st/boolean-like)
 (def email st/email)
 (def validate st/validate)
