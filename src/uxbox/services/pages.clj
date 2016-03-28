@@ -172,7 +172,8 @@
    :since [us/integer]})
 
 (defn get-page-history
-  [conn {:keys [id user since max pinned] :or {since Long/MAX_VALUE max 10}}]
+  [conn {:keys [id user since max pinned] :or {since Long/MAX_VALUE
+                                               max Long/MAX_VALUE}}]
   (let [sql (str "SELECT * FROM pages_history "
                  " WHERE \"user\"=? AND page=? AND version < ?"
                  (if pinned " AND pinned = true " "")
