@@ -5,11 +5,11 @@
   :source-paths ["src"]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
   :jvm-opts ["-Dclojure.compiler.direct-linking=true"
-             "-Dcom.sun.management.jmxremote.port=9090"
-             "-Dcom.sun.management.jmxremote.authenticate=false"
-             "-Dcom.sun.management.jmxremote.ssl=false"
-             "-Dcom.sun.management.jmxremote.rmi.port=9090"
-             "-Djava.rmi.server.hostname=0.0.0.0"
+             ;; "-Dcom.sun.management.jmxremote.port=9090"
+             ;; "-Dcom.sun.management.jmxremote.authenticate=false"
+             ;; "-Dcom.sun.management.jmxremote.ssl=false"
+             ;; "-Dcom.sun.management.jmxremote.rmi.port=9090"
+             ;; "-Djava.rmi.server.hostname=0.0.0.0"
              "-XX:+UseG1GC" "-Xms200m" "-Xmx200m"]
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.slf4j/slf4j-simple "1.7.19"]
