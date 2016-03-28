@@ -77,8 +77,9 @@
 ;; --- Retrieve Page History
 
 (def retrieve-page-history-query-schema
-  {:max [us/integer-like [us/in-range 0 100]]
-   :since [us/integer-like us/positive]})
+  {:max [us/integer-like [us/in-range 0 Long/MAX_VALUE]]
+   :since [us/integer-like us/positive]
+   :pinned [us/boolean-like]})
 
 (def retrieve-page-history-params-schema
   {:id [us/required us/uuid-like]})
