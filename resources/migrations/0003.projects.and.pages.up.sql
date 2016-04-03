@@ -51,6 +51,12 @@ $projectdelete$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION handle_page_delete()
   RETURNS TRIGGER AS $pagedelete$
   BEGIN
+    --- Update projects modified_at attribute when a
+    --- page of that project is modified.
+    UPDATE projects SET modified_at = clock_timestamp()
+      WHERE id = OLD.project;
+
+    --- Delete all history entries if page is deleted.
     DELETE FROM pages_history WHERE page = OLD.id;
     RETURN OLD;
   END;
@@ -59,10 +65,18 @@ $pagedelete$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION handle_page_update()
   RETURNS TRIGGER AS $pagechange$
   BEGIN
+    --- Update projects modified_at attribute when a
+    --- page of that project is modified.
+    UPDATE projects SET modified_at = clock_timestamp()
+      WHERE id = OLD.project;
+
+    --- Register a new history entry if the data
+    --- property is changed.
     IF (OLD.data != NEW.data) THEN
       INSERT INTO pages_history (page, "user", created_at, data, version)
         VALUES (OLD.id, OLD."user", OLD.modified_at, OLD.data, OLD.version);
     END IF;
+
     RETURN NEW;
   END;
 $pagechange$ LANGUAGE plpgsql;
