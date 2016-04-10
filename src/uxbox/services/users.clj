@@ -22,6 +22,7 @@
 
 (declare decode-user-data)
 (declare find-user-by-id)
+(declare find-full-user-by-id)
 (declare find-user-by-username-or-email)
 
 ;; --- Retrieve User Profile (own)
@@ -66,18 +67,29 @@
 
 (def ^:private update-password-schema
   {:id [us/required us/uuid]
-   :password [us/required us/string]})
+   :password [us/required us/string]
+   :old-password [us/required us/string]})
 
 (defn update-password
   [conn {:keys [id password]}]
-  (let [password (hashers/encrypt "password")
+  (let [password (hashers/encrypt password)
         sqlv ["UPDATE users SET password=? WHERE id=?" password id]]
     (pos? (sc/execute conn sqlv))))
+
+(defn validate-old-password
+  [conn params]
+  (let [user (find-full-user-by-id conn (:id params))]
+    (when-not user
+      (throw (ex/ex-info :auth/wrong-crendentials {})))
+    (when-not (hashers/check (:old-password params) (:password user))
+      (throw (ex/ex-info :auth/wrong-credentials {}))))
+  params)
 
 (defmethod usc/-novelty :update/password
   [conn params]
   (->> (usc/validate! params update-password-schema)
-       (update-password-schema conn)))
+       (validate-old-password conn)
+       (update-password conn)))
 
 ;; --- Create User
 
@@ -104,6 +116,12 @@
 
 
 ;; --- Helpers
+
+(defn find-full-user-by-id
+  [conn id]
+  (let [sql (str "SELECT * FROM users WHERE id=?")]
+    (some-> (sc/fetch-one conn [sql id])
+            (usc/normalize-attrs))))
 
 (defn find-user-by-id
   [conn id]

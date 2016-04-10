@@ -27,3 +27,11 @@
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
 
+(defn update-password
+  [{user :identity data :data}]
+  (let [params (assoc data
+                      :type :update/password
+                      :id user)]
+    (-> (sv/novelty params)
+        (p/then #(http/ok (rsp %))))))
+

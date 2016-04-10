@@ -76,6 +76,7 @@
 
        [:get "profile/me" #'users/retrieve-profile]
        [:put "profile/me" #'users/update-profile]
+       [:put "profile/me/password" #'users/update-password]
 
        [:put "library/colors/:id" #'library/update-color-collection]
        [:delete "library/colors/:id" #'library/delete-color-collection]
