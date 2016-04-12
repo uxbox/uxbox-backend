@@ -13,6 +13,8 @@
             [uxbox.util.transit :as t]
             [uxbox.services.core :as usc]))
 
+(def validate! (partial us/validate! :service/wrong-arguments))
+
 (declare decode-data)
 
 ;; --- Create Color Collection
@@ -36,7 +38,7 @@
 
 (defmethod usc/-novelty :create/color-collection
   [conn params]
-  (->> (usc/validate! params create-color-coll-schema)
+  (->> (validate! params create-color-coll-schema)
        (create-color-collection conn)))
 
 ;; --- Update Color Collection
@@ -57,7 +59,7 @@
 
 (defmethod usc/-novelty :update/color-collection
   [conn params]
-  (->> (usc/validate! params update-color-coll-schema)
+  (->> (validate! params update-color-coll-schema)
        (update-color-coll-schema conn)))
 
 ;; --- Delete Color Collection
@@ -74,7 +76,7 @@
 
 (defmethod usc/-novelty :delete/color-collection
   [conn params]
-  (->> (usc/validate! params delete-color-coll-schema)
+  (->> (validate! params delete-color-coll-schema)
        (delete-color-collection conn)))
 
 ;; --- List Projects

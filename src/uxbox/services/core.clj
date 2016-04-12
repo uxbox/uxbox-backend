@@ -10,40 +10,23 @@
             [struct.core :as st]
             [uxbox.util.exceptions :as ex]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Main Api
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(def +hierarchy+
-  (as-> (make-hierarchy) $
-    (derive $ :auth/login :command)))
+;; --- Main Api
 
 (defmulti -novelty
-  (fn [conn data] (:type data))
-  :hierarchy #'+hierarchy+)
+  (fn [conn data] (:type data)))
 
 (defmulti -query
-  (fn [conn data] (:type data))
-  :hierarchy #'+hierarchy+)
+  (fn [conn data] (:type data)))
 
 (defmethod -novelty :default
   [conn data]
-  (throw (ex-info "Not implemented" {})))
+  (throw (ex/ex-info :not-implemented data)))
 
 (defmethod -query :default
   [conn data]
-  (throw (ex-info "Not implemented" {})))
+  (throw (ex/ex-info :not-implemented data)))
 
-(defn validate!
-  [data schema]
-  (let [[errors data] (st/validate data schema)]
-    (if (seq errors)
-      (throw (ex/ex-info :internal/validation errors))
-      data)))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Common Helpers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Common Helpers
 
 (defn normalize-attrs
   "Recursively transforms all map keys from strings to keywords."

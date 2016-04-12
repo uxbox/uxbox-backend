@@ -9,9 +9,11 @@
             [catacumba.http :as http]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
-            [uxbox.frontend.core :refer (validate!)]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
+
+(def validate-form! (partial us/validate! :form/validation))
+(def validate-query! (partial us/validate! :query/validation))
 
 ;; --- List Pages
 
@@ -31,80 +33,98 @@
 
 ;; --- Create Page
 
-;; TODO: add validations
+(def ^:private create-page-schema
+  {:id [us/uuid]
+   :data [us/coll]
+   :options [us/coll]
+   :project [us/required us/uuid]
+   :name [us/required us/string]
+   :width [us/required us/integer]
+   :height [us/required us/integer]
+   :layout [us/required us/string]})
 
 (defn create-page
-  [{user :identity params :data}]
-  (p/alet [params (assoc params
-                         :type :create/page
-                         :user user)
-           result (p/await (sv/novelty params))
-           loc (str "/api/pages/" (:id result))]
-    (http/created loc (rsp result))))
+  [{user :identity data :data}]
+  (let [data (validate-form! data create-page-schema)
+        message (assoc data
+                       :type :create/page
+                       :user user)]
+    (->> (sv/novelty message)
+         (p/map (fn [result]
+                  (let [loc (str "/api/pages/" (:id result))]
+                    (http/created loc (rsp result))))))))
 
 ;; --- Update Page
 
-;; TODO: add validations
+(def ^:private update-page-schema
+  (assoc create-page-schema
+         :version [us/required us/number]))
 
 (defn update-page
   [{user :identity params :route-params data :data}]
-  (let [params (assoc data
-                      :id (uuid/from-string (:id params))
-                      :type :update/page
-                      :user user)]
-    (-> (sv/novelty params)
+  (let [data (validate-form! data update-page-schema)
+        message (assoc data
+                       :id (uuid/from-string (:id params))
+                       :type :update/page
+                       :user user)]
+    (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
+
+
+;; --- Update Page Metadata
+
+(def ^:private update-page-metadata-schema
+  (dissoc update-page-schema :data))
 
 (defn update-page-metadata
   [{user :identity params :route-params data :data}]
-  (let [params (merge data
-                      {:id (uuid/from-string (:id params))
+  (let [data (validate-form! data update-page-metadata-schema)
+        message (assoc data
+                       :id (uuid/from-string (:id params))
                        :type :update/page-metadata
-                       :user user})]
-    (-> (sv/novelty params)
+                       :user user)]
+    (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
 
 ;; --- Delete Page
 
 (defn delete-page
   [{user :identity params :route-params}]
-  (let [params {:id (uuid/from-string (:id params))
-                :type :delete/page
-                :user user}]
-    (-> (sv/novelty params)
+  (let [message {:id (uuid/from-string (:id params))
+                 :type :delete/page
+                 :user user}]
+    (-> (sv/novelty message)
         (p/then (fn [v] (http/no-content))))))
 
 ;; --- Retrieve Page History
 
-(def retrieve-page-history-query-schema
-  {:max [us/integer-like [us/in-range 0 Long/MAX_VALUE]]
-   :since [us/integer-like us/positive]
-   :pinned [us/boolean-like]})
-
-(def retrieve-page-history-params-schema
-  {:id [us/required us/uuid-like]})
+(def ^:private retrieve-page-history-query-schema
+  {:max [us/integer-str [us/in-range 0 Long/MAX_VALUE]]
+   :since [us/integer-str]
+   :pinned [us/boolean-str]})
 
 (defn retrieve-page-history
   [{user :identity params :route-params query :query-params}]
-  (let [query (validate! query retrieve-page-history-query-schema)
-        params (validate! params retrieve-page-history-params-schema)
-        params (-> (merge query params)
-                   (assoc :type :list/page-history :user user))]
-    (->> (sv/query params)
+  (let [query (validate-query! query retrieve-page-history-query-schema)
+        message (assoc query
+                       :id (uuid/from-string (:id params))
+                       :type :list/page-history
+                       :user user)]
+    (->> (sv/query message)
          (p/map #(http/ok (rsp %))))))
 
 ;; --- Update Page History
 
-(def update-page-history-schema
+(def ^:private update-page-history-schema
   {:label [us/required us/string]
    :pinned [us/required us/boolean]})
 
 (defn update-page-history
   [{user :identity params :route-params data :data}]
-  (let [data (validate! data update-page-history-schema)
-        params (assoc data
-                      :type :update/page-history
-                      :id (uuid/from-string (:hid params))
-                      :user user)]
-    (->> (sv/novelty params)
+  (let [data (validate-form! data update-page-history-schema)
+        message (assoc data
+                       :type :update/page-history
+                       :id (uuid/from-string (:hid params))
+                       :user user)]
+    (->> (sv/novelty message)
          (p/map #(http/ok (rsp %))))))

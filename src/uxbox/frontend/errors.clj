@@ -12,7 +12,12 @@
 
 (defmulti handle-exception #(:type (ex-data %)))
 
-(defmethod handle-exception :validation
+(defmethod handle-exception :form/validation
+  [err]
+  (let [response (select-keys (ex-data err) [:type :payload])]
+    (http/bad-request (rsp response))))
+
+(defmethod handle-exception :query/validation
   [err]
   (let [response (select-keys (ex-data err) [:type :payload])]
     (http/bad-request (rsp response))))
@@ -37,13 +42,15 @@
     (case state
       "P0002"
       (-> (rsp {:message message
-                :code "errors.api.occ"})
-          (http/bad-request))
+                :payload nil
+                :type :occ})
+          (http/precondition-failed))
 
       (do
         (.printStackTrace err)
         (-> (rsp {:message message
-                  :code (str "errors.api." state)})
+                  :type :unexpected
+                  :payload nil})
             (http/internal-server-error))))))
 
 (defn handle-unexpected-exception
@@ -51,9 +58,9 @@
   (.printStackTrace err)
   (let [message (.getMessage err)]
     (-> (rsp {:message message
-              :code "errors.api.unexpected"})
+              :type :unexpected
+              :payload nil})
         (http/internal-server-error))))
-
 
 ;; --- Entry Point
 

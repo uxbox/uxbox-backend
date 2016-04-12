@@ -17,6 +17,8 @@
             [uxbox.services.locks :as locks]
             [uxbox.services.auth :as usauth]))
 
+(def validate! (partial us/validate! :service/wrong-arguments))
+
 (declare decode-page-data)
 (declare decode-page-options)
 
@@ -50,8 +52,8 @@
          (decode-page-options))))
 
 (defmethod usc/-novelty :create/page
-  [conn {:keys [data] :as params}]
-  (->> (usc/validate! params create-page-schema)
+  [conn params]
+  (->> (validate! params create-page-schema)
        (create-page conn)))
 
 ;; --- Update Page
@@ -77,8 +79,8 @@
             (decode-page-options))))
 
 (defmethod usc/-novelty :update/page
-  [conn {:keys [data] :as params}]
-  (->> (usc/validate! params update-page-schema)
+  [conn params]
+  (->> (validate! params update-page-schema)
        (update-page conn)))
 
 ;; --- Update Page Metadata
@@ -103,7 +105,7 @@
 
 (defmethod usc/-novelty :update/page-metadata
   [conn params]
-  (->> (usc/validate! params update-page-metadata-schema)
+  (->> (validate! params update-page-metadata-schema)
        (update-page-metadata conn)))
 
 ;; --- Delete Page
@@ -115,13 +117,12 @@
 (defn delete-page
   [conn {:keys [id user] :as params}]
   (let [sql "DELETE FROM pages WHERE id=? AND \"user\"=?"]
-    (sc/execute conn [sql id user])
-    nil))
+    (pos? (sc/execute conn [sql id user]))))
 
 (defmethod usc/-novelty :delete/page
   [conn params]
-  (usc/validate! params delete-page-schema)
-  (delete-page conn params))
+  (->> (validate! params delete-page-schema)
+       (delete-page conn)))
 
 ;; --- List Pages
 
@@ -148,7 +149,7 @@
    :project [us/required us/uuid]})
 
 (defn get-pages-for-user-and-project
-  [conn user project]
+  [conn {:keys [user project]}]
   (let [sql (str "SELECT * FROM pages "
                  " WHERE \"user\"=? AND project=? "
                  " ORDER BY created_at ASC")]
@@ -159,8 +160,8 @@
 
 (defmethod usc/-query :list/pages-by-project
   [conn {:keys [user project] :as params}]
-  (usc/validate! params list-pages-by-project-schema)
-  (get-pages-for-user-and-project conn user project))
+  (->> (validate! params list-pages-by-project-schema)
+       (get-pages-for-user-and-project conn)))
 
 ;; --- Page History (Query)
 
@@ -172,8 +173,9 @@
    :since [us/integer]})
 
 (defn get-page-history
-  [conn {:keys [id user since max pinned] :or {since Long/MAX_VALUE
-                                               max Long/MAX_VALUE}}]
+  [conn {:keys [id user since max pinned]
+         :or {since Long/MAX_VALUE
+              max 10}}]
   (let [sql (str "SELECT * FROM pages_history "
                  " WHERE \"user\"=? AND page=? AND version < ?"
                  (if pinned " AND pinned = true " "")
@@ -186,7 +188,7 @@
 
 (defmethod usc/-query :list/page-history
   [conn params]
-  (->> (usc/validate! params list-page-history-schema)
+  (->> (validate! params list-page-history-schema)
        (get-page-history conn)))
 
 ;; --- Update Page History
@@ -209,7 +211,7 @@
 
 (defmethod usc/-novelty :update/page-history
   [conn params]
-  (->> (usc/validate! params update-page-history-schema)
+  (->> (validate! params update-page-history-schema)
        (update-page-history conn)))
 
 ;; --- Helpers

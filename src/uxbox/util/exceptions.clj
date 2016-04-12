@@ -9,7 +9,6 @@
   (:refer-clojure :exclude [ex-info]))
 
 (defn ex-info
-  ([type] (ex-info type {} ""))
   ([type payload] (ex-info type payload ""))
   ([type payload message]
    (clojure.core/ex-info message {:type type :payload payload})))

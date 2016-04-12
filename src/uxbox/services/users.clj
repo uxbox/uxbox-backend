@@ -20,6 +20,8 @@
             [uxbox.util.transit :as t]
             [uxbox.util.exceptions :as ex]))
 
+(def validate! (partial us/validate! :service/wrong-arguments))
+
 (declare decode-user-data)
 (declare find-user-by-id)
 (declare find-full-user-by-id)
@@ -32,7 +34,7 @@
 
 (defmethod usc/-query :retrieve/profile
   [conn params]
-  (let [params (usc/validate! params retrieve-profile-schema)]
+  (let [params (validate! params retrieve-profile-schema)]
     (some-> (find-user-by-id conn (:user params))
             (decode-user-data))))
 
@@ -59,35 +61,34 @@
 
 (defmethod usc/-novelty :update/profile
   [conn params]
-  (some->> (usc/validate! params update-profile-schema)
+  (some->> (validate! params update-profile-schema)
            (update-profile conn)))
-
 
 ;; --- Update Password
 
 (def ^:private update-password-schema
-  {:id [us/required us/uuid]
+  {:user [us/required us/uuid]
    :password [us/required us/string]
    :old-password [us/required us/string]})
 
 (defn update-password
-  [conn {:keys [id password]}]
+  [conn {:keys [user password]}]
   (let [password (hashers/encrypt password)
-        sqlv ["UPDATE users SET password=? WHERE id=?" password id]]
+        sql "UPDATE users SET password=? WHERE id=?"
+        sqlv [sql password user]]
     (pos? (sc/execute conn sqlv))))
 
-(defn validate-old-password
-  [conn params]
-  (let [user (find-full-user-by-id conn (:id params))]
-    (when-not user
-      (throw (ex/ex-info :auth/wrong-crendentials {})))
-    (when-not (hashers/check (:old-password params) (:password user))
-      (throw (ex/ex-info :auth/wrong-credentials {}))))
-  params)
+(defn- validate-old-password
+  [conn {:keys [user old-password] :as params}]
+  (let [user (find-full-user-by-id conn user)]
+    (when-not (hashers/check old-password (:password user))
+      (let [params {:old-password '("errors.api.form.old-password-not-match")}]
+        (throw (ex/ex-info :form/validation params))))
+    params))
 
 (defmethod usc/-novelty :update/password
   [conn params]
-  (->> (usc/validate! params update-password-schema)
+  (->> (validate! params update-password-schema)
        (validate-old-password conn)
        (update-password conn)))
 
@@ -103,7 +104,7 @@
 
 (defn create-user
   [conn {:keys [id username password email fullname metadata] :as data}]
-  (usc/validate! data create-user-schema)
+  (validate! data create-user-schema)
   (let [metadata (codecs/bytes->str (t/encode metadata))
         sql (str "INSERT INTO users (id, fullname, username, email, "
                  "                   password, metadata)"
@@ -113,7 +114,6 @@
     (->> (sc/fetch-one conn sqlv)
          (usc/normalize-attrs)
          (decode-user-data))))
-
 
 ;; --- Helpers
 

@@ -10,58 +10,64 @@
             [uxbox.util.exceptions :as ex])
   (:import java.time.Instant))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Validators
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; (v/defvalidator max-len
-;;   "Validate if `v` is at least smaller that `n`."
-;;   {:default-message-format "% must be lees than the maximum."}
-;;   [v n]
-;;   (let [len (count v)]
-;;     (>= len v)))
-
-;; (v/defvalidator min-len
-;;   "Validate if `v` is at least larger that `n`."
-;;   {:default-message-format "% must be greater than the minimum."}
-;;   [v n]
-;;   (let [len (count v)]
-;;     (>= v len)))
+;; --- Validators
 
 (def datetime
   {:message "must be an instant"
    :optional true
    :validate #(instance? Instant %)})
 
-(def positive
-  {:message "must be positive"
-   :optional true
-   :validate pos?})
+(def required
+  (assoc st/required :message "errors.form.required"))
 
-(def map
-  {:message "must be a map"
-   :optional true
-   :validate map?})
+(def string
+  (assoc st/string :message "errors.form.string"))
 
-(def set
-  {:message "must be a set"
-   :optional true
-   :validate set?})
+(def number
+  (assoc st/number :message "errors.form.number"))
 
-(def coll
-  {:message "must be a collection"
-   :optional true
-   :validate coll?})
+(def integer
+  (assoc st/integer :message "errors.form.integer"))
 
-(def required st/required)
-(def number st/number)
-(def integer st/integer)
-(def boolean st/boolean)
-(def string st/string)
+(def boolean
+  (assoc st/boolean :message "errors.form.bool"))
+
+(def identical-to
+  (assoc st/identical-to :message "errors.form.identical-to"))
+
 (def in-range st/in-range)
-(def uuid-like st/uuid-like)
+(def uuid-str st/uuid-str)
 (def uuid st/uuid)
-(def integer-like st/integer-like)
-(def boolean-like st/boolean-like)
+(def integer-str st/integer-str)
+(def boolean-str st/boolean-str)
 (def email st/email)
+(def set st/set)
+(def map st/map)
+(def coll st/coll)
+(def positive st/positive)
+
+(def max-len
+  {:message "errors.form.max-len"
+   :optional true
+   :validate (fn [v n]
+               (let [len (count v)]
+                 (>= len v)))})
+
+(def min-len
+  {:message "errors.form.min-len"
+   :optional true
+   :validate (fn [v n]
+               (>= (count v) n))})
+
+;; --- Public Api
+
 (def validate st/validate)
+
+(defn validate!
+  ([data schema]
+   (validate! :validation data schema))
+  ([type data schema]
+   (let [[errors data] (st/validate data schema)]
+     (if errors
+       (throw (ex/ex-info type errors))
+       data))))

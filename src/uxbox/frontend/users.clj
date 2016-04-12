@@ -12,6 +12,10 @@
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
+(def validate-form! (partial us/validate! :form/validation))
+
+;; --- Retrieve Profile
+
 (defn retrieve-profile
   [{user :identity}]
   (let [params {:user user
@@ -19,19 +23,36 @@
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
+;; --- Update Profile
+
+(def ^:private update-profile-schema
+  {:id [us/required us/uuid]
+   :username [us/required us/string]
+   :email [us/required us/email]
+   :fullname [us/required us/string]
+   :metadata [us/coll]})
+
 (defn update-profile
   [{user :identity data :data}]
-  (let [params (assoc data
-                      :type :update/profile
-                      :user user)]
-    (-> (sv/novelty params)
+  (let [params (validate-form! data update-profile-schema)
+        message (assoc params
+                       :type :update/profile
+                       :user user)]
+    (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
+
+;; --- Update Password
+
+(def ^:private update-password-schema
+  {:password [us/required us/string [us/min-len 6]]
+   :old-password [us/required us/string]})
 
 (defn update-password
   [{user :identity data :data}]
-  (let [params (assoc data
+  (let [params (validate-form! data update-password-schema)
+        message (assoc params
                       :type :update/password
-                      :id user)]
+                      :user user)]
     (-> (sv/novelty params)
         (p/then #(http/ok (rsp %))))))
 

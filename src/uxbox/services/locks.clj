@@ -5,7 +5,7 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.services.locks
-  "Advirsory locks for proper handling concurrent modifications
+  "Advirsory locks for specific handling concurrent modifications
   on particular objects in the database."
   (:require [suricatta.core :as sc])
   (:import clojure.lang.Murmur3))

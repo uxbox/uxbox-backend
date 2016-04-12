@@ -11,10 +11,10 @@
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.persistence :as up]
-            [uxbox.util.transit :as t]
             [uxbox.services.core :as usc]
-            [uxbox.services.locks :as locks]
-            [uxbox.services.auth :as usauth]))
+            [uxbox.util.transit :as t]))
+
+(def validate! (partial us/validate! :service/wrong-arguments))
 
 ;; --- Create Project
 
@@ -34,7 +34,7 @@
 
 (defmethod usc/-novelty :create/project
   [conn params]
-  (->> (usc/validate! params create-project-schema)
+  (->> (validate! params create-project-schema)
        (create-project conn)))
 
 ;; --- Update Project
@@ -43,14 +43,19 @@
   (assoc create-project-schema
          :version [us/required us/integer]))
 
-(defmethod usc/-novelty :update/project
+(defn- update-project
   [conn {:keys [name version id user] :as data}]
-  (usc/validate! data update-project-schema)
   (let [sql (str "UPDATE projects SET name=?, version=?"
                  " WHERE id=? AND \"user\"=? RETURNING *")
         sqlv [sql name version id user]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
+
+
+(defmethod usc/-novelty :update/project
+  [conn params]
+  (->> (validate! params update-project-schema)
+       (update-project conn)))
 
 ;; --- Delete Project
 
@@ -58,11 +63,15 @@
   {:id [us/required us/uuid]
    :user [us/required us/uuid]})
 
-(defmethod usc/-novelty :delete/project
+(defn- delete-project
   [conn {:keys [id user] :as data}]
-  (usc/validate! data delete-project-schema)
   (let [sql "DELETE FROM projects WHERE id=? AND \"user\"=?"]
     (pos? (sc/execute conn [sql id user]))))
+
+(defmethod usc/-novelty :delete/project
+  [conn params]
+  (->> (validate! params delete-project-schema)
+       (delete-project conn)))
 
 ;; --- List Projects
 

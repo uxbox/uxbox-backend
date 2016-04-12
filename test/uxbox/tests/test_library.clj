@@ -24,7 +24,7 @@
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/library/colors")
               [status data] (th/http-get user uri)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= 1 (count data))))))))
 
@@ -38,7 +38,7 @@
                     :data #{1}}
               params {:body data}
               [status data] (th/http-post user uri params)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 201 status))
           (t/is (= (:user data) (:id user)))
           (t/is (= (:data data) #{1}))
@@ -55,7 +55,7 @@
         (let [uri (str th/+base-url+ "/api/library/colors/" (:id coll))
               params {:body (assoc coll :name "coll2" :data #{2})}
               [status data] (th/http-put user uri params)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= (:user data) (:id user)))
           (t/is (= (:data data) #{2}))

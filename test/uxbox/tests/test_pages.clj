@@ -191,7 +191,8 @@
             ;; (println "RESPONSE:" status result)
             (t/is (= (count result) 20))
             (t/is (= 200 status))
-            (t/is (= 89 (:version (first result))))))))))
+            (t/is (= 89 (:version (first result))))))
+        ))))
 
 (t/deftest test-http-page-history-update
   (with-open [conn (up/get-conn)]

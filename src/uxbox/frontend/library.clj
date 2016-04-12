@@ -12,35 +12,57 @@
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
+(def validate-form! (partial us/validate! :form/validation))
+
+;; --- List Color Collections
+
 (defn list-color-collections
   [{user :identity}]
-  (let [params {:user user
+  (let [message {:user user
                 :type :list/color-collections}]
-    (-> (sv/query params)
-        (p/then #(http/ok (rsp %))))))
+    (->> (sv/query message)
+         (p/map #(http/ok (rsp %))))))
+
+;; --- Create Color Collection
+
+(def ^:private create-color-coll-schema
+  {:id [us/uuid]
+   :name [us/required us/string]
+   :data [us/required us/set]})
 
 (defn create-color-collection
-  [{user :identity params :data}]
-  (p/alet [params (assoc params
-                         :type :create/color-collection
-                         :user user)
-           result (p/await (sv/novelty params))
-           loc (str "/api/library/colors/" (:id result))]
-    (http/created loc (rsp result))))
+  [{user :identity data :data}]
+  (let [params (validate-form! data create-color-coll-schema)
+        message (assoc params
+                       :type :create/color-collection
+                       :user user)]
+    (->> (sv/novelty message)
+         (p/map (fn [result]
+                  (let [loc (str "/api/library/colors/" (:id result))]
+                    (http/created loc (rsp result))))))))
+
+;; --- Update Color Collection
+
+(def ^:private update-color-coll-schema
+  (assoc create-color-coll-schema
+         :version [us/required us/integer]))
 
 (defn update-color-collection
   [{user :identity params :route-params data :data}]
-  (let [params (assoc data
-                      :id (uuid/from-string (:id params))
-                      :type :update/color-collection
-                      :user user)]
-    (-> (sv/novelty params)
-        (p/then #(http/ok (rsp %))))))
+  (let [data (validate-form! data update-color-coll-schema)
+        message (assoc data
+                       :id (uuid/from-string (:id params))
+                       :type :update/color-collection
+                       :user user)]
+    (->> (sv/novelty message)
+         (p/map #(http/ok (rsp %))))))
+
+;; --- Delete Color Collection
 
 (defn delete-color-collection
   [{user :identity params :route-params}]
-  (let [params {:id (uuid/from-string (:id params))
-                :type :delete/color-collection
-                :user user}]
-    (-> (sv/novelty params)
-        (p/then (fn [v] (http/no-content))))))
+  (let [message {:id (uuid/from-string (:id params))
+                 :type :delete/color-collection
+                 :user user}]
+    (->> (sv/novelty message)
+         (p/map (fn [v] (http/no-content))))))
