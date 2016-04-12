@@ -18,9 +18,9 @@
 
 (defn retrieve-profile
   [{user :identity}]
-  (let [params {:user user
-                :type :retrieve/profile}]
-    (-> (sv/query params)
+  (let [message {:user user
+                 :type :retrieve/profile}]
+    (-> (sv/query message)
         (p/then #(http/ok (rsp %))))))
 
 ;; --- Update Profile
@@ -34,8 +34,8 @@
 
 (defn update-profile
   [{user :identity data :data}]
-  (let [params (validate-form! data update-profile-schema)
-        message (assoc params
+  (let [data (validate-form! data update-profile-schema)
+        message (assoc data
                        :type :update/profile
                        :user user)]
     (-> (sv/novelty message)
@@ -49,10 +49,10 @@
 
 (defn update-password
   [{user :identity data :data}]
-  (let [params (validate-form! data update-password-schema)
-        message (assoc params
+  (let [data (validate-form! data update-password-schema)
+        message (assoc data
                       :type :update/password
                       :user user)]
-    (-> (sv/novelty params)
+    (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
 
