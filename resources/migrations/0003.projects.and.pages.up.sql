@@ -51,11 +51,6 @@ $projectdelete$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION handle_page_delete()
   RETURNS TRIGGER AS $pagedelete$
   BEGIN
-    --- Update projects modified_at attribute when a
-    --- page of that project is modified.
-    UPDATE projects SET modified_at = clock_timestamp()
-      WHERE id = OLD.project;
-
     --- Delete all history entries if page is deleted.
     DELETE FROM pages_history WHERE page = OLD.id;
     RETURN OLD;
