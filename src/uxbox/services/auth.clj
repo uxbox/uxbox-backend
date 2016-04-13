@@ -50,7 +50,7 @@
   [conn {:keys [username password scope]}]
   (let [user (users/find-user-by-username-or-email conn username)]
     (when-not user
-      (throw (ex/ex-info :auth/wrong-crendentials {})))
+      (throw (ex/ex-info :auth/wrong-credentials {})))
     (if (check-user-password user password)
       {:token (generate-token user)}
       (throw (ex/ex-info :auth/wrong-credentials {})))))
