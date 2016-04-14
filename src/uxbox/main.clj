@@ -11,6 +11,7 @@
             [clojure.test :as test]
             [mount.core :as mount]
             [buddy.core.codecs :as codecs]
+            [buddy.core.codecs.base64 :as b64]
             [buddy.core.nonce :as nonce]
             [uxbox.config :as cfg]
             [uxbox.migrations]
@@ -53,8 +54,9 @@
 
 (defn make-secret
   []
-  (let [rdata (nonce/random-bytes 64)]
-    (codecs/bytes->safebase64 rdata)))
+  (-> (nonce/random-bytes 64)
+      (b64/encode true)
+      (codecs/bytes->str)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point (only for uberjar)
