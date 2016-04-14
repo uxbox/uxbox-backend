@@ -1,5 +1,5 @@
 {:dev
- {:plugins [[lein-ancient "0.6.7"]]
+ {:plugins [[lein-ancient "0.6.10"]]
   :dependencies [[clj-http "2.1.0"]]
   :main ^:skip-aot uxbox.main}
 

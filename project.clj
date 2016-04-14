@@ -12,12 +12,12 @@
              ;; "-Djava.rmi.server.hostname=0.0.0.0"
              "-XX:+UseG1GC" "-Xms200m" "-Xmx200m"]
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
-                 [org.slf4j/slf4j-simple "1.7.19"]
+                 [org.slf4j/slf4j-simple "1.7.21"]
                  [funcool/struct "0.1.0-SNAPSHOT"]
                  [mount "0.1.10"]
                  [environ "1.0.2"]
-                 [buddy/buddy-sign "0.11.0"]
-                 [buddy/buddy-hashers "0.13.0"]
+                 [buddy/buddy-sign "0.12.0"]
+                 [buddy/buddy-hashers "0.14.0"]
                  [com.github.spullara.mustache.java/compiler "0.9.1"]
                  [org.postgresql/postgresql "9.4.1208" :scope "provided"]
                  [niwinz/migrante "0.1.0"]
@@ -25,4 +25,4 @@
                  [funcool/suricatta "0.9.0"]
                  [funcool/promesa "1.1.1"]
                  [hikari-cp "1.6.1"]
-                 [funcool/catacumba "0.13.0-SNAPSHOT"]])
+                 [funcool/catacumba "0.13.0"]])
