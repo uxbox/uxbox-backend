@@ -77,8 +77,9 @@
 
 (defn get-projects-for-user
   [conn user]
-  (let [sql (str "SELECT * FROM projects "
-                 " WHERE \"user\"=? ORDER BY created_at DESC")]
+  (let [sql (str "SELECT projects.*, Count(pages.id) as total_pages FROM projects "
+                 "JOIN pages ON pages.project=projects.id "
+                 "WHERE projects.user=? GROUP BY projects.id ORDER BY created_at DESC")]
     (->> (sc/fetch conn [sql user])
          (map usc/normalize-attrs))))
 
