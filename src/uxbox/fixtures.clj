@@ -30,6 +30,8 @@
   (-> (t/encode data)
       (codecs/bytes->str)))
 
+(def ^:private password (hashers/encrypt "123123"))
+
 (defn- create-user
   [conn i]
   (println "create user" i)
@@ -38,12 +40,12 @@
                        :id (mk-uuid "user" i)
                        :fullname (str "User " i)
                        :metadata {}
-                       :password (hashers/encrypt "123123")
+                       :password password
                        :email (str "user" i ".test@uxbox.io")}))
 
 (defn- create-project
   [conn i ui]
-  (Thread/sleep 20)
+  ;; (Thread/sleep 20)
   (println "create project" i "for user" ui)
   (sproj/create-project conn
                         {:id (mk-uuid "project" i)
@@ -52,7 +54,7 @@
 
 (defn- create-page
   [conn i pi ui]
-  (Thread/sleep 20)
+  ;; (Thread/sleep 1)
   (println "create page" i "for user" ui "for project" pi)
   (spag/create-page conn
                     {:id (mk-uuid "page" i)
@@ -64,20 +66,24 @@
                      :height 768
                      :layout "tablet"}))
 
+(def num-users 1000)
+(def num-projects 5)
+(def num-pages 5)
+
 (defn init
   []
   (mount/start)
   (with-open [conn (up/get-conn)]
     (sc/atomic conn
-      (doseq [i (range 10)]
+      (doseq [i (range num-users)]
         (create-user conn i))
 
-      (doseq [ui (range 10)]
-        (doseq [i (range 10)]
+      (doseq [ui (range num-users)]
+        (doseq [i (range num-projects)]
           (create-project conn (str ui i) ui)))
 
-      (doseq [pi (range 10)]
-        (doseq [ui (range 10)]
-          (doseq [i (range 10)]
-            (create-page conn (str pi ui i) (str ui i) ui))))))
+      (doseq [pi (range num-projects)]
+        (doseq [ui (range num-users)]
+          (doseq [i (range num-pages)]
+            (create-page conn (str pi ui i) (str ui pi) ui))))))
   (mount/stop))
