@@ -19,8 +19,8 @@
 (defn list-projects
   [{user :identity}]
   (let [message {:user user :type :list/projects}]
-    (-> (sv/query message)
-        (p/then #(http/ok (rsp %))))))
+    (->> (sv/query message)
+         (p/map #(http/ok (rsp %))))))
 
 ;; --- Create Projects
 
