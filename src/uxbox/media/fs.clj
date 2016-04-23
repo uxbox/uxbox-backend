@@ -6,8 +6,10 @@
 
 (ns uxbox.media.fs
   "A local filesystem storage implementation."
-  (:require [uxbox.media.proto :as p]
-            [uxbox.media.impl :as impl])
+  (:require [promesa.core :as p]
+            [uxbox.media.proto :as pt]
+            [uxbox.media.impl :as impl]
+            [uxbox.media.executor :as exec])
   (:import java.io.InputStream
            java.io.OutputStream
            java.nio.file.Path
@@ -26,56 +28,67 @@
                         {:path (str path)})))
       fullpath)))
 
+(defn- save
+  [base path content]
+  (let [^Path path (pt/-path path)
+        ^Path fullpath (normalize-path base path)]
+    (when-not (impl/exists? (.getParent fullpath))
+      (impl/create-dir (.getParent fullpath)))
+    (with-open [^InputStream source (pt/-input-stream content)
+                ^OutputStream dest (Files/newOutputStream fullpath
+                                                          impl/open-opts)]
+      (IOUtils/copy source dest)
+      path)))
+
+(defn- delete
+  [base path]
+  (let [path (->> (pt/-path path)
+                  (normalize-path base))]
+    (Files/deleteIfExists ^Path path)))
+
 (defrecord FileSystemStorage [^Path base]
-  p/IStorage
+  pt/IStorage
   (-save [_ path content]
-    (let [^Path path (p/-path path)
-          ^Path fullpath (normalize-path base path)]
-      (when-not (impl/exists? (.getParent fullpath))
-        (impl/create-dir (.getParent fullpath)))
-      (try
-        (with-open [^InputStream source (p/-input-stream content)
-                    ^OutputStream dest (Files/newOutputStream fullpath
-                                                              impl/+open-opts+)]
-          (IOUtils/copy source dest)
-          [path nil])
-        (catch java.nio.file.FileAlreadyExistsException err
-          [nil err]))))
+    (exec/submit (partial save base path content)))
 
   (-delete [_ path]
-    (let [path (->> (p/-path path)
-                    (normalize-path base))]
-      (Files/deleteIfExists ^Path path)))
+    (exec/submit (partial delete base path)))
 
   (-exists? [this path]
-    (let [path (->> (p/-path path)
-                    (normalize-path base))]
-      (impl/exists? path)))
+    (try
+      (p/resolved
+       (let [path (->> (pt/-path path)
+                       (normalize-path base))]
+         (impl/exists? path)))
+      (catch Exception e
+        (p/rejected e))))
 
-  p/ILocalStorage
+  pt/ILocalStorage
   (-lookup [_ path']
-    (let [^Path path (->> (p/-path path')
-                          (normalize-path base))]
-      (when (impl/exists? path)
-        path))))
+    (try
+      (p/resolved
+       (->> (pt/-path path')
+            (normalize-path base)))
+      (catch Exception e
+        (p/rejected e)))))
 
 (defrecord PrefixedPathStorage [^FileSystemStorage storage
                                 ^Path prefix]
-  p/IStorage
+  pt/IStorage
   (-save [_ path content]
-    (let [^Path path (p/-path path)
+    (let [^Path path (pt/-path path)
           ^Path path (.resolve prefix path)]
-      (p/-save storage path content)))
+      (pt/-save storage path content)))
 
   (-delete [_ path]
-    (p/-delete storage path))
+    (pt/-delete storage path))
 
   (-exists? [this path]
-    (p/-exists? storage path))
+    (pt/-exists? storage path))
 
-  p/ILocalStorage
+  pt/ILocalStorage
   (-lookup [_ path]
-    (p/-lookup storage path)))
+    (pt/-lookup storage path)))
 
 (defn filesystem
   "Create an instance of local FileSystem storage providing an
@@ -85,7 +98,7 @@
   if it exists but is not a directory, an exception will be
   raised."
   [base]
-  (let [^Path basepath (p/-path base)]
+  (let [^Path basepath (pt/-path base)]
     (when (and (impl/exists? basepath)
                (not (impl/directory? basepath)))
       (throw (ex-info "File already exists." {})))
@@ -103,5 +116,5 @@
   This is usefull for atomatically add sertain prefix to some
   uploads."
   [storage prefix]
-  (let [prefix (p/-path prefix)]
+  (let [prefix (pt/-path prefix)]
     (->PrefixedPathStorage storage prefix)))

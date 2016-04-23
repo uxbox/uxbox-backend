@@ -23,26 +23,22 @@
            java.nio.file.attribute.FileAttribute
            java.nio.file.attribute.PosixFilePermissions))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Constants
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Constants
 
-(def +open-opts+
+(def open-opts
   (->> [StandardOpenOption/CREATE_NEW
         StandardOpenOption/WRITE]
        (into-array OpenOption)))
 
-(def +link-options+
+(def link-opts
   (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
 
-(def +file-attrs+
+(def file-attrs
   (let [perms (PosixFilePermissions/fromString "rwxr-xr-x")
         attr (PosixFilePermissions/asFileAttribute perms)]
     (into-array FileAttribute [attr])))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Helpers
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Helpers
 
 (defn absolute?
   [path]
@@ -52,26 +48,19 @@
 (defn exists?
   [path]
   (let [^Path path (p/-path path)]
-    (Files/exists path +link-options+)))
+    (Files/exists path link-opts)))
 
 (defn directory?
   [path]
   (let [^Path path (p/-path path)]
-    (Files/isDirectory path +link-options+)))
+    (Files/isDirectory path link-opts)))
 
 (defn create-dir
   [path]
   (let [^Path path (p/-path path)]
-    (Files/createDirectories path +file-attrs+)))
+    (Files/createDirectories path file-attrs)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Impl
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;; TODO: Path
-;; TODO: File
-;; TODO: URI
-;; TODO: URL
+;; --- Impl
 
 (extend-protocol p/IContent
   String

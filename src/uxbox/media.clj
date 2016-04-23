@@ -18,9 +18,7 @@
   to this function and the behavior is totally dependen on
   the storage implementation."
   [storage path content]
-  (let [[path err] (p/-save storage path content)]
-    (when err (throw err))
-    path))
+  (p/-save storage path content))
 
 (defn lookup
   "Resolve provided relative path in the storage and return
