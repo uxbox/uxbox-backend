@@ -11,23 +11,25 @@
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.persistence :as up]
-            [uxbox.util.time :as dt]
-            [uxbox.util.transit :as t]
             [uxbox.services.core :as usc]
             [uxbox.services.locks :as locks]
-            [uxbox.services.auth :as usauth]))
+            [uxbox.services.auth :as usauth]
+            [uxbox.util.time :as dt]
+            [uxbox.util.transit :as t]
+            [uxbox.util.snappy :as snappy]))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
 (declare decode-page-data)
 (declare decode-page-options)
+(declare encode-data)
 
 ;; --- Create Page
 
 (def ^:private create-page-schema
   {:id [us/uuid]
-   :data [us/coll]
-   :options [us/coll]
+   :data [us/required us/string]
+   :options [us/required us/string]
    :user [us/required us/uuid]
    :project [us/required us/uuid]
    :name [us/required us/string]
@@ -38,12 +40,12 @@
 (defn create-page
   [conn {:keys [id user project name width
                 height layout data options] :as params}]
-  (let [data (codecs/bytes->str (t/encode data))
-        options (codecs/bytes->str (t/encode options))
-        sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
+  (let [sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
                  "                   height, layout, data, options)"
                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
         id (or id (uuid/v4))
+        data (encode-data data)
+        options (encode-data options)
         sqlv [sql id user project name width
               height layout data options]]
     (->> (sc/fetch-one conn sqlv)
@@ -65,12 +67,12 @@
 (defn update-page
   [conn {:keys [id user project name width height
                 layout data version options] :as params}]
-  (let [data (codecs/bytes->str (t/encode data))
-        options (codecs/bytes->str (t/encode options))
-        sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
+  (let [sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
                  "                 data=?, version=?, options=? "
                  " WHERE id=? AND \"user\"=? AND project=?"
                  " RETURNING *")
+        data (encode-data data)
+        options (encode-data options)
         sqlv [sql name width height layout data
               version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
@@ -91,11 +93,11 @@
 (defn update-page-metadata
   [conn {:keys [id user project name width
                 height layout version options] :as params}]
-  (let [options (codecs/bytes->str (t/encode options))
-        sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
+  (let [sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
                  "                 version=?, options=? "
                  " WHERE id=? AND \"user\"=? AND project=?"
                  " RETURNING *")
+        options (encode-data options)
         sqlv [sql name width height layout
               version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
@@ -216,19 +218,26 @@
 
 ;; --- Helpers
 
+(defn- encode-data
+  "Encodes arbitrary blob into ready to persist bytea blob."
+  [^String data]
+  (snappy/compress data))
+
+(defn- decode-data
+  "Decodes persisted blob into ready to transmit string blob."
+  [^bytes data]
+  (-> (snappy/uncompress data)
+      (codecs/bytes->str)))
+
 (defn- decode-page-options
   [{:keys [options] :as result}]
-  (let [options (some-> options
-                        (codecs/str->bytes)
-                        (t/decode))]
-    (assoc result :options options)))
+  (merge result (when options
+                  {:options (decode-data options)})))
 
 (defn- decode-page-data
   [{:keys [data] :as result}]
-  (let [data (some-> data
-                     (codecs/str->bytes)
-                     (t/decode))]
-    (assoc result :data data)))
+  (merge result (when data
+                  {:data (decode-data data)})))
 
 (defn get-page-by-id
   [conn id]
@@ -237,5 +246,3 @@
             (usc/normalize-attrs)
             (decode-page-data)
             (decode-page-options))))
-
-

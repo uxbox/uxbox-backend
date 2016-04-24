@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS pages (
   "user" uuid NOT NULL REFERENCES users(id),
   project uuid NOT NULL REFERENCES projects(id),
   name text NOT NULL,
-  data text NOT NULL,
-  options text NOT NULL,
+  data bytea NOT NULL,
+  options bytea NOT NULL,
 
   version bigint DEFAULT 0,
 
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS pages_history (
   pinned bool NOT NULL DEFAULT false,
   label text NOT NULL DEFAULT '',
 
-  data text NOT NULL,
+  data bytea NOT NULL,
   version bigint NOT NULL DEFAULT 0
 ) WITH (OIDS=FALSE);
 

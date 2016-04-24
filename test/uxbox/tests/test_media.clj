@@ -76,7 +76,7 @@
 (t/deftest test-localfs-prefixed-store-duplicate-file-raises-exception
   (let [storage (umfs/filesystem "/tmp/catacumba/test")
         storage (umsc/prefixed storage "some/prefix")]
-    (t/is (um/save storage "test.txt" "my content"))
+    (t/is @(um/save storage "test.txt" "my content"))
     (t/is (thrown? java.util.concurrent.ExecutionException
                    @(um/save storage "test.txt" "my content")))))
 

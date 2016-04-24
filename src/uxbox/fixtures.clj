@@ -16,6 +16,7 @@
             [uxbox.persistence :as up]
             [uxbox.migrations]
             [uxbox.util.transit :as t]
+            [uxbox.util.snappy :as snappy]
             [uxbox.services.users :as susers]
             [uxbox.services.projects :as sproj]
             [uxbox.services.pages :as spag])
@@ -61,6 +62,7 @@
                      :user (mk-uuid "user" ui)
                      :project (mk-uuid "project" pi)
                      :data (data-encode nil)
+                     :options (data-encode nil)
                      :name (str "page " i)
                      :width 1024
                      :height 768

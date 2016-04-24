@@ -35,8 +35,8 @@
 
 (def ^:private create-page-schema
   {:id [us/uuid]
-   :data [us/coll]
-   :options [us/coll]
+   :data [us/required us/string]
+   :options [us/required us/string]
    :project [us/required us/uuid]
    :name [us/required us/string]
    :width [us/required us/integer]

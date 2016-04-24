@@ -26,7 +26,8 @@
         (let [uri (str th/+base-url+ "/api/pages")
               params {:body {:project (:id proj)
                              :name "page1"
-                             :data [:test]
+                             :data "1"
+                             :options "1"
                              :width 200
                              :height 200
                              :layout "mobile"}}
@@ -45,7 +46,8 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data (th/data-encode [:test1])
+                :data "1"
+                :options "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -53,11 +55,11 @@
           page (uspg/create-page conn data)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ (str "/api/pages/" (:id page)))
-              params {:body (assoc page :data [:test1 :test2])}
+              params {:body (assoc page :data "3")}
               [status page'] (th/http-put user uri params)]
           ;; (println "RESPONSE:" status page')
           (t/is (= 200 status))
-          (t/is (= [:test1 :test2] (:data page')))
+          (t/is (= "3" (:data page')))
           (t/is (= 1 (:version page')))
           (t/is (= (:user page') (:id user)))
           (t/is (= (:name data) "page1")))))))
@@ -70,7 +72,8 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data [:test1]
+                :data "1"
+                :options "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -78,11 +81,11 @@
           page (uspg/create-page conn data)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ (str "/api/pages/" (:id page) "/metadata"))
-              params {:body (assoc page :data [:test1 :test2])}
+              params {:body (assoc page :data "3")}
               [status page'] (th/http-put user uri params)]
-          (println "RESPONSE:" status page')
+          ;; (println "RESPONSE:" status page')
           (t/is (= 200 status))
-          (t/is (= [:test1] (:data page')))
+          (t/is (= "1" (:data page')))
           (t/is (= 1 (:version page')))
           (t/is (= (:user page') (:id user)))
           (t/is (= (:name data) "page1")))))))
@@ -95,7 +98,8 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data (th/data-encode [:test1])
+                :data "1"
+                :options "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -118,7 +122,8 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data (th/data-encode [:test1])
+                :data "1"
+                :options "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -138,7 +143,8 @@
           proj2 (uspr/create-project conn {:user (:id user) :name "proj2"})
           data {:user (:id user)
                 :version 0
-                :data (th/data-encode [])
+                :data "1"
+                :options "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -161,7 +167,8 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data [:test1]
+                :data "1"
+                :options "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -169,7 +176,7 @@
           page (uspg/create-page conn data)]
       (dotimes [i 100]
         (let [page (uspg/get-page-by-id conn (:id data))]
-          (uspg/update-page conn (assoc page :data [i]))))
+          (uspg/update-page conn (assoc page :data (str i)))))
 
       ;; Check inserted history
       (let [sqlv ["SELECT * FROM pages_history WHERE page=?" (:id data)]
@@ -202,7 +209,8 @@
                 :user (:id user)
                 :project (:id proj)
                 :version 0
-                :data (th/data-encode [:test1])
+                :data "1"
+                :options "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -211,7 +219,7 @@
 
       (dotimes [i 10]
         (let [page (uspg/get-page-by-id conn (:id data))]
-          (uspg/update-page conn (assoc page :data (th/data-encode [i])))))
+          (uspg/update-page conn (assoc page :data (th/data-encode (str i))))))
 
       ;; Check inserted history
       (let [sql (str "SELECT * FROM pages_history "
