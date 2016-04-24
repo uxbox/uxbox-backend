@@ -1,0 +1,22 @@
+language: clojure
+lein: lein
+sudo: false
+
+services:
+  - postgresql
+
+before_script:
+  - createdb test
+
+script:
+  - lein test
+
+jdk:
+  - oraclejdk8
+
+notifications:
+  email:
+    recipients:
+      - niwi@niwi.nz
+    on_success: change
+    on_failure: change
