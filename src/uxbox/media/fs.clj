@@ -72,24 +72,6 @@
       (catch Exception e
         (p/rejected e)))))
 
-(defrecord PrefixedPathStorage [^FileSystemStorage storage
-                                ^Path prefix]
-  pt/IStorage
-  (-save [_ path content]
-    (let [^Path path (pt/-path path)
-          ^Path path (.resolve prefix path)]
-      (pt/-save storage path content)))
-
-  (-delete [_ path]
-    (pt/-delete storage path))
-
-  (-exists? [this path]
-    (pt/-exists? storage path))
-
-  pt/ILocalStorage
-  (-lookup [_ path]
-    (pt/-lookup storage path)))
-
 (defn filesystem
   "Create an instance of local FileSystem storage providing an
   absolute base path.
@@ -108,13 +90,3 @@
 
     (->FileSystemStorage basepath)))
 
-(defn prefixed
-  "Create a composed storage instance that automatically prefixes
-  the path when content is saved. For the rest of methods it just
-  relies to the underlying storage.
-
-  This is usefull for atomatically add sertain prefix to some
-  uploads."
-  [storage prefix]
-  (let [prefix (pt/-path prefix)]
-    (->PrefixedPathStorage storage prefix)))

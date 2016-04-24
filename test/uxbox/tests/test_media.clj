@@ -1,7 +1,8 @@
 (ns uxbox.tests.test-media
   (:require [clojure.test :as t]
             [uxbox.media :as um]
-            [uxbox.media.fs :as umfs])
+            [uxbox.media.fs :as umfs]
+            [uxbox.media.misc :as umsc])
   (:import java.io.File
            org.apache.commons.io.FileUtils))
 
@@ -58,7 +59,7 @@
 
 (t/deftest test-localfs-prefixed-store-and-lookup
   (let [storage (umfs/filesystem "/tmp/catacumba/test")
-        storage (umfs/prefixed storage "some/prefix")
+        storage (umsc/prefixed storage "some/prefix")
         rpath  @(um/save storage "test.txt" "my content")
         fpath @(um/lookup storage rpath)
         fdata (slurp fpath)]
@@ -67,21 +68,21 @@
 
 (t/deftest test-localfs-prefixed-store-and-delete-and-check
   (let [storage (umfs/filesystem "/tmp/catacumba/test")
-        storage (umfs/prefixed storage "some/prefix")
+        storage (umsc/prefixed storage "some/prefix")
         rpath  @(um/save storage "test.txt" "my content")]
     (t/is @(um/delete storage rpath))
     (t/is (not @(um/exists? storage rpath)))))
 
 (t/deftest test-localfs-prefixed-store-duplicate-file-raises-exception
   (let [storage (umfs/filesystem "/tmp/catacumba/test")
-        storage (umfs/prefixed storage "some/prefix")]
+        storage (umsc/prefixed storage "some/prefix")]
     (t/is (um/save storage "test.txt" "my content"))
     (t/is (thrown? java.util.concurrent.ExecutionException
                    @(um/save storage "test.txt" "my content")))))
 
 (t/deftest test-localfs-prefixed-access-unauthorized-path
   (let [storage (umfs/filesystem "/tmp/catacumba/test")
-        storage (umfs/prefixed storage "some/prefix")]
+        storage (umsc/prefixed storage "some/prefix")]
     (t/is (thrown? java.util.concurrent.ExecutionException
                    @(um/lookup storage "../test.txt")))
     (t/is (thrown? java.util.concurrent.ExecutionException
