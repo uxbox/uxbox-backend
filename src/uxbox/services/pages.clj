@@ -16,7 +16,7 @@
             [uxbox.services.auth :as usauth]
             [uxbox.util.time :as dt]
             [uxbox.util.transit :as t]
-            [uxbox.util.snappy :as snappy]))
+            [uxbox.util.blob :as blob]))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
@@ -44,8 +44,8 @@
                  "                   height, layout, data, options)"
                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
         id (or id (uuid/v4))
-        data (encode-data data)
-        options (encode-data options)
+        data (blob/encode data)
+        options (blob/encode options)
         sqlv [sql id user project name width
               height layout data options]]
     (->> (sc/fetch-one conn sqlv)
@@ -71,8 +71,8 @@
                  "                 data=?, version=?, options=? "
                  " WHERE id=? AND \"user\"=? AND project=?"
                  " RETURNING *")
-        data (encode-data data)
-        options (encode-data options)
+        data (blob/encode data)
+        options (blob/encode options)
         sqlv [sql name width height layout data
               version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
@@ -97,7 +97,7 @@
                  "                 version=?, options=? "
                  " WHERE id=? AND \"user\"=? AND project=?"
                  " RETURNING *")
-        options (encode-data options)
+        options (blob/encode options)
         sqlv [sql name width height layout
               version options id user project]]
     (some-> (sc/fetch-one conn sqlv)
@@ -218,26 +218,15 @@
 
 ;; --- Helpers
 
-(defn- encode-data
-  "Encodes arbitrary blob into ready to persist bytea blob."
-  [^String data]
-  (snappy/compress data))
-
-(defn- decode-data
-  "Decodes persisted blob into ready to transmit string blob."
-  [^bytes data]
-  (-> (snappy/uncompress data)
-      (codecs/bytes->str)))
-
 (defn- decode-page-options
   [{:keys [options] :as result}]
   (merge result (when options
-                  {:options (decode-data options)})))
+                  {:options (blob/decode options)})))
 
 (defn- decode-page-data
   [{:keys [data] :as result}]
   (merge result (when data
-                  {:data (decode-data data)})))
+                  {:data (blob/decode data)})))
 
 (defn get-page-by-id
   [conn id]
