@@ -26,4 +26,4 @@
                  [funcool/suricatta "0.9.0"]
                  [funcool/promesa "1.1.1"]
                  [hikari-cp "1.6.1"]
-                 [funcool/catacumba "0.14.0"]])
+                 [funcool/catacumba "0.15.0"]])
