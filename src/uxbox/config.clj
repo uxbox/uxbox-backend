@@ -23,7 +23,9 @@
 (defn read-config
   []
   (let [defaults (edn/read-string (slurp (io/resource +default-config+)))
-        local (io/resource (:local-config env "config/local.edn"))]
+        local (if-let [path (:uxbox-config env)]
+                (io/file path)
+                (io/resource "config/local.edn"))]
     (if local
       (deep-merge defaults (edn/read-string (slurp local)))
       defaults)))
@@ -31,10 +33,8 @@
 (defn read-test-config
   []
   (let [defaults (edn/read-string (slurp (io/resource +default-config+)))
-        local (io/resource (:local-config env "config/test.edn"))]
-    (if local
-      (deep-merge defaults (edn/read-string (slurp local)))
-      defaults)))
+        local (io/resource "config/test.edn")]
+    (deep-merge defaults (edn/read-string (slurp local)))))
 
 (defstate config
   :start (read-config))
