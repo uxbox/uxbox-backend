@@ -59,6 +59,11 @@
    :validate (fn [v n]
                (>= (count v) n))})
 
+(def uploaded-file
+  {:message "errors.form.file"
+   :optional true
+   :validate #(instance? ratpack.form.UploadedFile %)})
+
 ;; --- Public Api
 
 (def validate st/validate)
