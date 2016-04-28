@@ -13,6 +13,10 @@
  :email {:reply-to "no-reply@uxbox.io"
          :from "no-reply@uxbox.io"}
 
+ :storage
+ {:basedir "public/images"
+  :baseuri "http://localhost:6060/images/"}
+
  :database
  {:adapter "postgresql"
   :username nil
