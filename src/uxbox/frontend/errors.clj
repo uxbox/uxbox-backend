@@ -70,6 +70,9 @@
     (instance? clojure.lang.ExceptionInfo err)
     (handle-exception err)
 
+    (instance? java.util.concurrent.CompletionException err)
+    (handler context (.getCause err))
+
     (instance? org.jooq.exception.DataAccessException err)
     (handle-data-access-exception err)
 
