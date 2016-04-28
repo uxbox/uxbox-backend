@@ -4,9 +4,9 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.media.impl
+(ns storages.impl
   "Implementation details and helpers."
-  (:require [uxbox.media.proto :as p]
+  (:require [storages.proto :as pt]
             [buddy.core.codecs :as codecs]
             [clojure.java.io :as io])
   (:import java.io.File
@@ -42,27 +42,27 @@
 
 (defn absolute?
   [path]
-  (let [^Path path (p/-path path)]
+  (let [^Path path (pt/-path path)]
     (.isAbsolute path)))
 
 (defn exists?
   [path]
-  (let [^Path path (p/-path path)]
+  (let [^Path path (pt/-path path)]
     (Files/exists path link-opts)))
 
 (defn directory?
   [path]
-  (let [^Path path (p/-path path)]
+  (let [^Path path (pt/-path path)]
     (Files/isDirectory path link-opts)))
 
 (defn create-dir
   [path]
-  (let [^Path path (p/-path path)]
+  (let [^Path path (pt/-path path)]
     (Files/createDirectories path file-attrs)))
 
 ;; --- Impl
 
-(extend-protocol p/IContent
+(extend-protocol pt/IContent
   String
   (-input-stream [v]
     (ByteArrayInputStream. (codecs/str->bytes v)))
@@ -91,9 +91,22 @@
   (-input-stream [this]
     (.getInputStream this)))
 
-(extend-protocol p/IPath
+(extend-protocol pt/IUri
+  URI
+  (-uri [v] v)
+
+  String
+  (-uri [v] (URI. v)))
+
+(extend-protocol pt/IPath
   Path
   (-path [v] v)
+
+  URI
+  (-path [v] (Paths/get v))
+
+  URL
+  (-path [v] (Paths/get (.toURI v)))
 
   String
   (-path [v] (Paths/get v (make-array String 0)))
@@ -104,17 +117,28 @@
           mv (rest v)]
       (Paths/get ^String fv (into-array String mv)))))
 
+(defn- path->input-stream
+  [^Path path]
+  (->> (into-array OpenOption [StandardOpenOption/READ])
+       (Files/newInputStream path)))
+
+(defn- path->output-stream
+  [^Path path]
+  (->> (into-array OpenOption [StandardOpenOption/WRITE
+                               StandardOpenOption/CREATE])
+       (Files/newOutputStream path)))
+
 (extend-type Path
   io/IOFactory
   (make-reader [path opts]
-    (let [^File file (.toFile path)]
-      (io/make-reader file opts)))
+    (let [^InputStream is (path->input-stream path)]
+      (io/make-reader is opts)))
   (make-writer [path opts]
-    (let [^File file (.toFile path)]
-      (io/make-writer file opts)))
+    (let [^OutputStream os (path->output-stream path)]
+      (io/make-writer os opts)))
   (make-input-stream [path opts]
-    (let [^File file (.toFile path)]
-      (io/make-input-stream file opts)))
+    (let [^InputStream is (path->input-stream path)]
+      (io/make-input-stream is opts)))
   (make-output-stream [path opts]
-    (let [^File file (.toFile path)]
-      (io/make-output-stream file opts))))
+    (let [^OutputStream os (path->output-stream path)]
+      (io/make-output-stream os opts))))

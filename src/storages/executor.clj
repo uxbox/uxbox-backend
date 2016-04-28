@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.media.executor
+(ns storages.executor
   "A basic abstraction for executor services."
   (:require [promesa.core :as p])
   (:import java.util.concurrent.ForkJoinPool

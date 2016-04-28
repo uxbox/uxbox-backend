@@ -4,14 +4,15 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.media.fs
+(ns storages.fs
   "A local filesystem storage implementation."
   (:require [promesa.core :as p]
-            [uxbox.media.proto :as pt]
-            [uxbox.media.impl :as impl]
-            [uxbox.media.executor :as exec])
+            [storages.proto :as pt]
+            [storages.impl :as impl]
+            [storages.executor :as exec])
   (:import java.io.InputStream
            java.io.OutputStream
+           java.net.URI
            java.nio.file.Path
            java.nio.file.Files
            org.apache.commons.io.IOUtils))
@@ -46,7 +47,11 @@
                   (normalize-path base))]
     (Files/deleteIfExists ^Path path)))
 
-(defrecord FileSystemStorage [^Path base]
+(defrecord FileSystemStorage [^Path base ^URI baseuri]
+  pt/IPublicStorage
+  (-public-uri [_ path]
+    (.resolve baseuri (str path)))
+
   pt/IStorage
   (-save [_ path content]
     (exec/submit (partial save base path content)))
@@ -79,8 +84,9 @@
   If that path does not exists it will be automatically created,
   if it exists but is not a directory, an exception will be
   raised."
-  [base]
-  (let [^Path basepath (pt/-path base)]
+  [{:keys [basedir baseuri] :as keys}]
+  (let [^Path basepath (pt/-path basedir)
+        ^URI baseuri (pt/-uri baseuri)]
     (when (and (impl/exists? basepath)
                (not (impl/directory? basepath)))
       (throw (ex-info "File already exists." {})))
@@ -88,5 +94,5 @@
     (when-not (impl/exists? basepath)
       (impl/create-dir basepath))
 
-    (->FileSystemStorage basepath)))
+    (->FileSystemStorage basepath baseuri)))
 

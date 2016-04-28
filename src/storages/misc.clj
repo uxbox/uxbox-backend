@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.media.misc
+(ns storages.misc
   "A local filesystem storage implementation."
   (:require [promesa.core :as p]
             [cuerdas.core :as str]
@@ -12,9 +12,9 @@
             [buddy.core.codecs.base64 :as b64]
             [buddy.core.nonce :as nonce]
             [buddy.core.hash :as hash]
-            [uxbox.media.proto :as pt]
-            [uxbox.media.impl :as impl]
-            [uxbox.media.executor :as exec])
+            [storages.proto :as pt]
+            [storages.impl :as impl]
+            [storages.executor :as exec])
   (:import java.io.InputStream
            java.io.OutputStream
            java.nio.file.Path
@@ -25,6 +25,10 @@
 ;; --- Prefixed Storage
 
 (defrecord PrefixedPathStorage [storage prefix]
+  pt/IPublicStorage
+  (-public-uri [_ path]
+    (pt/-public-uri storage path))
+
   pt/IStorage
   (-save [_ path content]
     (let [^Path path (pt/-path path)
@@ -74,6 +78,10 @@
      (concat-path path frest name))))
 
 (defrecord HashedStorage [storage]
+  pt/IPublicStorage
+  (-public-uri [_ path]
+    (pt/-public-uri storage path))
+
   pt/IStorage
   (-save [_ path content]
     (let [^Path path (pt/-path path)

@@ -4,8 +4,11 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.media.proto
+(ns storages.proto
   "A storage abstraction definition.")
+
+(defprotocol IUri
+  (-uri [_] "Coerce to uri."))
 
 (defprotocol IPath
   (-path [_] "Coerce to path."))
@@ -20,7 +23,7 @@
   (-exists? [_ path] "Check if file exists by path."))
 
 (defprotocol IPublicStorage
-  (-uri [_ path] "Get a public accessible uri for path."))
+  (-public-uri [_ path] "Get a public accessible uri for path."))
 
 (defprotocol ILocalStorage
   (-lookup [_ path] "Resolves the path to the local filesystem."))
