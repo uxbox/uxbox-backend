@@ -5,42 +5,25 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.media
-  "A media storage persistence layer."
-  (:require [uxbox.media.proto :as p]
-            [uxbox.media.fs :as fs]
-            [uxbox.media.impl]))
+  "A media storage impl for uxbox."
+  (:require [mount.core :as mount :refer (defstate)]
+            [cuerdas.core :as str]
+            [storages.core :as st]
+            [storages.fs :refer (filesystem)]
+            [storages.misc :refer (hashed)]
+            [uxbox.config :refer (config)]))
 
-(defn save
-  "Perists a file or bytes in the storage. This function
-  returns a relative path where file is saved.
+(defn- resolve-basedir
+  [^String basedir]
+  (or (io/resource basedir)
+      basedir))
 
-  The final file path can be different to the one provided
-  to this function and the behavior is totally dependen on
-  the storage implementation."
-  [storage path content]
-  (p/-save storage path content))
+(defn- initialize-storage
+  [{:keys [basedir baseuri] :as config}]
+  (let [basedir (resolve-basedir basedir)]
+    (-> (filesystem {:basedir basedir
+                     :baseuri baseuri})
+        (hashed))))
 
-(defn lookup
-  "Resolve provided relative path in the storage and return
-  the local filesystem absolute path to it.
-  This method may be not implemented in all storages."
-  [storage path]
-  {:pre [(satisfies? p/ILocalStorage storage)]}
-  (p/-lookup storage path))
-
-(defn exists?
-  "Check if a  relative `path` exists in the storage."
-  [storage path]
-  (p/-exists? storage path))
-
-(defn delete
-  "Delete a file from the storage."
-  [storage path]
-  (p/-delete storage path))
-
-(defn path
-  "Create path from string or more than one string."
-  [fst & more]
-  (if (seq more)
-    (p/-path (cons fst more))
-    (p/-path fst)))
+(defstate storage
+  :start (initialize-storage (:storage config)))
