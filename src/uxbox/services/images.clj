@@ -12,7 +12,9 @@
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.util.transit :as t]
-            [uxbox.services.core :as usc]))
+            [uxbox.services.core :as usc])
+  (:import ratpack.form.UploadedFile
+           org.apache.commons.io.FilenameUtils))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
@@ -81,7 +83,46 @@
                  " WHERE id=? AND \"user\"=?")]
     (pos? (sc/execute conn [sql id user]))))
 
-(defmethod usc/-novelty :delete/color-collection
+(defmethod usc/-novelty :delete/image-collection
   [conn params]
   (->> (validate! params delete-collection-schema)
        (delete-collection conn)))
+
+;; --- Create Image (Upload)
+
+(defn create-image
+  [conn {:keys [id user file collection]}]
+  (let [id (or id (uuid/v4))
+        filename (.getFileName ^UploadedFile file)
+        ext (FilenameUtils/getExtension oname)
+        path @(st/save (str id "." ext) file)
+        sql (str "INSERT INTO images (\"user\", name, collection, size, path) "
+                 " VALUES (?, ?, ?, 0, ?)")]
+    (->> (sc/fetch conn [sql user filename collection size path])
+         (map usc/normalize-attrs))))
+
+(def ^:private create-image-schema
+  {:id [us/uuid]
+   :user [us/required us/uuid]
+   :file [us/required us/uploaded-file]})
+
+(defmethod usc/-novelty :create/image
+  [conn params]
+  (->> (validate! params create-image-schema)
+       (create-image conn)))
+
+;; --- Delete Image.
+
+(defn delete-image
+  [conn {:keys [user id]}]
+  (let [sql "DELETE FROM images WHERE id=?, \"user\"=?"]
+    (pos? (sc/execute conn [sql id user]))))
+
+(def ^:private delete-image-schema
+  {:id [us/uuid]
+   :user [us/required us/uuid]})
+
+(defmethod usc/-novelty :create/image
+  [conn params]
+  (->> (validate! params create-image-schema)
+       (create-image conn)))
