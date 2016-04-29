@@ -26,4 +26,6 @@
                  [funcool/suricatta "0.9.0"]
                  [funcool/promesa "1.1.1"]
                  [hikari-cp "1.6.1"]
+                 [org.quartz-scheduler/quartz "2.2.3"]
+                 [org.quartz-scheduler/quartz-jobs "2.2.3"]
                  [funcool/catacumba "0.15.0"]])
