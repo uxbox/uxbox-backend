@@ -7,9 +7,9 @@
 (ns storages.fs
   "A local filesystem storage implementation."
   (:require [promesa.core :as p]
+            [executors.core :as exec]
             [storages.proto :as pt]
-            [storages.impl :as impl]
-            [storages.executor :as exec])
+            [storages.impl :as impl])
   (:import java.io.InputStream
            java.io.OutputStream
            java.net.URI

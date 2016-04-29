@@ -13,8 +13,7 @@
             [buddy.core.nonce :as nonce]
             [buddy.core.hash :as hash]
             [storages.proto :as pt]
-            [storages.impl :as impl]
-            [storages.executor :as exec])
+            [storages.impl :as impl])
   (:import java.io.InputStream
            java.io.OutputStream
            java.nio.file.Path
