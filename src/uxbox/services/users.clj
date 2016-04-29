@@ -52,7 +52,7 @@
   (let [metadata (codecs/bytes->str (t/encode metadata))
         sql (str "UPDATE users SET "
                  " username=?,fullname=?,email=?,metadata=? "
-                 " WHERE id = ? "
+                 " WHERE id = ? AND deleted=false "
                  " RETURNING *")]
     (some-> (sc/fetch-one conn [sql username fullname email metadata id])
             (usc/normalize-attrs)
@@ -74,7 +74,7 @@
 (defn update-password
   [conn {:keys [user password]}]
   (let [password (hashers/encrypt password)
-        sql "UPDATE users SET password=? WHERE id=?"
+        sql "UPDATE users SET password=? WHERE id=? AND deleted=false"
         sqlv [sql password user]]
     (pos? (sc/execute conn sqlv))))
 
@@ -107,7 +107,7 @@
   (validate! data create-user-schema)
   (let [metadata (codecs/bytes->str (t/encode metadata))
         sql (str "INSERT INTO users (id, fullname, username, email, "
-                 "                   password, metadata)"
+                 "                           password, metadata)"
                  " VALUES (?, ?, ?, ?, ?, ?) RETURNING *;")
         id (or id (uuid/v4))
         sqlv [sql id fullname username email password metadata]]
@@ -119,20 +119,22 @@
 
 (defn find-full-user-by-id
   [conn id]
-  (let [sql (str "SELECT * FROM users WHERE id=?")]
+  (let [sql (str "SELECT * FROM users WHERE id=? AND deleted=false")]
     (some-> (sc/fetch-one conn [sql id])
             (usc/normalize-attrs))))
 
 (defn find-user-by-id
   [conn id]
-  (let [sql (str "SELECT * FROM users WHERE id=?")]
+  (let [sql (str "SELECT * FROM users WHERE id=? AND deleted=false")]
     (some-> (sc/fetch-one conn [sql id])
             (usc/normalize-attrs)
             (dissoc :password))))
 
 (defn find-user-by-username-or-email
   [conn username]
-  (let [sql (str "SELECT * FROM users WHERE username=? OR email=?")
+  (let [sql (str "SELECT * FROM users "
+                 "  WHERE (username=? OR email=?) "
+                 "        AND deleted=false")
         sqlv [sql username username]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))

@@ -69,7 +69,7 @@
                 layout data version options] :as params}]
   (let [sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
                  "                 data=?, version=?, options=? "
-                 " WHERE id=? AND \"user\"=? AND project=?"
+                 " WHERE id=? AND \"user\"=? AND project=? AND deleted=false"
                  " RETURNING *")
         data (blob/encode data)
         options (blob/encode options)
@@ -95,7 +95,7 @@
                 height layout version options] :as params}]
   (let [sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
                  "                 version=?, options=? "
-                 " WHERE id=? AND \"user\"=? AND project=?"
+                 " WHERE id=? AND \"user\"=? AND project=? AND deleted=false"
                  " RETURNING *")
         options (blob/encode options)
         sqlv [sql name width height layout
@@ -118,7 +118,8 @@
 
 (defn delete-page
   [conn {:keys [id user] :as params}]
-  (let [sql "DELETE FROM pages WHERE id=? AND \"user\"=?"]
+  (let [sql (str "UPDATE pages SET deleted=true, deleted_at=clock_timestamp() "
+                 " WHERE id=? AND \"user\"=?")]
     (pos? (sc/execute conn [sql id user]))))
 
 (defmethod usc/-novelty :delete/page
@@ -133,7 +134,7 @@
 (defn get-pages-for-user
   [conn user]
   (let [sql (str "SELECT * FROM pages "
-                 " WHERE \"user\"=?"
+                 " WHERE \"user\"=? AND deleted=false"
                  " ORDER BY created_at ASC")]
     (->> (sc/fetch conn [sql user])
          (map usc/normalize-attrs)
@@ -153,7 +154,7 @@
 (defn get-pages-for-user-and-project
   [conn {:keys [user project]}]
   (let [sql (str "SELECT * FROM pages "
-                 " WHERE \"user\"=? AND project=? "
+                 " WHERE \"user\"=? AND project=? & deleted=false "
                  " ORDER BY created_at ASC")]
     (->> (sc/fetch conn [sql user project])
          (map usc/normalize-attrs)
@@ -230,7 +231,7 @@
 
 (defn get-page-by-id
   [conn id]
-  (let [sqlv ["SELECT * FROM pages WHERE id=?" id]]
+  (let [sqlv ["SELECT * FROM pages WHERE id=? AND deleted=false" id]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (decode-page-data)

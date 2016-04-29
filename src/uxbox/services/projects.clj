@@ -46,11 +46,11 @@
 (defn- update-project
   [conn {:keys [name version id user] :as data}]
   (let [sql (str "UPDATE projects SET name=?, version=?"
-                 " WHERE id=? AND \"user\"=? RETURNING *")
+                 " WHERE id=? AND \"user\"=? AND deleted=false "
+                 " RETURNING *")
         sqlv [sql name version id user]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
-
 
 (defmethod usc/-novelty :update/project
   [conn params]
@@ -65,7 +65,9 @@
 
 (defn- delete-project
   [conn {:keys [id user] :as data}]
-  (let [sql "DELETE FROM projects WHERE id=? AND \"user\"=?"]
+  (let [sql (str "UPDATE projects "
+                 " SET deleted=true, deleted_at=clock_timestamp() "
+                 " WHERE id=? AND \"user\"=? AND deleted=false")]
     (pos? (sc/execute conn [sql id user]))))
 
 (defmethod usc/-novelty :delete/project
@@ -77,10 +79,13 @@
 
 (defn get-projects-for-user
   [conn user]
-  (let [sql (str "SELECT projects.*, count(pages.id) as total_pages FROM projects "
-                 " LEFT OUTER JOIN pages ON pages.project=projects.id "
-                 " WHERE projects.user=? GROUP BY projects.id "
-                 " ORDER BY created_at DESC")]
+  (let [sql (str "SELECT pr.*, count(pg.id) as total_pages "
+                 " FROM projects AS pr "
+                 " LEFT OUTER JOIN pages AS pg "
+                 " ON pg.project=pr.id "
+                 " WHERE pr.user=? AND pr.deleted = false "
+                 " GROUP BY pr.id "
+                 " ORDER BY pr.created_at DESC")]
     (->> (sc/fetch conn [sql user])
          (map usc/normalize-attrs))))
 
@@ -92,6 +97,6 @@
 
 (defn get-project-by-id
   [conn id]
-  (let [sqlv ["SELECT * FROM projects WHERE id=?" id]]
+  (let [sqlv ["SELECT * FROM projects WHERE id=? AND deleted=false" id]]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
