@@ -2,7 +2,7 @@
   :description "UXBox backend."
   :url "http://uxbox.github.io"
   :license {:name "MPL 2.0" :url "https://www.mozilla.org/en-US/MPL/2.0/"}
-  :source-paths ["src"]
+  :source-paths ["src" "vendor"]
   :javac-options ["-target" "1.8" "-source" "1.8" "-Xlint:-options"]
   :jvm-opts ["-Dclojure.compiler.direct-linking=true"
              ;; "-Dcom.sun.management.jmxremote.port=9090"
