@@ -17,23 +17,27 @@
 
 (defmigration utils-0000
   "Create a initial version of txlog table."
-  :up (mg/resource "migrations/0000.main.utils.up.sql"))
+  :up (mg/resource "migrations/0000.main.up.sql"))
 
 (defmigration txlog-0001
   "Create a initial version of txlog table."
-  :up (mg/resource "migrations/0001.txlog.create.up.sql"))
+  :up (mg/resource "migrations/0001.txlog.up.sql"))
 
 (defmigration auth-0002
   "Create initial auth related tables."
-  :up (mg/resource "migrations/0002.auth.tables.up.sql"))
+  :up (mg/resource "migrations/0002.auth.up.sql"))
 
 (defmigration projects-0003
-  "Create initial tables for projects and pages."
-  :up (mg/resource "migrations/0003.projects.and.pages.up.sql"))
+  "Create initial tables for projects."
+  :up (mg/resource "migrations/0003.projects.up.sql"))
 
-(defmigration color-collections-0004
+(defmigration pages-0004
+  "Create initial tables for pages."
+  :up (mg/resource "migrations/0004.pages.up.sql"))
+
+(defmigration color-collections-0005
   "Create initial tables for color collections."
-  :up (mg/resource "migrations/0004.color.collections.up.sql"))
+  :up (mg/resource "migrations/0005.color.collections.up.sql"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point
@@ -45,7 +49,8 @@
            [:0001 txlog-0001]
            [:0002 auth-0002]
            [:0003 projects-0003]
-           [:0004 color-collections-0004]]})
+           [:0004 pages-0004]
+           [:0005 color-collections-0005]]})
 
 (defn- migrate
   []

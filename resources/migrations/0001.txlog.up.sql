@@ -1,7 +1,7 @@
 -- A table that will store the whole transaction log of the database.
 CREATE TABLE IF NOT EXISTS txlog (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  created_at timestamptz DEFAULT clock_timestamp(),
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   payload bytea NOT NULL
 ) WITH (OIDS=FALSE);
 
