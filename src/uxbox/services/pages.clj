@@ -154,7 +154,7 @@
 (defn get-pages-for-user-and-project
   [conn {:keys [user project]}]
   (let [sql (str "SELECT * FROM pages "
-                 " WHERE \"user\"=? AND project=? & deleted=false "
+                 " WHERE \"user\"=? AND project=? AND deleted=false "
                  " ORDER BY created_at ASC")]
     (->> (sc/fetch conn [sql user project])
          (map usc/normalize-attrs)
