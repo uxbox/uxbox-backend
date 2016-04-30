@@ -10,6 +10,7 @@
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
+            [uxbox.sql :as sql]
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]
             [uxbox.util.transit :as t]))
@@ -25,10 +26,8 @@
 
 (defn create-project
   [conn {:keys [id user name] :as data}]
-  (let [sql (str "INSERT INTO projects (id, \"user\", name)"
-                 " VALUES (?, ?, ?) RETURNING *")
-        id (or id (uuid/v4))
-        sqlv [sql id user name]]
+  (let [id (or id (uuid/v4))
+        sqlv (sql/create-project {:id id :user user :name name})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
@@ -45,10 +44,10 @@
 
 (defn- update-project
   [conn {:keys [name version id user] :as data}]
-  (let [sql (str "UPDATE projects SET name=?, version=?"
-                 " WHERE id=? AND \"user\"=? AND deleted=false "
-                 " RETURNING *")
-        sqlv [sql name version id user]]
+  (let [sqlv (sql/update-project {:name name
+                                  :version version
+                                  :id id
+                                  :user user})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
@@ -65,10 +64,8 @@
 
 (defn- delete-project
   [conn {:keys [id user] :as data}]
-  (let [sql (str "UPDATE projects "
-                 " SET deleted=true, deleted_at=clock_timestamp() "
-                 " WHERE id=? AND \"user\"=? AND deleted=false")]
-    (pos? (sc/execute conn [sql id user]))))
+  (let [sqlv (sql/delete-project {:id id :user user})]
+    (pos? (sc/execute conn sqlv))))
 
 (defmethod usc/-novelty :delete/project
   [conn params]
@@ -79,24 +76,10 @@
 
 (defn get-projects-for-user
   [conn user]
-  (let [sql (str "SELECT pr.*, count(pg.id) as total_pages "
-                 " FROM projects AS pr "
-                 " LEFT OUTER JOIN pages AS pg "
-                 " ON pg.project=pr.id "
-                 " WHERE pr.user=? AND pr.deleted = false "
-                 " GROUP BY pr.id "
-                 " ORDER BY pr.created_at DESC")]
-    (->> (sc/fetch conn [sql user])
+  (let [sqlv (sql/get-projects {:user user})]
+    (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs))))
 
 (defmethod usc/-query :list/projects
   [conn {:keys [user] :as params}]
   (get-projects-for-user conn user))
-
-;; --- Helpers
-
-(defn get-project-by-id
-  [conn id]
-  (let [sqlv ["SELECT * FROM projects WHERE id=? AND deleted=false" id]]
-    (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
