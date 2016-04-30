@@ -128,6 +128,9 @@
   [scheduler]
   (.shutdown ^Scheduler scheduler true))
 
+;; TODO: add proper jandling of `:delay` option that should allow
+;; execute a task firstly delayed until some milliseconds or at certain time.
+
 (defn schedule!
   ([schd f] (schedule! schd f nil))
   ([schd f opts]
