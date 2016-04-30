@@ -6,12 +6,14 @@
 
 (ns executors.core
   "A executos service abstraction layer."
-  (:import java.util.concurrent.ForkJoinPool
+  (:import java.util.function.Supplier
+           java.util.concurrent.ForkJoinPool
+           java.util.concurrent.Future
            java.util.concurrent.CompletableFuture
            java.util.concurrent.ExecutorService
+           java.util.concurrent.TimeoutException
            java.util.concurrent.ThreadFactory
            java.util.concurrent.TimeUnit
-           java.util.concurrent.Supplier
            java.util.concurrent.ScheduledExecutorService
            java.util.concurrent.Executors))
 
@@ -91,14 +93,13 @@
   (-execute [this task]
     (CompletableFuture/runAsync ^Runnable task this))
 
-  IExecutorService
   (-submit [this task]
     (let [supplier (reify Supplier (get [_] (task)))]
       (CompletableFuture/supplyAsync supplier this))))
 
 (extend-type ScheduledExecutorService
   IScheduledExecutor
-  (-schedule [_ ms func]
+  (-schedule [this ms func]
     (let [fut (.schedule this func ms TimeUnit/MILLISECONDS)]
       (ScheduledTask. fut))))
 
