@@ -33,18 +33,20 @@
     PersistentJobImpl []
   Job
   (execute [_ context]
-    (let [data (.. context getJobDetail getJobDataMap)
-          callable (.get ^JobDataMap data "callable")
-          state (.get ^JobDataMap data "state")
-          result (callable state)]
+    (let [^JobDataMap data (.. context getJobDetail getJobDataMap)
+          callable (.get data "callable")
+          state (.get data "state")
+          args (.get data "args")
+          result (apply callable state args)]
       (.put ^JobDataMap data "state" result))))
 
 (deftype JobImpl []
   Job
   (execute [_ context]
-    (let [data (.. context getJobDetail getJobDataMap)
-          callable (.get ^JobDataMap data "callable")]
-      (callable))))
+    (let [^JobDataMap data (.. context getJobDetail getJobDataMap)
+          args (.get data "args")
+          callable (.get data "callable")]
+      (apply callable args))))
 
 (defn- build-trigger
   [{:keys [cron group name repeat? interval]
@@ -65,14 +67,37 @@
     (.build builder)))
 
 (defn- build-job-detail
-  [f {:keys [group name state] :or {group "uxbox"} :as opts}]
-  (let [name (or name (str (gensym "uxbox-job")))
-        data (JobDataMap. {"callable" f "state" state})
+  [f {:keys [group name state args] :as opts}]
+  (let [data (JobDataMap. {"callable" f
+                           "state" state
+                           "args" args})
         builder (doto (JobBuilder/newJob (if state PersistentJobImpl JobImpl))
                   (.storeDurably true)
                   (.usingJobData data)
                   (.withIdentity name group))]
     (.build builder)))
+
+(defn- resolve-fn
+  [func opts]
+  (cond
+    (symbol? func)
+    (let [ns (symbol (namespace func))
+          _  (require ns)
+          var (resolve func)
+          opts (assoc (merge (meta var) opts)
+                      :name (name (or (:name opts) (gensym "uxbox")))
+                      :group (name (:group opts "uxbox")))]
+      [@var opts])
+
+    (fn? func)
+    (let [opts (assoc opts
+                      :name (name (:name opts) (gensym "uxbox"))
+                      :group (name (:group opts "uxbox")))]
+      [func opts])))
+
+(defn- next-name
+  []
+  (str (gensym "uxbox")))
 
 ;; --- Public Api
 
@@ -105,9 +130,8 @@
 
 (defn schedule!
   ([schd f] (schedule! schd f nil))
-  ([schd f {:keys [name group] :as opts}]
-   (let [name (or name (str (gensym "uxbox")))
-         opts (assoc opts :name name :group "uxbox")
+  ([schd f opts]
+   (let [[f opts] (resolve-fn f opts)
          job (build-job-detail f opts)
          trigger (build-trigger opts)]
      (.scheduleJob ^Scheduler schd job trigger))))
