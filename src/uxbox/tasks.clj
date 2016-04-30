@@ -8,6 +8,7 @@
   "UXBOX asynchronous/scheduled tasks."
   (:require [mount.core :as mount :refer (defstate)]
             [uxbox.config :as cfg]
+            [uxbox.persistence]
             [uxbox.util.quartz :as qtz]))
 
 (def ^:private tasks
