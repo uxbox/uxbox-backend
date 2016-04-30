@@ -16,7 +16,8 @@
             [uxbox.config :as cfg]
             [uxbox.migrations]
             [uxbox.persistence]
-            [uxbox.frontend])
+            [uxbox.frontend]
+            [uxbox.tasks])
   (:gen-class))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
