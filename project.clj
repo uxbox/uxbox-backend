@@ -12,6 +12,7 @@
              ;; "-Djava.rmi.server.hostname=0.0.0.0"
              "-XX:+UseG1GC" "-Xms200m" "-Xmx200m"]
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
+                 [org.clojure/tools.logging "0.3.1"]
                  [org.slf4j/slf4j-simple "1.7.21"]
                  [funcool/struct "0.1.0"]
                  [mount "0.1.10"]
