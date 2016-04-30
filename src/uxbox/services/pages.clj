@@ -10,6 +10,7 @@
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
+            [uxbox.sql :as sql]
             [uxbox.persistence :as up]
             [uxbox.services.core :as usc]
             [uxbox.services.locks :as locks]
@@ -40,14 +41,16 @@
 (defn create-page
   [conn {:keys [id user project name width
                 height layout data options] :as params}]
-  (let [sql (str "INSERT INTO pages (id, \"user\", project, name, width, "
-                 "                   height, layout, data, options)"
-                 " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
-        id (or id (uuid/v4))
-        data (blob/encode data)
-        options (blob/encode options)
-        sqlv [sql id user project name width
-              height layout data options]]
+  (let [opts {:id (or id (uuid/v4))
+              :user user
+              :project project
+              :name name
+              :width width
+              :height height
+              :layout layout
+              :data (blob/encode data)
+              :options (blob/encode options)}
+        sqlv (sql/create-page opts)]
     (->> (sc/fetch-one conn sqlv)
          (usc/normalize-attrs)
          (decode-page-data)
@@ -67,14 +70,17 @@
 (defn update-page
   [conn {:keys [id user project name width height
                 layout data version options] :as params}]
-  (let [sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
-                 "                 data=?, version=?, options=? "
-                 " WHERE id=? AND \"user\"=? AND project=? AND deleted=false"
-                 " RETURNING *")
-        data (blob/encode data)
-        options (blob/encode options)
-        sqlv [sql name width height layout data
-              version options id user project]]
+  (let [opts {:id (or id (uuid/v4))
+              :user user
+              :project project
+              :name name
+              :width width
+              :version version
+              :height height
+              :layout layout
+              :data (blob/encode data)
+              :options (blob/encode options)}
+        sqlv (sql/update-page opts)]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (decode-page-data)
@@ -93,13 +99,16 @@
 (defn update-page-metadata
   [conn {:keys [id user project name width
                 height layout version options] :as params}]
-  (let [sql (str "UPDATE pages SET name=?, width=?, height=?, layout=?, "
-                 "                 version=?, options=? "
-                 " WHERE id=? AND \"user\"=? AND project=? AND deleted=false"
-                 " RETURNING *")
-        options (blob/encode options)
-        sqlv [sql name width height layout
-              version options id user project]]
+  (let [opts {:id (or id (uuid/v4))
+              :user user
+              :project project
+              :name name
+              :width width
+              :version version
+              :height height
+              :layout layout
+              :options (blob/encode options)}
+        sqlv (sql/update-page-metadata opts)]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (decode-page-data)
@@ -118,9 +127,8 @@
 
 (defn delete-page
   [conn {:keys [id user] :as params}]
-  (let [sql (str "UPDATE pages SET deleted=true, deleted_at=clock_timestamp() "
-                 " WHERE id=? AND \"user\"=?")]
-    (pos? (sc/execute conn [sql id user]))))
+  (let [sqlv (sql/delete-page {:id id :user user})]
+    (pos? (sc/execute conn sqlv))))
 
 (defmethod usc/-novelty :delete/page
   [conn params]
@@ -133,10 +141,8 @@
 
 (defn get-pages-for-user
   [conn user]
-  (let [sql (str "SELECT * FROM pages "
-                 " WHERE \"user\"=? AND deleted=false"
-                 " ORDER BY created_at ASC")]
-    (->> (sc/fetch conn [sql user])
+  (let [sqlv (sql/get-pages {:user user})]
+    (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs)
          (map decode-page-data)
          (map decode-page-options))))
@@ -153,10 +159,8 @@
 
 (defn get-pages-for-user-and-project
   [conn {:keys [user project]}]
-  (let [sql (str "SELECT * FROM pages "
-                 " WHERE \"user\"=? AND project=? AND deleted=false "
-                 " ORDER BY created_at ASC")]
-    (->> (sc/fetch conn [sql user project])
+  (let [sqlv (sql/get-pages-for-project {:user user :project project})]
+    (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs)
          (map decode-page-data)
          (map decode-page-options))))
@@ -179,12 +183,11 @@
   [conn {:keys [id user since max pinned]
          :or {since Long/MAX_VALUE
               max 10}}]
-  (let [sql (str "SELECT * FROM pages_history "
-                 " WHERE \"user\"=? AND page=? AND version < ?"
-                 (if pinned " AND pinned = true " "")
-                 " ORDER BY version DESC"
-                 " LIMIT ?")
-        sqlv [sql user id since max]]
+  (let [sqlv (sql/get-page-history {:user user
+                                    :page id
+                                    :since since
+                                    :max max
+                                    :pinned pinned})]
     (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs)
          (map decode-page-data))))
@@ -204,11 +207,11 @@
 
 (defn update-page-history
   [conn {:keys [user id label pinned]}]
-  (let [sql (str "UPDATE pages_history SET "
-                 " label=?, pinned=? "
-                 " WHERE id=? AND \"user\"=? "
-                 " RETURNING *")]
-    (some-> (sc/fetch-one conn [sql label pinned id user])
+  (let [sqlv (sql/update-page-history {:user user
+                                       :id id
+                                       :label label
+                                       :pinned pinned})]
+    (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (decode-page-data))))
 
@@ -231,7 +234,7 @@
 
 (defn get-page-by-id
   [conn id]
-  (let [sqlv ["SELECT * FROM pages WHERE id=? AND deleted=false" id]]
+  (let [sqlv (sql/get-page-by-id {:id id})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (decode-page-data)

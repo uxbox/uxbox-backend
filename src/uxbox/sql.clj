@@ -8,3 +8,4 @@
   (:require [hugsql.core :as hugsql]))
 
 (hugsql/def-sqlvec-fns "sql/projects.sql" {:quoting :ansi :fn-suffix ""})
+(hugsql/def-sqlvec-fns "sql/pages.sql" {:quoting :ansi :fn-suffix ""})
