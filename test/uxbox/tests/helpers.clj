@@ -23,11 +23,18 @@
   (with-open [conn (sc/context +ds+)]
     (sc/execute conn "drop schema if exists public cascade;")
     (sc/execute conn "create schema public;"))
-  (mount/start-with {#'uxbox.config/config +config+})
+  (-> (mount/only #{#'uxbox.config/config
+                    #'uxbox.persistence/datasource
+                    #'uxbox.migrations/migrations
+                    #'uxbox.services.auth/secret})
+      (mount/swap {#'uxbox.config/config +config+
+                   #'uxbox.persistence/datasource +ds+})
+      (mount/start))
   (try
     (next)
     (finally
-      (mount/stop))))
+      (mount/stop-except #'uxbox.config/config
+                         #'uxbox.persistence/datasource))))
 
 (defn ex-info?
   [v]
