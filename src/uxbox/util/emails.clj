@@ -14,7 +14,7 @@
 (def ^:private grammar
   (str "message = part*"
        "part = begin header body end; "
-       "header = tag* eol; "
+       "header = tag eol; "
        "tag = space keyword; "
        "body = line*; "
        "begin = #'--\\s+begin\\s+'; "
