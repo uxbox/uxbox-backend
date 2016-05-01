@@ -15,6 +15,7 @@
 (t/deftest test-http-success-auth
   (let [data {:username "user1"
               :fullname "user 1"
+              :metadata "1"
               :password  (hashers/encrypt "user1")
               :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
@@ -22,6 +23,7 @@
     (with-server {:handler (urt/app)}
       (let [data {:username "user1"
                   :password "user1"
+                  :metadata "1"
                   :scope "foobar"}
             uri (str th/+base-url+ "/api/auth/token")
             [status data] (th/http-post uri {:body data})]
@@ -32,6 +34,7 @@
 (t/deftest test-http-failed-auth
   (let [data {:username "user1"
               :fullname "user 1"
+              :metadata "1"
               :password  (hashers/encrypt "user1")
               :email "user1@uxbox.io"}
         user (with-open [conn (up/get-conn)]
@@ -39,6 +42,7 @@
     (with-server {:handler (urt/app)}
       (let [data {:username "user1"
                   :password "user2"
+                  :metadata "2"
                   :scope "foobar"}
             uri (str th/+base-url+ "/api/auth/token")
             [status data] (th/http-post uri {:body data})]

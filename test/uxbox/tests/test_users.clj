@@ -23,7 +23,7 @@
           (t/is (= 200 status))
           (t/is (= (:fullname data) "User 1"))
           (t/is (= (:username data) "user1"))
-          (t/is (= (:metadata data) nil))
+          (t/is (= (:metadata data) "1"))
           (t/is (= (:email data) "user1@uxbox.io"))
           (t/is (not (contains? data :password)))))
 
@@ -33,14 +33,14 @@
               data (assoc user
                           :fullname "Full Name"
                           :username "user222"
-                          :metadata [1 2 3]
+                          :metadata "222"
                           :email "user222@uxbox.io")
               [status data] (th/http-put user uri {:body data})]
           (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= (:fullname data) "Full Name"))
           (t/is (= (:username data) "user222"))
-          (t/is (= (:metadata data) [1 2 3]))
+          (t/is (= (:metadata data) "222"))
           (t/is (= (:email data) "user222@uxbox.io"))
           (t/is (not (contains? data :password))))))))
 

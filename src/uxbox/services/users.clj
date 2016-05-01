@@ -13,12 +13,12 @@
             [buddy.core.nonce :as nonce]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :as codecs]
-            [uxbox.config :as ucfg]
             [uxbox.schema :as us]
-            [uxbox.persistence :as up]
+            [uxbox.sql :as sql]
             [uxbox.services.core :as usc]
             [uxbox.util.transit :as t]
-            [uxbox.util.exceptions :as ex]))
+            [uxbox.util.exceptions :as ex]
+            [uxbox.util.blob :as blob]))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
@@ -45,16 +45,17 @@
    :username [us/required us/string]
    :email [us/required us/email]
    :fullname [us/required us/string]
-   :metadata [us/coll]})
+   :metadata [us/required us/string]})
 
 (defn update-profile
   [conn {:keys [id username email fullname metadata]}]
-  (let [metadata (codecs/bytes->str (t/encode metadata))
-        sql (str "UPDATE users SET "
-                 " username=?,fullname=?,email=?,metadata=? "
-                 " WHERE id = ? AND deleted=false "
-                 " RETURNING *")]
-    (some-> (sc/fetch-one conn [sql username fullname email metadata id])
+  (let [metadata (blob/encode metadata)
+        sqlv (sql/update-profile {:username username
+                                  :fullname fullname
+                                  :metadata metadata
+                                  :email email
+                                  :id id})]
+    (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (decode-user-data)
             (dissoc :password))))
@@ -74,8 +75,7 @@
 (defn update-password
   [conn {:keys [user password]}]
   (let [password (hashers/encrypt password)
-        sql "UPDATE users SET password=? WHERE id=? AND deleted=false"
-        sqlv [sql password user]]
+        sqlv (sql/update-profile-password {:id user :password password})]
     (pos? (sc/execute conn sqlv))))
 
 (defn- validate-old-password
@@ -96,7 +96,7 @@
 
 (def ^:private create-user-schema
   {:id [us/uuid]
-   :metadata [us/coll]
+   :metadata [us/required us/string]
    :username [us/required us/string]
    :fullname [us/required us/string]
    :email [us/required us/email]
@@ -105,12 +105,14 @@
 (defn create-user
   [conn {:keys [id username password email fullname metadata] :as data}]
   (validate! data create-user-schema)
-  (let [metadata (codecs/bytes->str (t/encode metadata))
-        sql (str "INSERT INTO users (id, fullname, username, email, "
-                 "                           password, metadata)"
-                 " VALUES (?, ?, ?, ?, ?, ?) RETURNING *;")
+  (let [metadata (blob/encode metadata)
         id (or id (uuid/v4))
-        sqlv [sql id fullname username email password metadata]]
+        sqlv (sql/create-profile {:id id
+                                  :fullname fullname
+                                  :username username
+                                  :email email
+                                  :password password
+                                  :metadata metadata})]
     (->> (sc/fetch-one conn sqlv)
          (usc/normalize-attrs)
          (decode-user-data))))
@@ -119,30 +121,24 @@
 
 (defn find-full-user-by-id
   [conn id]
-  (let [sql (str "SELECT * FROM users WHERE id=? AND deleted=false")]
-    (some-> (sc/fetch-one conn [sql id])
+  (let [sqlv (sql/get-profile {:id id})]
+    (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
 (defn find-user-by-id
   [conn id]
-  (let [sql (str "SELECT * FROM users WHERE id=? AND deleted=false")]
-    (some-> (sc/fetch-one conn [sql id])
+  (let [sqlv (sql/get-profile {:id id})]
+    (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (dissoc :password))))
 
 (defn find-user-by-username-or-email
   [conn username]
-  (let [sql (str "SELECT * FROM users "
-                 "  WHERE (username=? OR email=?) "
-                 "        AND deleted=false")
-        sqlv [sql username username]]
+  (let [sqlv (sql/get-profile-by-username {:username username})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
-(defn decode-user-data
+(defn- decode-user-data
   [{:keys [metadata] :as result}]
-  (let [metadata (some-> metadata
-                         (codecs/str->bytes)
-                         (t/decode))]
-    (assoc result :metadata metadata)))
-
+  (merge result (when metadata
+                  {:metadata (blob/decode metadata)})))

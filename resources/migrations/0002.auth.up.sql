@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   username text NOT NULL,
   email text NOT NULL,
   password text NOT NULL,
-  metadata text NOT NULL,
+  metadata bytea NOT NULL,
   deleted boolean DEFAULT false
 ) WITH (OIDS=FALSE);
 

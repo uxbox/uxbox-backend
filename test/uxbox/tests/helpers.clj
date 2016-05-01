@@ -121,7 +121,7 @@
   [conn i]
   (let [data {:username (str "user" i)
               :password  (hashers/encrypt (str "user" i))
-              :metadata nil
+              :metadata (str i)
               :fullname (str "User " i)
               :email (str "user" i "@uxbox.io")}]
     (usu/create-user conn data)))

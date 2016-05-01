@@ -30,7 +30,7 @@
    :username [us/required us/string]
    :email [us/required us/email]
    :fullname [us/required us/string]
-   :metadata [us/coll]})
+   :metadata [us/required us/string]})
 
 (defn update-profile
   [{user :identity data :data}]
