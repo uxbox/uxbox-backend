@@ -39,6 +39,10 @@
   "Create initial tables for color collections."
   :up (mg/resource "migrations/0005.color.collections.up.sql"))
 
+(defmigration emails-queue-0006
+  "Create initial tables for emails queue."
+  :up (mg/resource "migrations/0006.emails.up.sql"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -50,7 +54,8 @@
            [:0002 auth-0002]
            [:0003 projects-0003]
            [:0004 pages-0004]
-           [:0005 color-collections-0005]]})
+           [:0005 color-collections-0005]
+           [:0006 emails-queue-0006]]})
 
 (defn- migrate
   []

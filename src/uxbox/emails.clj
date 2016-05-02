@@ -5,7 +5,25 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.emails
-  (:require [uxbox.util.emails :as emails]))
+  (:require [suricatta.core :as sc]
+            [uxbox.persistence :as up]
+            [uxbox.config :as cfg]
+            [uxbox.sql :as sql]
+            [uxbox.util.blob :as blob]
+            [uxbox.util.transit :as t]
+            [uxbox.util.emails :as emails]))
 
 (def register-email
   #(emails/render "register" % {:reply-to "no-reply@uxbox.io"}))
+
+(defn send!
+  ([sender email] (send! sender email 5))
+  ([sender email priority]
+   (let [email (merge (:email cfg/config) email)
+         data (-> email t/encode blob/encode)
+         sqlv (sql/insert-email {:sender sender
+                                 :data data
+                                 :priority priority})]
+     (with-open [conn (up/get-conn)]
+       (sc/atomic conn
+         (sc/execute conn sqlv))))))

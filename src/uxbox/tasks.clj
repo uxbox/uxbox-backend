@@ -12,7 +12,10 @@
             [uxbox.util.quartz :as qtz]))
 
 (def ^:private tasks
-  ['uxbox.tasks.garbage/task-clean-deleted-projects])
+  ['uxbox.tasks.garbage/task-clean-deleted-projects
+   'uxbox.tasks.emails/task-send-immediate-emails
+   'uxbox.tasks.emails/task-send-pending-emails
+   'uxbox.tasks.emails/task-send-failed-emails])
 
 (defn- initialize
   []

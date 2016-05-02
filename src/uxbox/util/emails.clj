@@ -25,7 +25,7 @@
        "eol = ('\\n' | '\\r\\n'); "))
 
 (def ^:private parser (insta/parser grammar))
-(def ^:private path-template "emails/%(lang)s/%(name)s.mustache")
+(def ^:private path-template "emails/%(lang)s/%(id)s.mustache")
 
 (defn- parse-email
   [data]
@@ -44,8 +44,8 @@
                :content (str/trim (:body-html state) " \n")}]})))
 
 (defn render
-  [name {:keys [lang] :or {lang "en"} :as opts} defaults]
-  (let [path (str/format path-template {:name name :lang lang})
+  [id {:keys [lang] :or {lang "en"} :as opts} defaults]
+  (let [path (str/format path-template {:id (name id) :lang lang})
         data (tmpl/render path opts)
         email (parse-email data)]
     (->> (select-keys opts [:from :reply-to :to :cc :bcc])

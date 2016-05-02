@@ -225,12 +225,12 @@
 (defn- decode-page-options
   [{:keys [options] :as result}]
   (merge result (when options
-                  {:options (blob/decode options)})))
+                  {:options (blob/decode->str options)})))
 
 (defn- decode-page-data
   [{:keys [data] :as result}]
   (merge result (when data
-                  {:data (blob/decode data)})))
+                  {:data (blob/decode->str data)})))
 
 (defn get-page-by-id
   [conn id]

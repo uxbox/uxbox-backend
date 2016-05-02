@@ -4,32 +4,13 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.services.core
+(ns uxbox.util.data
+  "Data transformations utils."
   (:require [clojure.walk :as walk]
-            [cuerdas.core :as str]
-            [uxbox.util.exceptions :as ex]))
-
-;; --- Main Api
-
-(defmulti -novelty
-  (fn [conn data] (:type data)))
-
-(defmulti -query
-  (fn [conn data] (:type data)))
-
-(defmethod -novelty :default
-  [conn data]
-  (throw (ex/ex-info :not-implemented data)))
-
-(defmethod -query :default
-  [conn data]
-  (throw (ex/ex-info :not-implemented data)))
-
-;; --- Common Helpers
+            [cuerdas.core :as str]))
 
 (defn normalize-attrs
   "Recursively transforms all map keys from strings to keywords."
-  {:deperecated true}
   [m]
   (letfn [(tf [[k v]]
             (let [ks (-> (name k)
@@ -40,3 +21,4 @@
               (into {} (map tf) x)
               x))]
     (walk/postwalk walker m)))
+

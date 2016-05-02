@@ -18,6 +18,11 @@
 (defn decode
   "Decode blob into string."
   [^bytes data]
+  (snappy/uncompress data))
+
+(defn decode->str
+  "A convenience function that encodes data as string."
+  [^bytes data]
   (-> (snappy/uncompress data)
       (codecs/bytes->str)))
 

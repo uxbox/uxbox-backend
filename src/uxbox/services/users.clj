@@ -141,4 +141,4 @@
 (defn- decode-user-data
   [{:keys [metadata] :as result}]
   (merge result (when metadata
-                  {:metadata (blob/decode metadata)})))
+                  {:metadata (blob/decode->str metadata)})))

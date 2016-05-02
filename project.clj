@@ -34,6 +34,7 @@
                  [org.quartz-scheduler/quartz "2.2.3"]
                  [org.quartz-scheduler/quartz-jobs "2.2.3"]
                  [commons-io/commons-io "2.5"]
+                 [com.draines/postal "1.11.3"]
 
                  [hikari-cp "1.6.1"]
                  [mount "0.1.10"]
