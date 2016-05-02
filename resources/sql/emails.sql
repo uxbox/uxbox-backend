@@ -27,7 +27,7 @@ select eq.* from email_queue as eq
 
 -- :name mark-email-as-sent :! :n
 update email_queue
-   set status = 'sent'
+   set status = 'ok'
  where id = :id
    and deleted = false;
 
