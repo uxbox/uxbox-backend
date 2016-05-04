@@ -17,12 +17,12 @@
   #(emails/render "register" % {:reply-to "no-reply@uxbox.io"}))
 
 (defn send!
-  ([sender email] (send! sender email 5))
-  ([sender email priority]
-   (let [email (merge (:email cfg/config) email)
+  ([email] (send! sender email 5))
+  ([email priority]
+   (let [defaults (:email cfg/config)
+         email (merge defaults email)
          data (-> email t/encode blob/encode)
-         sqlv (sql/insert-email {:sender sender
-                                 :data data
+         sqlv (sql/insert-email {:data data
                                  :priority priority})]
      (with-open [conn (up/get-conn)]
        (sc/atomic conn

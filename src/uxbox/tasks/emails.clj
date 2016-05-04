@@ -18,7 +18,6 @@
 
 (defn- decode-email-data
   [{:keys [data] :as result}]
-  (println "data" (type data) data)
   (merge result (when data
                   {:data (-> data blob/decode t/decode)})))
 
@@ -53,13 +52,13 @@
   (let [sqlv (sql/mark-email-as-failed {:id id})]
     (sc/execute conn sqlv)))
 
-(defn- send-pending-email
+(defn- send-email
   [{:keys [id data] :as entry}]
-  (let [config (:email cfg/config)
+  (let [config (:smtp cfg/config)
         result (postal/send-message config data)]
     (if (= (:error result) :SUCCESS)
       (log/debug "Message" id "sent successfully.")
-      (log/warn "Message" id "failed with:" (pr-str result)))
+      (log/warn "Message" id "failed with:" (:message result)))
     (if (= (:error result) :SUCCESS)
       true
       false)))
@@ -68,7 +67,7 @@
   [conn entries]
   (loop [entries entries]
     (if-let [entry (first entries)]
-      (do (if (send-pending-email entry)
+      (do (if (send-email entry)
             (mark-email-as-sent conn (:id entry))
             (mark-email-as-failed conn (:id entry)))
           (recur (rest entries))))))

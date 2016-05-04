@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS email_queue (
   modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz DEFAULT NULL,
 
-  sender uuid NOT NULL,
   data bytea NOT NULL,
 
   priority smallint NOT NULL DEFAULT 10

@@ -25,9 +25,9 @@
        "eol = ('\\n' | '\\r\\n'); "))
 
 (def ^:private parser (insta/parser grammar))
-(def ^:private path-template "emails/%(lang)s/%(id)s.mustache")
+(def ^:private email-path "emails/%(lang)s/%(id)s.mustache")
 
-(defn- parse-email
+(defn- parse-email-template
   [data]
   (loop [state {} parts (drop 1 (parser data))]
     (if-let [[_ _ header body] (first parts)]
@@ -36,17 +36,24 @@
             content (apply str (map second (rest body)))]
         (recur (assoc state type content)
                (rest parts)))
-      {:subject (str/trim (:subject state) " \n")
-       :body [:alternatives
-              {:type "text/plain; charset=utf-8"
-               :content (str/trim (:body-text state) " \n")}
-              {:type "text/html; charset=utf-8"
-               :content (str/trim (:body-html state) " \n")}]})))
+      [(str/trim (:subject state) " \n")
+       (str/trim (:body-text state) " \n")
+       (str/trim (:body-html state) " \n")])))
+
+(defn- parse-email
+  [data]
+  (let [[subject text html] (parse-email-template data)]
+    {:subject subject
+     :body [:alternatives
+            {:type "text/plain; charset=utf-8"
+             :content text}
+            {:type "text/html; charset=utf-8"
+             :content html}]}))
 
 (defn render
-  [id {:keys [lang] :or {lang "en"} :as opts} defaults]
-  (let [path (str/format path-template {:id (name id) :lang lang})
+  [id {:keys [lang] :or {lang "en"} :as opts}]
+  (let [path (str/format email-path {:id (name id) :lang lang})
         data (tmpl/render path opts)
         email (parse-email data)]
     (->> (select-keys opts [:from :reply-to :to :cc :bcc])
-         (merge defaults email))))
+         (merge email))))

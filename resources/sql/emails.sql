@@ -1,6 +1,6 @@
 -- :name insert-email :! :n
-insert into email_queue (sender, data, priority)
-values (:sender, :data, :priority);
+insert into email_queue (data, priority)
+values (:data, :priority);
 
 -- :name get-pending-emails :? :*
 select eq.* from email_queue as eq
