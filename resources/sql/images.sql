@@ -13,7 +13,7 @@ returning *;
 
 -- :name get-image-collections :? :*
 select * from image_collections
- where "user" = :user
+ where "user" = :user and deleted = false
 order by created_at desc;
 
 -- :name delete-image-collection :! :n
