@@ -9,11 +9,14 @@
   (:require [suricatta.core :as sc]
             [clj-uuid :as uuid]
             [buddy.core.codecs :as codecs]
+            [storages.core :as st]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
+            [uxbox.media :as md]
             [uxbox.sql :as sql]
             [uxbox.util.transit :as t]
-            [uxbox.services.core :as usc])
+            [uxbox.services.core :as usc]
+            [uxbox.util.data :as data])
   (:import ratpack.form.UploadedFile
            org.apache.commons.io.FilenameUtils))
 
@@ -28,9 +31,9 @@
                                            :user user
                                            :name name})]
     (-> (sc/fetch-one conn sqlv)
-        (usc/normalize-attrs))))
+        (data/normalize-attrs))))
 
-(def ^:private create-collection-scheme
+(def create-collection-scheme
   {:id [us/uuid]
    :user [us/required us/uuid]
    :name [us/required us/string]})
@@ -49,10 +52,9 @@
                                            :name name
                                            :version version})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
-            (decode-data))))
+            (data/normalize-attrs))))
 
-(def ^:private update-collection-scheme
+(def update-collection-scheme
   (assoc create-collection-scheme
          :version [us/required us/integer]))
 
@@ -67,7 +69,7 @@
   [conn user]
   (let [sqlv (sql/get-image-collections {:user user})]
     (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs))))
+         (map data/normalize-attrs))))
 
 (defmethod usc/-query :list/image-collections
   [conn {:keys [user] :as params}]
@@ -75,7 +77,7 @@
 
 ;; --- Delete Collection
 
-(def ^:private delete-collection-schema
+(def  delete-collection-schema
   {:id [us/required us/uuid]
    :user [us/required us/uuid]})
 
@@ -95,16 +97,16 @@
   [conn {:keys [id user file collection]}]
   (let [id (or id (uuid/v4))
         filename (.getFileName ^UploadedFile file)
-        ext (FilenameUtils/getExtension oname)
-        path @(st/save (str id "." ext) file)
+        ext (FilenameUtils/getExtension filename)
+        path @(st/save md/storage (str id "." ext) file)
         sqlv (sql/create-image {:id id
                                 :path path
                                 :collection collection
                                 :user user})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (data/normalize-attrs))))
 
-(def ^:private create-image-schema
+(def create-image-schema
   {:id [us/uuid]
    :user [us/required us/uuid]
    :file [us/required us/uploaded-file]})
@@ -120,9 +122,9 @@
   [conn {:keys [id name version]}]
   (let [sqlv (sql/update-image {:id id :name name :version version})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (data/normalize-attrs))))
 
-(def ^:private update-image-schema
+(def update-image-schema
   {:id [us/uuid]
    :user [us/required us/uuid]
    :file [us/required us/uploaded-file]})
@@ -139,7 +141,7 @@
   (let [sqlv (sql/delete-image {:id id :user user})]
     (pos? (sc/execute conn sqlv))))
 
-(def ^:private delete-image-schema
+(def delete-image-schema
   {:id [us/uuid]
    :user [us/required us/uuid]})
 
