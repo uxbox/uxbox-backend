@@ -5,7 +5,7 @@ returning *;
 
 -- :name update-image-collection :<! :1
 update image_collections
-   set name = :name
+   set name = :name,
        version = :version
  where id = :id
    and "user" = :user
