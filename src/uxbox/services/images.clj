@@ -11,6 +11,7 @@
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
+            [uxbox.sql :as sql]
             [uxbox.util.transit :as t]
             [uxbox.services.core :as usc])
   (:import ratpack.form.UploadedFile
@@ -22,10 +23,11 @@
 
 (defn create-collection
   [conn {:keys [id user name]}]
-  (let [sql (str "INSERT INTO image_collections (id, \"user\", name) "
-                 " VALUES (?, ?, ?) RETURNING *")
-        id (or id (uuid/v4))]
-    (-> (sc/fetch-one conn [sql id user name])
+  (let [id (or id (uuid/v4))
+        sqlv (sql/create-image-collection {:id id
+                                           :user user
+                                           :name name})]
+    (-> (sc/fetch-one conn sqlv)
         (usc/normalize-attrs))))
 
 (def ^:private create-collection-scheme
@@ -42,10 +44,11 @@
 
 (defn update-collection
   [conn {:keys [id user name version]}]
-  (let [sql (str "UPDATE image_collections SET name=?,version=? "
-                 " WHERE id=? AND \"user\"=? RETURNING *")
-        sqlv [sql id user name data]]
-    (some-> (sc/fetch-one conn [sql name version id user])
+  (let [sqlv (sql/update-image-collection {:id id
+                                           :user user
+                                           :name name
+                                           :version version})]
+    (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (decode-data))))
 
@@ -62,9 +65,8 @@
 
 (defn get-collections-by-user
   [conn user]
-  (let [sql (str "SELECT * FROM image_collections "
-                 " WHERE \"user\"=? ORDER BY created_at DESC")]
-    (->> (sc/fetch conn [sql user])
+  (let [sqlv (sql/get-image-collections {:user user})]
+    (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs))))
 
 (defmethod usc/-query :list/image-collections
@@ -79,9 +81,8 @@
 
 (defn delete-collection
   [conn {:keys [id user]}]
-  (let [sql (str "DELETE FROM image_collections "
-                 " WHERE id=? AND \"user\"=?")]
-    (pos? (sc/execute conn [sql id user]))))
+  (let [sqlv (sql/delete-image-collection {:id id :user user})]
+    (pos? (sc/execute conn sqlv))))
 
 (defmethod usc/-novelty :delete/image-collection
   [conn params]
@@ -96,9 +97,11 @@
         filename (.getFileName ^UploadedFile file)
         ext (FilenameUtils/getExtension oname)
         path @(st/save (str id "." ext) file)
-        sql (str "INSERT INTO images (\"user\", name, collection, size, path) "
-                 " VALUES (?, ?, ?, 0, ?)")]
-    (->> (sc/fetch conn [sql user filename collection size path])
+        sqlv (sql/create-image {:id id
+                                :path path
+                                :collection collection
+                                :user user})]
+    (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs))))
 
 (def ^:private create-image-schema
@@ -111,18 +114,23 @@
   (->> (validate! params create-image-schema)
        (create-image conn)))
 
+;; --- Update Image.
+
+(defn update-image
+  [conn {:keys [id name version]}]
+
 ;; --- Delete Image.
 
 (defn delete-image
   [conn {:keys [user id]}]
-  (let [sql "DELETE FROM images WHERE id=?, \"user\"=?"]
-    (pos? (sc/execute conn [sql id user]))))
+  (let [sqlv (sql/delete-image {:id id :user user})]
+    (pos? (sc/execute conn sqlv))))
 
 (def ^:private delete-image-schema
   {:id [us/uuid]
    :user [us/required us/uuid]})
 
-(defmethod usc/-novelty :create/image
+(defmethod usc/-novelty :delete/image
   [conn params]
-  (->> (validate! params create-image-schema)
-       (create-image conn)))
+  (->> (validate! params delete-image-schema)
+       (delete-image conn)))

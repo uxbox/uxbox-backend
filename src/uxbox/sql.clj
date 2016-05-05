@@ -11,4 +11,5 @@
 (hugsql/def-sqlvec-fns "sql/pages.sql" {:quoting :ansi :fn-suffix ""})
 (hugsql/def-sqlvec-fns "sql/users.sql" {:quoting :ansi :fn-suffix ""})
 (hugsql/def-sqlvec-fns "sql/emails.sql" {:quoting :ansi :fn-suffix ""})
+(hugsql/def-sqlvec-fns "sql/images.sql" {:quoting :ansi :fn-suffix ""})
 
