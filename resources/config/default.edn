@@ -14,8 +14,8 @@
          :from "no-reply@uxbox.io"}
 
  :storage
- {:basedir "public/images"
-  :baseuri "http://localhost:6060/images/"}
+ {:basedir "public/media"
+  :baseuri "http://localhost:6060/media/"}
 
  :database
  {:adapter "postgresql"

@@ -10,7 +10,7 @@
             [cuerdas.core :as str]
             [storages.core :as st]
             [storages.fs :refer (filesystem)]
-            [storages.misc :refer (hashed)]
+            [storages.misc :refer (hashed prefixed)]
             [uxbox.config :refer (config)]))
 
 (defn- resolve-basedir
@@ -23,6 +23,7 @@
   (let [basedir (resolve-basedir basedir)]
     (-> (filesystem {:basedir basedir
                      :baseuri baseuri})
+        (prefixed "images")
         (hashed))))
 
 (defstate storage
