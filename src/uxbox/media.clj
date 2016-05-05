@@ -7,6 +7,7 @@
 (ns uxbox.media
   "A media storage impl for uxbox."
   (:require [mount.core :as mount :refer (defstate)]
+            [clojure.java.io :as io]
             [cuerdas.core :as str]
             [storages.core :as st]
             [storages.fs :refer (filesystem)]
