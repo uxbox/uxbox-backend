@@ -101,8 +101,8 @@
                                 :path path
                                 :collection collection
                                 :user user})]
-    (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs))))
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs))))
 
 (def ^:private create-image-schema
   {:id [us/uuid]
@@ -114,12 +114,25 @@
   (->> (validate! params create-image-schema)
        (create-image conn)))
 
-;; --- Update Image.
+;; --- Update Image
 
 (defn update-image
   [conn {:keys [id name version]}]
+  (let [sqlv (sql/update-image {:id id :name name :version version})]
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs))))
 
-;; --- Delete Image.
+(def ^:private update-image-schema
+  {:id [us/uuid]
+   :user [us/required us/uuid]
+   :file [us/required us/uploaded-file]})
+
+(defmethod usc/-novelty :update/image
+  [conn params]
+  (->> (validate! params update-image-schema)
+       (update-image conn)))
+
+;; --- Delete Image
 
 (defn delete-image
   [conn {:keys [user id]}]
