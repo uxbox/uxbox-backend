@@ -16,7 +16,6 @@
             [uxbox.persistence :as up]
             [uxbox.migrations]
             [uxbox.util.transit :as t]
-            [uxbox.util.snappy :as snappy]
             [uxbox.services.users :as susers]
             [uxbox.services.projects :as sproj]
             [uxbox.services.pages :as spag])
@@ -40,7 +39,7 @@
                       {:username (str "user" i)
                        :id (mk-uuid "user" i)
                        :fullname (str "User " i)
-                       :metadata {}
+                       :metadata (data-encode {})
                        :password password
                        :email (str "user" i ".test@uxbox.io")}))
 
