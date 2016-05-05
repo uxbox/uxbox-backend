@@ -18,6 +18,7 @@
             [uxbox.frontend.projects :as projects]
             [uxbox.frontend.pages :as pages]
             [uxbox.frontend.library :as library]
+            [uxbox.frontend.images :as images]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
@@ -64,6 +65,12 @@
        [:delete "projects/:id" #'projects/delete-project]
        [:post "projects" #'projects/create-project]
        [:get "projects" #'projects/list-projects]
+
+       ;; Image Collections
+       [:put "library/image-collections/:id" #'images/update-collection]
+       [:delete "library/image-collections/:id" #'images/delete-collection]
+       [:get "library/image-collections" #'images/list-collections]
+       [:post "library/image-collections" #'images/create-collection]
 
        ;; Pages
        [:put "pages/:id/metadata" #'pages/update-page-metadata]
