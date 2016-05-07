@@ -17,7 +17,7 @@
   #(emails/render "register" % {:reply-to "no-reply@uxbox.io"}))
 
 (defn send!
-  ([email] (send! sender email 5))
+  ([email] (send! email 5))
   ([email priority]
    (let [defaults (:email cfg/config)
          email (merge defaults email)
