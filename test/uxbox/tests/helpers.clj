@@ -16,20 +16,19 @@
 
 (def +base-url+ "http://localhost:5050")
 (def +config+ (ucfg/read-test-config))
-(def +ds+ (up/create-datasource (:database +config+)))
 
 (defn database-reset
   [next]
-  (with-open [conn (sc/context +ds+)]
-    (sc/execute conn "drop schema if exists public cascade;")
-    (sc/execute conn "create schema public;"))
   (-> (mount/only #{#'uxbox.config/config
                     #'uxbox.persistence/datasource
                     #'uxbox.migrations/migrations
                     #'uxbox.services.auth/secret})
-      (mount/swap {#'uxbox.config/config +config+
-                   #'uxbox.persistence/datasource +ds+})
+      (mount/swap {#'uxbox.config/config +config+})
       (mount/start))
+  (with-open [conn (up/get-conn)]
+    (sc/execute conn (str "truncate txlog, users, projects, pages, pages_history, "
+                          " color_collections, email_queue, image_collections, "
+                          " images CASCADE;")))
   (try
     (next)
     (finally
