@@ -22,6 +22,11 @@ update image_collections
        deleted_at = clock_timestamp()
  where id = :id and "user" = :user;
 
+-- :name get-images :? :*
+select * from images
+ where "user" = :user and deleted = false
+order by created_at desc;
+
 -- :name create-image :<! :1
 insert into images ("user", name, collection, path)
 values (:user, :name, :collection, :path)
