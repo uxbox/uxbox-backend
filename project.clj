@@ -20,6 +20,7 @@
 
                  [instaparse "1.4.1"]
                  [hiccup "1.0.5"]
+                 [org.im4java/im4java "1.4.0"]
 
                  [org.slf4j/slf4j-simple "1.7.21"]
                  [com.layerware/hugsql-core "0.4.7"
