@@ -26,9 +26,13 @@
       (mount/swap {#'uxbox.config/config +config+})
       (mount/start))
   (with-open [conn (up/get-conn)]
-    (sc/execute conn (str "truncate txlog, users, projects, pages, pages_history, "
-                          " color_collections, email_queue, image_collections, "
-                          " images CASCADE;")))
+    (let [sql (str "SELECT table_name FROM information_schema.tables "
+                   " WHERE table_schema = 'public' AND table_name != 'migrations';")
+          result (->> (sc/fetch conn sql)
+                      (map :table_name))]
+      (sc/execute conn (str "TRUNCATE "
+                            (apply str (interpose ", " result))
+                            " CASCADE;"))))
   (try
     (next)
     (finally
