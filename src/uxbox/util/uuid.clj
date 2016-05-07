@@ -5,7 +5,12 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.util.uuid
+  (:require [clj-uuid :as uuid])
   (:import java.util.UUID))
+
+(def random
+  "Alias for clj-uuid/v4."
+  uuid/v4)
 
 (defn from-string
   "Parse string uuid representation into proper UUID instance."
