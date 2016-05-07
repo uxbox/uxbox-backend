@@ -1,7 +1,14 @@
-{:migrations {:verbose false}
- :database {:adapter "postgresql"
-            :username nil
-            :password nil
-            :database-name "test"
-            :server-name "localhost"
-            :port-number 5432}}
+{:migrations
+ {:verbose false}
+
+ :storage
+ {:basedir "public/test-media"
+  :baseuri "http://localhost:6060/media/"}
+
+ :database
+ {:adapter "postgresql"
+  :username nil
+  :password nil
+  :database-name "test"
+  :server-name "localhost"
+  :port-number 5432}}
