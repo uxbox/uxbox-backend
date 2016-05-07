@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS images (
                   DEFAULT NULL,
 
   name text NOT NULL,
-  path text NOT NULL
+  path text NOT NULL,
+
+  deleted boolean NOT NULL DEFAULT false
 ) WITH (OIDS=FALSE);
 
 CREATE INDEX ON images (collection);
