@@ -82,6 +82,18 @@
        (catch clojure.lang.ExceptionInfo e
          (strip-response (ex-data e)))))))
 
+(defn http-multipart
+  [user uri params]
+  (let [headers (merge
+                  (when user
+                    {"Authorization" (str "Token " (usa/generate-token user))}))
+        params {:headers headers
+                :multipart params}]
+    (try
+      (strip-response (http/post uri params))
+      (catch clojure.lang.ExceptionInfo e
+        (strip-response (ex-data e))))))
+
 (defn http-put
   ([uri params]
    (http-put nil uri params))
