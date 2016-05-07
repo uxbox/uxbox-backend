@@ -64,6 +64,11 @@
    :optional true
    :validate #(instance? ratpack.form.UploadedFile %)})
 
+(def path
+  {:message "errors.form.path"
+   :optional true
+   :validate #(instance? java.nio.file.Path %)})
+
 ;; --- Public Api
 
 (def validate st/validate)
