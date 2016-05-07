@@ -94,12 +94,10 @@
 ;; --- Create Image (Upload)
 
 (defn create-image
-  [conn {:keys [id user file collection]}]
+  [conn {:keys [id user name path collection]}]
   (let [id (or id (uuid/v4))
-        filename (.getFileName ^UploadedFile file)
-        ext (FilenameUtils/getExtension filename)
-        path @(st/save md/storage (str id "." ext) file)
         sqlv (sql/create-image {:id id
+                                :name name
                                 :path path
                                 :collection collection
                                 :user user})]
@@ -109,7 +107,8 @@
 (def create-image-schema
   {:id [us/uuid]
    :user [us/required us/uuid]
-   :file [us/required us/uploaded-file]})
+   :name [us/required us/string]
+   :path [us/required us/string]})
 
 (defmethod usc/-novelty :create/image
   [conn params]

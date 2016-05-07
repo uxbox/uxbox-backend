@@ -7,11 +7,14 @@
 (ns uxbox.frontend.images
   (:require [promesa.core :as p]
             [catacumba.http :as http]
+            [storages.core :as st]
+            [uxbox.media :as md]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.services.images :as si]
             [uxbox.util.response :refer (rsp)]
-            [uxbox.util.uuid :as uuid]))
+            [uxbox.util.uuid :as uuid]
+            [uxbox.util.paths :as paths]))
 
 (def validate-form! (partial us/validate! :form/validation))
 (def validate-query! (partial us/validate! :query/validation))
@@ -64,3 +67,30 @@
         (p/then #(http/ok (rsp %))))))
 
 
+;; --- Create image
+
+(def create-image-schema
+  {:id [us/uuid]
+   :file [us/required us/uploaded-file]})
+
+(defn- resolve-path
+  [{:keys [path] :as imagentry}]
+  (assoc imagentry :url (str (st/public-url md/storage path))))
+
+(defn create-image
+  [{user :identity data :data}]
+  (let [{:keys [file id] :as data} (validate-form! data create-image-schema)
+        id (or id (uuid/random))
+        filename (paths/name file)
+        extension (paths/extension filename)]
+    (->> (st/save md/storage filename file)
+         (p/mapcat (fn [path]
+                     (sv/novelty {:id id
+                                  :type :create/image
+                                  :user user
+                                  :name filename
+                                  :path (str path)})))
+         (p/map resolve-path)
+         (p/map (fn [result]
+                  (let [loc (str "/api/library/images/" (:id result))]
+                    (http/created loc (rsp result))))))))

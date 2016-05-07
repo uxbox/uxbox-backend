@@ -72,6 +72,9 @@
        [:get "library/image-collections" #'images/list-collections]
        [:post "library/image-collections" #'images/create-collection]
 
+       ;; Images
+       [:post "library/images" #'images/create-image]
+
        ;; Pages
        [:put "pages/:id/metadata" #'pages/update-page-metadata]
        [:get "pages/:id/history" #'pages/retrieve-page-history]
