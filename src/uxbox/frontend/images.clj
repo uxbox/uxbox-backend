@@ -112,3 +112,20 @@
     (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
 
+;; --- Delete Image
+
+(defn delete-image
+  [{user :identity params :route-params}]
+  (let [message {:id (uuid/from-string (:id params))
+                 :type :delete/image
+                 :user user}]
+    (-> (sv/novelty message)
+        (p/then (fn [v] (http/no-content))))))
+
+;; --- List collections
+
+(defn list-images
+  [{user :identity}]
+  (let [params {:user user :type :list/images}]
+    (-> (sv/query params)
+        (p/then #(http/ok (rsp %))))))

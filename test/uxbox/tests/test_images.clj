@@ -104,3 +104,34 @@
           (t/is (= (:user data) (:id user)))
           (t/is (= (:name data) "my stuff")))))))
 
+(t/deftest test-http-delete-image
+  (with-open [conn (up/get-conn)]
+    (let [user (th/create-user conn 1)
+          data {:user (:id user)
+                :name "test.png"
+                :path "some/path"
+                :collection nil}
+          img (images/create-image conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/library/images/" (:id img))
+              [status data] (th/http-delete user uri)]
+          (t/is (= 204 status))
+          (let [sqlv (sql/get-images {:user (:id user)})
+                result (sc/fetch conn sqlv)]
+            (t/is (empty? result))))))))
+
+(t/deftest test-http-list-images
+  (with-open [conn (up/get-conn)]
+    (let [user (th/create-user conn 1)
+          data {:user (:id user)
+                :name "test.png"
+                :path "some/path"
+                :collection nil}
+          img (images/create-image conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/library/images")
+              [status data] (th/http-get user uri)]
+          ;; (println "RESPONSE:" status data)
+          (t/is (= 200 status))
+          (t/is (= 1 (count data))))))))
+

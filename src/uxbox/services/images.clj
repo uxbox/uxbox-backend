@@ -152,3 +152,15 @@
   [conn params]
   (->> (validate! params delete-image-schema)
        (delete-image conn)))
+
+;; --- List Images
+
+(defn get-images-by-user
+  [conn user]
+  (let [sqlv (sql/get-images {:user user})]
+    (->> (sc/fetch conn sqlv)
+         (map data/normalize-attrs))))
+
+(defmethod usc/-query :list/images
+  [conn {:keys [user] :as params}]
+  (get-images-by-user conn user))

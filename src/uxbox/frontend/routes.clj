@@ -73,7 +73,9 @@
        [:post "library/image-collections" #'images/create-collection]
 
        ;; Images
+       [:delete "library/images/:id" #'images/delete-image]
        [:put "library/images/:id" #'images/update-image]
+       [:get "library/images" #'images/list-images]
        [:post "library/images" #'images/create-image]
 
        ;; Pages
