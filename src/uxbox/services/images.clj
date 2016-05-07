@@ -118,15 +118,19 @@
 ;; --- Update Image
 
 (defn update-image
-  [conn {:keys [id name version]}]
-  (let [sqlv (sql/update-image {:id id :name name :version version})]
+  [conn {:keys [id name version user]}]
+  (let [sqlv (sql/update-image {:id id
+                                :name name
+                                :user user
+                                :version version})]
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs))))
 
 (def update-image-schema
   {:id [us/uuid]
    :user [us/required us/uuid]
-   :file [us/required us/uploaded-file]})
+   :name [us/required us/string]
+   :version [us/required us/integer]})
 
 (defmethod usc/-novelty :update/image
   [conn params]

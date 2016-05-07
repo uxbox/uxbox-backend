@@ -73,6 +73,7 @@
        [:post "library/image-collections" #'images/create-collection]
 
        ;; Images
+       [:put "library/images/:id" #'images/update-image]
        [:post "library/images" #'images/create-image]
 
        ;; Pages

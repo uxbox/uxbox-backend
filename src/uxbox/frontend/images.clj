@@ -94,3 +94,21 @@
          (p/map (fn [result]
                   (let [loc (str "/api/library/images/" (:id result))]
                     (http/created loc (rsp result))))))))
+
+;; --- Update Image
+
+(def update-image-schema
+  {:id [us/uuid]
+   :name [us/required us/string]
+   :version [us/required us/integer]})
+
+(defn update-image
+  [{user :identity params :route-params data :data}]
+  (let [data (validate-form! data update-image-schema)
+        message (assoc data
+                       :id (uuid/from-string (:id params))
+                       :type :update/image
+                       :user user)]
+    (-> (sv/novelty message)
+        (p/then #(http/ok (rsp %))))))
+
