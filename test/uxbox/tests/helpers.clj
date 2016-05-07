@@ -11,6 +11,7 @@
             [uxbox.services.users :as usu]
             [uxbox.util.transit :as transit]
             [uxbox.migrations :as umg]
+            [uxbox.media :as media]
             [uxbox.persistence :as up]
             [uxbox.config :as ucfg]))
 
@@ -22,6 +23,7 @@
   (-> (mount/only #{#'uxbox.config/config
                     #'uxbox.persistence/datasource
                     #'uxbox.migrations/migrations
+                    #'uxbox.media/storage
                     #'uxbox.services.auth/secret})
       (mount/swap {#'uxbox.config/config +config+})
       (mount/start))

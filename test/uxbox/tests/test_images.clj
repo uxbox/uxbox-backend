@@ -3,6 +3,7 @@
             [promesa.core :as p]
             [suricatta.core :as sc]
             [clj-uuid :as uuid]
+            [clojure.java.io :as io]
             [catacumba.testing :refer (with-server)]
             [buddy.core.codecs :as codecs]
             [uxbox.persistence :as up]
@@ -23,7 +24,7 @@
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/library/image-collections")
               [status data] (th/http-get user uri)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= 1 (count data))))))))
 
@@ -70,4 +71,19 @@
           (let [sqlv (sql/get-image-collections {:user (:id user)})
                 result (sc/fetch conn sqlv)]
             (t/is (empty? result))))))))
+
+(t/deftest test-http-create-image
+  (with-open [conn (up/get-conn)]
+    (let [user (th/create-user conn 1)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/library/images")
+              params [{:name "sample.jpg"
+                       :part-name "file"
+                       :content (io/input-stream
+                                 (io/resource "uxbox/tests/_files/sample.jpg"))}]
+              [status data] (th/http-multipart user uri params)]
+          (println "RESPONSE:" status data)
+          (t/is (= 201 status))
+          (t/is (= (:user data) (:id user)))
+          (t/is (= (:name data) "sample.jpg")))))))
 
