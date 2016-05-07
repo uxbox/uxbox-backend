@@ -10,6 +10,7 @@
             [uxbox.services.auth :as usa]
             [uxbox.services.users :as usu]
             [uxbox.util.transit :as transit]
+            [uxbox.util.paths :as paths]
             [uxbox.migrations :as umg]
             [uxbox.media :as media]
             [uxbox.persistence :as up]
@@ -38,6 +39,7 @@
   (try
     (next)
     (finally
+      #_(paths/delete (-> +config+ :storage :basedir) {:recursive true})
       (mount/stop-except #'uxbox.config/config
                          #'uxbox.persistence/datasource))))
 
