@@ -63,26 +63,18 @@
 ;; Entry point (only for uberjar)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defonce +vars+ nil)
-
 (defn run-all-tests
   ([] (test/run-all-tests #"^uxbox.tests.*"))
   ([re] (test/run-all-tests re)))
 
 (defn test-vars
-  []
-  (test/test-vars +vars+))
-
-(defn run-tests
   [& vars]
-  (cond
-    (pos? (count vars))
-    (do
-      (alter-var-root #'+vars+ (constantly vars))
-      (repl/refresh :after 'uxbox.main/test-vars))
-
-    :else
-    (repl/refresh :after 'uxbox.main/run-all-tests)))
+  (repl/refresh)
+  (test/test-vars
+   (map (fn [sym]
+          (require (symbol (namespace sym)))
+          (resolve sym))
+        vars)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point (only for uberjar)
