@@ -14,7 +14,7 @@
          :from "no-reply@uxbox.io"}
 
  :storage
- {:basedir "public/media"
+ {:basedir "resources/public/media"
   :baseuri "http://localhost:6060/media/"}
 
  :database

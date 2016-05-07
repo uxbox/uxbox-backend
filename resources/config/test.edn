@@ -2,7 +2,7 @@
  {:verbose false}
 
  :storage
- {:basedir "public/test-media"
+ {:basedir "resources/public/test-media"
   :baseuri "http://localhost:6060/media/"}
 
  :database
