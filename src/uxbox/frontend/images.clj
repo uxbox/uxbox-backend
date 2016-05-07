@@ -16,9 +16,9 @@
 (def validate-form! (partial us/validate! :form/validation))
 (def validate-query! (partial us/validate! :query/validation))
 
-(def create-collection-scheme si/create-collection-scheme)
-
 ;; --- Create Collection
+
+(def create-collection-scheme si/create-collection-scheme)
 
 (defn create-collection
   [{user :identity data :data}]
