@@ -14,18 +14,21 @@
             [storages.misc :refer (hashed prefixed)]
             [uxbox.config :refer (config)]))
 
-(defn- resolve-basedir
-  [^String basedir]
-  (or (io/resource basedir)
-      basedir))
+(defn- initialize-images-storage
+  [{:keys [basedir baseuri] :as config} prefix]
+  (-> (filesystem {:basedir basedir
+                   :baseuri baseuri})
+      (prefixed prefix)
+      (hashed)))
 
-(defn- initialize-storage
-  [{:keys [basedir baseuri] :as config}]
-  (let [basedir (resolve-basedir basedir)]
-    (-> (filesystem {:basedir basedir
-                     :baseuri baseuri})
-        (prefixed "images")
-        (hashed))))
+(defn- initialize-thumbnails-storage
+  [{:keys [basedir baseuri] :as config} prefix]
+  (-> (filesystem {:basedir basedir
+                   :baseuri baseuri})
+      (prefixed prefix)))
 
-(defstate storage
-  :start (initialize-storage (:storage config)))
+(defstate images-storage
+  :start (initialize-images-storage (:storage config) "images"))
+
+(defstate thumbnails-storage
+  :start (initialize-thumbnails-storage (:storage config) "thumbnails"))
