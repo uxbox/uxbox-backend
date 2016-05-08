@@ -8,7 +8,7 @@
   (:require [promesa.core :as p]
             [catacumba.http :as http]
             [storages.core :as st]
-            [uxbox.media :as md]
+            [uxbox.media :as media]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.services.images :as si]
@@ -75,15 +75,18 @@
 
 (defn- resolve-path
   [{:keys [path] :as imagentry}]
-  (assoc imagentry :url (str (st/public-url md/storage path))))
+  (let [storage media/images-storage
+        url (str (st/public-url storage path))]
+    (assoc imagentry :url url)))
 
 (defn create-image
   [{user :identity data :data}]
   (let [{:keys [file id] :as data} (validate-form! data create-image-schema)
         id (or id (uuid/random))
-        filename (paths/name file)
-        extension (paths/extension filename)]
-    (->> (st/save md/storage filename file)
+        filename (paths/base-name file)
+        extension (paths/extension filename)
+        storage media/images-storage]
+    (->> (st/save storage filename file)
          (p/mapcat (fn [path]
                      (sv/novelty {:id id
                                   :type :create/image
