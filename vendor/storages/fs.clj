@@ -7,6 +7,7 @@
 (ns storages.fs
   "A local filesystem storage implementation."
   (:require [promesa.core :as p]
+            [clojure.java.io :as io]
             [executors.core :as exec]
             [storages.proto :as pt]
             [storages.impl :as impl])
@@ -14,8 +15,7 @@
            java.io.OutputStream
            java.net.URI
            java.nio.file.Path
-           java.nio.file.Files
-           org.apache.commons.io.IOUtils))
+           java.nio.file.Files))
 
 (defn- normalize-path
   [^Path base ^Path path]
@@ -38,7 +38,7 @@
     (with-open [^InputStream source (pt/-input-stream content)
                 ^OutputStream dest (Files/newOutputStream fullpath
                                                           impl/open-opts)]
-      (IOUtils/copy source dest)
+      (io/copy source dest)
       path)))
 
 (defn- delete
