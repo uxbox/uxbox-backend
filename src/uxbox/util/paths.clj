@@ -17,55 +17,39 @@
            java.nio.file.attribute.FileAttribute
            java.nio.file.attribute.PosixFilePermissions
            java.nio.file.NoSuchFileException
-           org.apache.commons.io.FilenameUtils
            ratpack.form.UploadedFile))
 
 (def path
   "Alias to storages.core/path."
   st/path)
 
-(defn exists?
-  "Check if a path exists."
+(defn parent
+  "Get parent path if it exists."
   [path]
-  (let [^Path path (st/path path)
-        opts (into-array LinkOption [LinkOption/NOFOLLOW_LINKS])]
-    (Files/exists path opts)))
+  (.getParent ^Path (st/path path)))
 
-(defn- delete-recursive
-  [^Path path]
-  (try
-    (Files/walkFileTree path (proxy [SimpleFileVisitor] []
-                               (visitFile [file attrs]
-                                 (Files/deleteIfExists file)
-                                 (FileVisitResult/CONTINUE))
-                               (postVisitDirectory [dir exc]
-                                 (Files/deleteIfExists dir)
-                                 (FileVisitResult/CONTINUE))))
-    true
-    (catch NoSuchFileException e
-      false)))
-
-(defn delete
-  "Delete a file or directory."
-  ([path] (delete path nil))
-  ([path {:keys [recursive] :or {recursive false}}]
-   (let [^Path path (st/path path)]
-     (if recursive
-       (delete-recursive path)
-       (Files/deleteIfExists path)))))
-
-(defn extension
-  "Get the file extension."
-  [path]
-  (let [path (st/path path)]
-    (FilenameUtils/getExtension (str path))))
-
-(defn name
+(defn base-name
   "Get the file name."
   [path]
   (if (instance? UploadedFile path)
     (.getFileName ^UploadedFile path)
-    (let [path (st/path path)]
-      (FilenameUtils/getName (str path)))))
+    (str (.getFileName ^Path (st/path path)))))
 
+(defn split-ext
+  "Returns a vector of `[name extension]`."
+  [path]
+  (let [base (base-name path)
+        i (.lastIndexOf base ".")]
+    (if (pos? i)
+      [(subs base 0 i) (subs base i)]
+      [base nil])))
 
+(defn extension
+  "Return the extension part of a file."
+  [path]
+  (last (split-ext path)))
+
+(defn name
+  "Return the name part of a file."
+  [path]
+  (first (split-ext path)))
