@@ -15,10 +15,10 @@
 
 (defn thumbnail
   ([input] (thumbnail input nil))
-  ([input {:keys [size crop format]
-           :or {format "webp"
-                size [200 200]
-                crop true}
+  ([input {:keys [size quality format]
+           :or {format "jpg"
+                quality 92
+                size [200 200]}
            :as opts}]
    {:pre [(vector? size)]}
    (with-open [out (ByteArrayOutputStream.)]
@@ -31,6 +31,7 @@
                 (.thumbnail (int width) (int height))
                 (.gravity "center")
                 (.extent (int width) (int height))
+                (.quality (double quality))
                 (.addImage (into-array String [(str format ":-")])))
            cmd (doto (ConvertCmd.)
                  (.setInputProvider pipe-in)
