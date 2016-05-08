@@ -11,24 +11,17 @@
             [cuerdas.core :as str]
             [storages.core :as st]
             [storages.fs :refer (filesystem)]
-            [storages.misc :refer (hashed prefixed)]
+            [storages.misc :refer (hashed scoped)]
             [uxbox.config :refer (config)]))
 
-(defn- initialize-images-storage
-  [{:keys [basedir baseuri] :as config} prefix]
-  (-> (filesystem {:basedir basedir
-                   :baseuri baseuri})
-      (prefixed prefix)
-      (hashed)))
-
-(defn- initialize-thumbnails-storage
-  [{:keys [basedir baseuri] :as config} prefix]
-  (-> (filesystem {:basedir basedir
-                   :baseuri baseuri})
-      (prefixed prefix)))
+(defstate storage
+  :start (let [{:keys [basedir baseuri]} (:storage config)]
+           (filesystem {:basedir basedir :baseuri baseuri})))
 
 (defstate images-storage
-  :start (initialize-images-storage (:storage config) "images"))
+  :start (-> storage
+             (scoped "images")
+             (hashed)))
 
 (defstate thumbnails-storage
-  :start (initialize-thumbnails-storage (:storage config) "thumbnails"))
+  :start (scoped storage "thumbs"))
