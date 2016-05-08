@@ -60,10 +60,6 @@
 
 ;; --- Hashed Storage
 
-(defn- concat-path
-  [path & others]
-  (reduce #(FilenameUtils/concat %1 %2) path others))
-
 (defn- generate-path
   [^Path path]
   (let [name (str (.getFileName path))
@@ -74,10 +70,9 @@
         tokens (re-seq #"[\w\d\-\_]{3}" hash)
         path-tokens (take 6 tokens)
         rest-tokens (drop 6 tokens)
-        path (apply concat-path path-tokens)
+        path (pt/-path path-tokens)
         frest (apply str rest-tokens)]
-    (pt/-path
-     (concat-path path frest name))))
+    (pt/-path (list path frest name))))
 
 (defrecord HashedStorage [storage]
   pt/IPublicStorage
