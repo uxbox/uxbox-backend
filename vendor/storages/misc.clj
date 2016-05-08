@@ -17,32 +17,35 @@
   (:import java.io.InputStream
            java.io.OutputStream
            java.nio.file.Path
-           java.nio.file.Files
-           org.apache.commons.io.FilenameUtils
-           org.apache.commons.io.IOUtils))
+           java.nio.file.Files))
 
 ;; --- Prefixed Storage
 
-(defrecord PrefixedPathStorage [storage prefix]
+(defrecord PrefixedPathStorage [storage ^Path prefix]
   pt/IPublicStorage
   (-public-uri [_ path]
-    (pt/-public-uri storage path))
+    (let [^Path path (pt/-path [prefix path])]
+      (pt/-public-uri storage path)))
 
   pt/IStorage
   (-save [_ path content]
-    (let [^Path path (pt/-path path)
-          ^Path path (.resolve ^Path prefix path)]
-      (pt/-save storage path content)))
+    (let [^Path path (pt/-path [prefix path])]
+      (->> (pt/-save storage path content)
+           (p/map (fn [^Path path]
+                    (.relativize prefix path))))))
 
   (-delete [_ path]
-    (pt/-delete storage path))
+    (let [^Path path (pt/-path [prefix path])]
+      (pt/-delete storage path)))
 
   (-exists? [this path]
-    (pt/-exists? storage path))
+    (let [^Path path (pt/-path [prefix path])]
+      (pt/-exists? storage path)))
 
   pt/ILocalStorage
   (-lookup [_ path]
-    (pt/-lookup storage path)))
+    (let [^Path path (pt/-path [prefix path])]
+      (pt/-lookup storage path))))
 
 (defn prefixed
   "Create a composed storage instance that automatically prefixes
