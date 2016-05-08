@@ -9,12 +9,15 @@
             [catacumba.http :as http]
             [storages.core :as st]
             [uxbox.media :as media]
+            [uxbox.images :as images]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.services.images :as si]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.paths :as paths]))
+
+;; --- Constants & Config
 
 (def validate-form! (partial us/validate! :form/validation))
 (def validate-query! (partial us/validate! :query/validation))
@@ -66,18 +69,11 @@
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
-
 ;; --- Create image
 
 (def create-image-schema
   {:id [us/uuid]
    :file [us/required us/uploaded-file]})
-
-(defn- resolve-path
-  [{:keys [path] :as imagentry}]
-  (let [storage media/images-storage
-        url (str (st/public-url storage path))]
-    (assoc imagentry :url url)))
 
 (defn create-image
   [{user :identity data :data}]
@@ -86,17 +82,33 @@
         filename (paths/base-name file)
         extension (paths/extension filename)
         storage media/images-storage]
-    (->> (st/save storage filename file)
-         (p/mapcat (fn [path]
-                     (sv/novelty {:id id
-                                  :type :create/image
-                                  :user user
-                                  :name filename
-                                  :path (str path)})))
-         (p/map resolve-path)
-         (p/map (fn [result]
-                  (let [loc (str "/api/library/images/" (:id result))]
-                    (http/created loc (rsp result))))))))
+    (letfn [(persist-image-entry [path]
+              (sv/novelty {:id id
+                           :type :create/image
+                           :user user
+                           :name filename
+                           :path (str path)}))
+
+            (populate-thumbnails [entry]
+              (let [opts {:src :path
+                          :dst :thumbnail
+                          :size [300 300]
+                          :quality 93
+                          :format "webp"}]
+                (images/populate-thumbnails entry opts)))
+
+            (populate-urls [v]
+              (images/populate-urls v storage :path :url))
+
+            (create-response [entry]
+              (let [loc (str "/api/library/images/" (:id entry))]
+                (http/created loc (rsp entry))))]
+
+      (->> (st/save storage filename file)
+           (p/mapcat persist-image-entry)
+           (p/map populate-thumbnails)
+           (p/map populate-urls)
+           (p/map create-response)))))
 
 ;; --- Update Image
 
