@@ -9,6 +9,17 @@
   (:require [clojure.walk :as walk]
             [cuerdas.core :as str]))
 
+(defn dissoc-in
+  [m [k & ks :as keys]]
+  (if ks
+    (if-let [nextmap (get m k)]
+      (let [newmap (dissoc-in nextmap ks)]
+        (if (seq newmap)
+          (assoc m k newmap)
+          (dissoc m k)))
+      m)
+    (dissoc m k)))
+
 (defn normalize-attrs
   "Recursively transforms all map keys from strings to keywords."
   [m]
