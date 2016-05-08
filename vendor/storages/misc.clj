@@ -13,15 +13,16 @@
             [buddy.core.nonce :as nonce]
             [buddy.core.hash :as hash]
             [storages.proto :as pt]
-            [storages.impl :as impl])
+            [storages.impl :as impl]
+            [storages.fs :as fs])
   (:import java.io.InputStream
            java.io.OutputStream
            java.nio.file.Path
            java.nio.file.Files))
 
-;; --- Prefixed Storage
+;; --- Scoped Storage
 
-(defrecord PrefixedPathStorage [storage ^Path prefix]
+(defrecord ScopedPathStorage [storage ^Path prefix]
   pt/IPublicStorage
   (-public-uri [_ path]
     (let [^Path path (pt/-path [prefix path])]
@@ -44,10 +45,13 @@
 
   pt/ILocalStorage
   (-lookup [_ path]
-    (let [^Path path (pt/-path [prefix path])]
-      (pt/-lookup storage path))))
+    (->> (pt/-lookup storage "")
+         (p/map (fn [^Path base]
+                  (let [base (pt/-path [base prefix])]
+                    (->> (pt/-path path)
+                         (fs/normalize-path base))))))))
 
-(defn prefixed
+(defn scoped
   "Create a composed storage instance that automatically prefixes
   the path when content is saved. For the rest of methods it just
   relies to the underlying storage.
@@ -56,7 +60,7 @@
   uploads."
   [storage prefix]
   (let [prefix (pt/-path prefix)]
-    (->PrefixedPathStorage storage prefix)))
+    (->ScopedPathStorage storage prefix)))
 
 ;; --- Hashed Storage
 

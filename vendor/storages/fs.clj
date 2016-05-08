@@ -17,7 +17,7 @@
            java.nio.file.Path
            java.nio.file.Files))
 
-(defn- normalize-path
+(defn normalize-path
   [^Path base ^Path path]
   (if (impl/absolute? path)
     (throw (ex-info "Suspicios operation: absolute path not allowed."

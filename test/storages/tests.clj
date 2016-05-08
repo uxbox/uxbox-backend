@@ -67,38 +67,38 @@
     (t/is (thrown? java.util.concurrent.ExecutionException
                    @(st/lookup storage "/test.txt")))))
 
-;; --- Tests: PrefixedPathStorage
+;; --- Tests: ScopedPathStorage
 
-(t/deftest test-localfs-prefixed-store-and-lookup
+(t/deftest test-localfs-scoped-store-and-lookup
   (let [storage (fs/filesystem {:basedir "/tmp/catacumba/test"
                                 :baseuri "http://localhost:5050/"})
-        storage (misc/prefixed storage "some/prefix")
+        storage (misc/scoped storage "some/prefix")
         rpath  @(st/save storage "test.txt" "my content")
         fpath @(st/lookup storage rpath)
         fdata (slurp fpath)]
     (t/is (= (str fpath) "/tmp/catacumba/test/some/prefix/test.txt"))
     (t/is (= "my content" fdata))))
 
-(t/deftest test-localfs-prefixed-store-and-delete-and-check
+(t/deftest test-localfs-scoped-store-and-delete-and-check
   (let [storage (fs/filesystem {:basedir "/tmp/catacumba/test"
                                 :baseuri "http://localhost:5050/"})
-        storage (misc/prefixed storage "some/prefix")
+        storage (misc/scoped storage "some/prefix")
         rpath  @(st/save storage "test.txt" "my content")]
     (t/is @(st/delete storage rpath))
     (t/is (not @(st/exists? storage rpath)))))
 
-(t/deftest test-localfs-prefixed-store-duplicate-file-raises-exception
+(t/deftest test-localfs-scoped-store-duplicate-file-raises-exception
   (let [storage (fs/filesystem {:basedir "/tmp/catacumba/test"
                                 :baseuri "http://localhost:5050/"})
-        storage (misc/prefixed storage "some/prefix")]
+        storage (misc/scoped storage "some/prefix")]
     (t/is @(st/save storage "test.txt" "my content"))
     (t/is (thrown? java.util.concurrent.ExecutionException
                    @(st/save storage "test.txt" "my content")))))
 
-(t/deftest test-localfs-prefixed-access-unauthorized-path
+(t/deftest test-localfs-scoped-access-unauthorized-path
   (let [storage (fs/filesystem {:basedir "/tmp/catacumba/test"
                                 :baseuri "http://localhost:5050/"})
-        storage (misc/prefixed storage "some/prefix")]
+        storage (misc/scoped storage "some/prefix")]
     (t/is (thrown? java.util.concurrent.ExecutionException
                    @(st/lookup storage "../test.txt")))
     (t/is (thrown? java.util.concurrent.ExecutionException
