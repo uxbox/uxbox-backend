@@ -40,10 +40,10 @@
 
 (defn path
   "Create path from string or more than one string."
-  [fst & more]
-  (if (seq more)
-    (pt/-path (cons fst more))
-    (pt/-path fst)))
+  ([fst]
+   (pt/-path fst))
+  ([fst & more]
+   (pt/-path (cons fst more))))
 
 (defn public-url
   [storage path]
