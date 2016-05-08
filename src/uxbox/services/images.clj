@@ -12,7 +12,6 @@
             [storages.core :as st]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
-            [uxbox.media :as md]
             [uxbox.sql :as sql]
             [uxbox.util.transit :as t]
             [uxbox.services.core :as usc]
