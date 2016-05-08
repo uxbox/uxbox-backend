@@ -24,6 +24,7 @@
   (-> (mount/only #{#'uxbox.config/config
                     #'uxbox.persistence/datasource
                     #'uxbox.migrations/migrations
+                    #'uxbox.media/storage
                     #'uxbox.media/images-storage
                     #'uxbox.media/thumbnails-storage
                     #'uxbox.services.auth/secret})
