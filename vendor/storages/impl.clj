@@ -98,6 +98,9 @@
   String
   (-uri [v] (URI. v)))
 
+(def ^:private empty-string-array
+  (make-array String 0))
+
 (extend-protocol pt/IPath
   Path
   (-path [v] v)
@@ -109,13 +112,13 @@
   (-path [v] (Paths/get (.toURI v)))
 
   String
-  (-path [v] (Paths/get v (make-array String 0)))
+  (-path [v] (Paths/get v empty-string-array))
 
   clojure.lang.Sequential
   (-path [v]
-    (let [fv (first v)
-          mv (rest v)]
-      (Paths/get ^String fv (into-array String mv)))))
+    (reduce #(.resolve %1 %2)
+            (pt/-path (first v))
+            (map pt/-path (rest v)))))
 
 (defn- path->input-stream
   [^Path path]
