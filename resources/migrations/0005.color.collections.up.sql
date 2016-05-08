@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS color_collections (
 
   "user" uuid NOT NULL REFERENCES users(id),
   name text NOT NULL,
-  data text NOT NULL
+  data bytea NOT NULL
 ) WITH (OIDS=FALSE);
 
 -- Triggers

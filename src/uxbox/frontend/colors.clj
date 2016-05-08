@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.frontend.library
+(ns uxbox.frontend.colors
   (:require [promesa.core :as p]
             [catacumba.http :as http]
             [uxbox.schema :as us]
@@ -14,25 +14,25 @@
 
 (def validate-form! (partial us/validate! :form/validation))
 
-;; --- List Color Collections
+;; --- List Collections
 
-(defn list-color-collections
+(defn list-collections
   [{user :identity}]
   (let [message {:user user
-                :type :list/color-collections}]
+                 :type :list/color-collections}]
     (->> (sv/query message)
          (p/map #(http/ok (rsp %))))))
 
-;; --- Create Color Collection
+;; --- Create Collection
 
-(def ^:private create-color-coll-schema
+(def ^:private create-collection-schema
   {:id [us/uuid]
    :name [us/required us/string]
-   :data [us/required us/set]})
+   :data [us/required us/string]})
 
-(defn create-color-collection
+(defn create-collection
   [{user :identity data :data}]
-  (let [params (validate-form! data create-color-coll-schema)
+  (let [params (validate-form! data create-collection-schema)
         message (assoc params
                        :type :create/color-collection
                        :user user)]
@@ -41,15 +41,15 @@
                   (let [loc (str "/api/library/colors/" (:id result))]
                     (http/created loc (rsp result))))))))
 
-;; --- Update Color Collection
+;; --- Update Collection
 
-(def ^:private update-color-coll-schema
-  (assoc create-color-coll-schema
+(def ^:private update-collection-schema
+  (assoc create-collection-schema
          :version [us/required us/integer]))
 
-(defn update-color-collection
+(defn update-collection
   [{user :identity params :route-params data :data}]
-  (let [data (validate-form! data update-color-coll-schema)
+  (let [data (validate-form! data update-collection-schema)
         message (assoc data
                        :id (uuid/from-string (:id params))
                        :type :update/color-collection
@@ -59,7 +59,7 @@
 
 ;; --- Delete Color Collection
 
-(defn delete-color-collection
+(defn delete-collection
   [{user :identity params :route-params}]
   (let [message {:id (uuid/from-string (:id params))
                  :type :delete/color-collection

@@ -15,7 +15,8 @@
             [uxbox.services.auth]
             [uxbox.services.projects]
             [uxbox.services.pages]
-            [uxbox.services.library]
+            [uxbox.services.images]
+            [uxbox.services.colors]
             [uxbox.util.transit :as t]
             [uxbox.util.blob :as blob]))
 

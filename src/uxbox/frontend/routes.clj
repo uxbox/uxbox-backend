@@ -17,7 +17,7 @@
             [uxbox.frontend.errors :as errors]
             [uxbox.frontend.projects :as projects]
             [uxbox.frontend.pages :as pages]
-            [uxbox.frontend.library :as library]
+            [uxbox.frontend.colors :as colors]
             [uxbox.frontend.images :as images]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
@@ -78,6 +78,12 @@
        [:get "library/images" #'images/list-images]
        [:post "library/images" #'images/create-image]
 
+       ;; Color Collections
+       [:put "library/color-collections/:id" #'colors/update-collection]
+       [:delete "library/color-collections/:id" #'colors/delete-collection]
+       [:get "library/color-collections" #'colors/list-collections]
+       [:post "library/color-collections" #'colors/create-collection]
+
        ;; Pages
        [:put "pages/:id/metadata" #'pages/update-page-metadata]
        [:get "pages/:id/history" #'pages/retrieve-page-history]
@@ -89,9 +95,5 @@
 
        [:get "profile/me" #'users/retrieve-profile]
        [:put "profile/me" #'users/update-profile]
-       [:put "profile/me/password" #'users/update-password]
+       [:put "profile/me/password" #'users/update-password]]])))
 
-       [:put "library/colors/:id" #'library/update-color-collection]
-       [:delete "library/colors/:id" #'library/delete-color-collection]
-       [:get "library/colors" #'library/list-color-collections]
-       [:post "library/colors" #'library/create-color-collection]]])))
