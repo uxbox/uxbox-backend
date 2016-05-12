@@ -46,7 +46,6 @@
           (t/is (= (:email data) "user222@uxbox.io"))
           (t/is (not (contains? data :password))))))))
 
-
 (t/deftest test-http-update-profile-photo
   (with-open [conn (up/get-conn)]
     (let [user (th/create-user conn 1)]
