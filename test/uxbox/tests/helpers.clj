@@ -41,9 +41,7 @@
   (try
     (next)
     (finally
-      #_(paths/delete (-> +config+ :storage :basedir) {:recursive true})
-      (mount/stop-except #'uxbox.config/config
-                         #'uxbox.persistence/datasource))))
+      (mount/stop-except #'uxbox.config/config))))
 
 (defn ex-info?
   [v]
