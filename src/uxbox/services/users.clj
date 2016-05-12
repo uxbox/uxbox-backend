@@ -92,6 +92,22 @@
        (validate-old-password conn)
        (update-password conn)))
 
+;; --- Update Photo
+
+(defn update-photo
+  [conn {:keys [user path]}]
+  (let [sqlv (sql/update-profile-photo {:id user :photo path})]
+    (pos? (sc/execute conn sqlv))))
+
+(def update-photo-schema
+  {:user [us/required us/uuid]
+   :path [us/required us/string]})
+
+(defmethod usc/-novelty :update/profile-photo
+  [conn params]
+  (->> (validate! params update-photo-schema)
+       (update-photo conn)))
+
 ;; --- Create User
 
 (def ^:private create-user-schema

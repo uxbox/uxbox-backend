@@ -7,12 +7,25 @@
 (ns uxbox.frontend.users
   (:require [promesa.core :as p]
             [catacumba.http :as http]
+            [storages.core :as st]
+            [uxbox.media :as media]
+            [uxbox.images :as images]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.util.response :refer (rsp)]
-            [uxbox.util.uuid :as uuid]))
+            [uxbox.util.uuid :as uuid]
+            [uxbox.util.paths :as paths]))
 
 (def validate-form! (partial us/validate! :form/validation))
+
+(defn- resolve-thumbnail
+  [user]
+  (let [opts {:src :photo
+              :dst :photo
+              :size [100 100]
+              :quality 90
+              :format "webp"}]
+    (images/populate-thumbnails user opts)))
 
 ;; --- Retrieve Profile
 
@@ -20,8 +33,9 @@
   [{user :identity}]
   (let [message {:user user
                  :type :retrieve/profile}]
-    (-> (sv/query message)
-        (p/then #(http/ok (rsp %))))))
+    (->> (sv/query message)
+         (p/map resolve-thumbnail)
+         (p/map #(http/ok (rsp %))))))
 
 ;; --- Update Profile
 
@@ -56,3 +70,21 @@
     (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
 
+
+;; --- Update Profile Photo
+
+(defn update-photo
+  [{user :identity data :data}]
+  (letfn [(store-photo [file]
+            (let [filename (paths/base-name file)
+                  storage media/images-storage]
+              (st/save storage filename file)))
+          (assign-photo [path]
+            (sv/novelty {:user user
+                         :path (str path)
+                         :type :update/profile-photo}))
+          (create-response [_]
+            (http/no-content))]
+    (->> (store-photo (:file data))
+         (p/mapcat assign-photo)
+         (p/map create-response))))

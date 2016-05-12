@@ -95,5 +95,6 @@
 
        [:get "profile/me" #'users/retrieve-profile]
        [:put "profile/me" #'users/update-profile]
-       [:put "profile/me/password" #'users/update-password]]])))
+       [:put "profile/me/password" #'users/update-password]
+       [:post "profile/me/photo" #'users/update-photo]]])))
 
