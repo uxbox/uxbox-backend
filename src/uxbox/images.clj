@@ -33,9 +33,11 @@
 (defn populate-thumbnail
   [entry {:keys [src dst] :as cfg}]
   (let [src (if (vector? src) src [src])
-        dst (if (vector? dst) dst [dst])]
-    (assoc-in entry dst
-              (make-thumbnail (get-in entry src) cfg))))
+        dst (if (vector? dst) dst [dst])
+        src (get-in entry src)]
+     (if (empty? src)
+       entry
+       (assoc-in entry dst (make-thumbnail src cfg)))))
 
 (defn populate-thumbnails
   [entry & settings]
@@ -45,8 +47,10 @@
   [entry storage src dst]
   (let [src (if (vector? src) src [src])
         dst (if (vector? dst) dst [dst])
-        value (get-in entry src)
-        url (str (st/public-url storage value))]
-    (-> entry
-        (dissoc-in src)
-        (assoc-in dst url))))
+        value (get-in entry src)]
+    (if (empty? value)
+      entry
+      (let [url (str (st/public-url storage value))]
+        (-> entry
+            (dissoc-in src)
+            (assoc-in dst url))))))
