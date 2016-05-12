@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS users (
   fullname text NOT NULL DEFAULT '',
   username text NOT NULL,
   email text NOT NULL,
+  photo text NOT NULL,
   password text NOT NULL,
   metadata bytea NOT NULL,
   deleted boolean DEFAULT false
