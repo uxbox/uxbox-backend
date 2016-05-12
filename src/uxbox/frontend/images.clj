@@ -80,7 +80,6 @@
   (let [{:keys [file id] :as data} (validate-form! data create-image-schema)
         id (or id (uuid/random))
         filename (paths/base-name file)
-        extension (paths/extension filename)
         storage media/images-storage]
     (letfn [(persist-image-entry [path]
               (sv/novelty {:id id
