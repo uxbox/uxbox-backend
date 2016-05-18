@@ -75,8 +75,8 @@
        ;; Images
        [:delete "library/images/:id" #'images/delete-image]
        [:put "library/images/:id" #'images/update-image]
-       [:get "library/images" #'images/list-images]
-       [:post "library/images" #'images/create-image]
+       [:get "library/images/:collid" #'images/list-images]
+       [:post "library/images/:collid" #'images/create-image]
 
        ;; Color Collections
        [:put "library/color-collections/:id" #'colors/update-collection]

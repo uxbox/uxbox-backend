@@ -155,11 +155,11 @@
 ;; --- List Images
 
 (defn get-images-by-user
-  [conn user]
-  (let [sqlv (sql/get-images {:user user})]
+  [conn user collection]
+  (let [sqlv (sql/get-images {:user user :collection collection})]
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs))))
 
 (defmethod usc/-query :list/images
-  [conn {:keys [user] :as params}]
-  (get-images-by-user conn user))
+  [conn {:keys [user collection] :as params}]
+  (get-images-by-user conn user collection))
