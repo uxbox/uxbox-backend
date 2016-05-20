@@ -94,7 +94,7 @@
               (sv/novelty {:id id
                            :type :create/image
                            :user user
-                           :collection (uuid/from-string (:collid params))
+                           :collection (uuid/from-string (:id params))
                            :name filename
                            :path (str path)}))
 
@@ -145,7 +145,7 @@
 
 (defn list-images
   [{user :identity route-params :route-params}]
-  (let [params {:collection (uuid/from-string (:collid route-params)) :user user :type :list/images}
+  (let [params {:collection (uuid/from-string (:id route-params)) :user user :type :list/images}
         thumbnail-opts +thumbnail-options+
         populate-thumbnails-url #(images/populate-thumbnails % thumbnail-opts)]
     (-> (sv/query params)
