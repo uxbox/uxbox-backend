@@ -71,12 +71,12 @@
        [:delete "library/image-collections/:id" #'images/delete-collection]
        [:get "library/image-collections" #'images/list-collections]
        [:post "library/image-collections" #'images/create-collection]
+       [:get "library/image-collections/:id/images" #'images/list-images]
+       [:post "library/image-collections/:id/images" #'images/create-image]
 
        ;; Images
        [:delete "library/images/:id" #'images/delete-image]
        [:put "library/images/:id" #'images/update-image]
-       [:get "library/images" #'images/list-images]
-       [:post "library/images" #'images/create-image]
 
        ;; Color Collections
        [:put "library/color-collections/:id" #'colors/update-collection]

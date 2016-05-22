@@ -19,16 +19,23 @@
 
 ;; --- Constants & Config
 
+(def +thumbnail-options+ {:src :path
+                          :dst :thumbnail
+                          :size [300 300]
+                          :quality 93
+                          :format "webp"})
 (def validate-form! (partial us/validate! :form/validation))
 (def validate-query! (partial us/validate! :query/validation))
 
 ;; --- Create Collection
 
-(def create-collection-scheme si/create-collection-scheme)
+(def ^:private create-collection-schema
+  {:id [us/uuid]
+   :name [us/required us/string]})
 
 (defn create-collection
   [{user :identity data :data}]
-  (let [data (validate-form! data create-collection-scheme)
+  (let [data (validate-form! data create-collection-schema)
         message (assoc data
                        :type :create/image-collection
                        :user user)]
@@ -39,11 +46,13 @@
 
 ;; --- Update Collection
 
-(def update-collection-scheme si/update-collection-scheme)
+(def ^:private update-collection-schema
+  (assoc create-collection-schema
+         :version [us/required us/integer]))
 
 (defn update-collection
   [{user :identity params :route-params data :data}]
-  (let [data (validate-form! data update-collection-scheme)
+  (let [data (validate-form! data update-collection-schema)
         message (assoc data
                        :id (uuid/from-string (:id params))
                        :type :update/image-collection
@@ -72,11 +81,11 @@
 ;; --- Create image
 
 (def create-image-schema
-  {:id [us/uuid]
+  {:id [us/uuid-str]
    :file [us/required us/uploaded-file]})
 
 (defn create-image
-  [{user :identity data :data}]
+  [{user :identity params :route-params  data :data}]
   (let [{:keys [file id] :as data} (validate-form! data create-image-schema)
         id (or id (uuid/random))
         filename (paths/base-name file)
@@ -85,16 +94,12 @@
               (sv/novelty {:id id
                            :type :create/image
                            :user user
+                           :collection (uuid/from-string (:id params))
                            :name filename
                            :path (str path)}))
 
             (populate-thumbnails [entry]
-              (let [opts {:src :path
-                          :dst :thumbnail
-                          :size [300 300]
-                          :quality 93
-                          :format "webp"}]
-                (images/populate-thumbnails entry opts)))
+              (images/populate-thumbnails entry +thumbnail-options+))
 
             (populate-urls [v]
               (images/populate-urls v storage :path :url))
@@ -139,7 +144,9 @@
 ;; --- List collections
 
 (defn list-images
-  [{user :identity}]
-  (let [params {:user user :type :list/images}]
+  [{user :identity route-params :route-params}]
+  (let [params {:collection (uuid/from-string (:id route-params)) :user user :type :list/images}
+        thumbnail-opts +thumbnail-options+
+        populate-thumbnails-url #(images/populate-thumbnails % thumbnail-opts)]
     (-> (sv/query params)
-        (p/then #(http/ok (rsp %))))))
+        (p/then #(http/ok (rsp (map populate-thumbnails-url %)))))))

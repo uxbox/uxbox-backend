@@ -24,7 +24,7 @@ update image_collections
 
 -- :name get-images :? :*
 select * from images
- where "user" = :user and deleted = false
+ where "user" = :user and deleted = false and "collection" = :collection
 order by created_at desc;
 
 -- :name create-image :<! :1
