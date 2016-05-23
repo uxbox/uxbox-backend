@@ -10,7 +10,7 @@
              ;; "-Dcom.sun.management.jmxremote.ssl=false"
              ;; "-Dcom.sun.management.jmxremote.rmi.port=9090"
              ;; "-Djava.rmi.server.hostname=0.0.0.0"
-             "-XX:+UseG1GC" "-Xms200m" "-Xmx200m"]
+             "-XX:+UseG1GC" "-Xms1g" "-Xmx1g"]
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.clojure/tools.logging "0.3.1"]
                  [funcool/struct "0.1.0"]
