@@ -21,11 +21,10 @@
                 size [200 200]}
            :as opts}]
    {:pre [(vector? size)]}
-   (with-open [out (ByteArrayOutputStream.)]
+   (with-open [out (ByteArrayOutputStream.)
+               in (io/input-stream input)]
      (let [[width height] size
-           in (io/input-stream input)
-           pipe-in (Pipe. in nil)
-           pipe-out (Pipe. nil out)
+           pipe (Pipe. in out)
            op (doto (IMOperation.)
                 (.addImage (into-array String ["-"]))
                 (.thumbnail (int width) (int height))
@@ -34,7 +33,7 @@
                 (.quality (double quality))
                 (.addImage (into-array String [(str format ":-")])))
            cmd (doto (ConvertCmd.)
-                 (.setInputProvider pipe-in)
-                 (.setOutputConsumer pipe-out))]
-       (.run cmd op (into-array Object []))
+                 (.setInputProvider pipe)
+                 (.setOutputConsumer pipe))]
+       (.run cmd op (make-array Object 0))
        (ByteArrayInputStream. (.toByteArray out))))))
