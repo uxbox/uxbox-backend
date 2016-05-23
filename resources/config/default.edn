@@ -13,6 +13,10 @@
  :email {:reply-to "no-reply@uxbox.io"
          :from "no-reply@uxbox.io"}
 
+ :server {:port 6060
+          :max-body-size 52428800
+          :debug true}
+
  :storage
  {:basedir "resources/public/media"
   :baseuri "http://localhost:6060/media/"}

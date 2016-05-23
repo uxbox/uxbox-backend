@@ -7,8 +7,14 @@
 (ns uxbox.frontend
   (:require [mount.core :as mount :refer (defstate)]
             [catacumba.core :as ct]
+            [uxbox.config :as cfg]
             [uxbox.frontend.routes :as urt]))
 
+(defn- start-server
+  []
+  (let [config (:server cfg/config)]
+    (ct/run-server (urt/app) config)))
+
 (defstate server
-  :start (ct/run-server (urt/app) {:port 6060})
+  :start (start-server)
   :stop (.stop server))
