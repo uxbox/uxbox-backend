@@ -42,7 +42,7 @@
   (try
     (next)
     (finally
-      (mount/stop-except #'uxbox.config/config))))
+      (mount/stop))))
 
 (defn ex-info?
   [v]
