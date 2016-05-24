@@ -19,7 +19,7 @@
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/profile/me")
               [status data] (th/http-get user uri)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= (:fullname data) "User 1"))
           (t/is (= (:username data) "user1"))
@@ -38,7 +38,7 @@
                           :metadata "222"
                           :email "user222@uxbox.io")
               [status data] (th/http-put user uri {:body data})]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= (:fullname data) "Full Name"))
           (t/is (= (:username data) "user222"))
@@ -56,6 +56,6 @@
                        :content (io/input-stream
                                  (io/resource "uxbox/tests/_files/sample.jpg"))}]
               [status data] (th/http-multipart user uri params)]
-          (println "RESPONSE:" status data)
+          ;; (println "RESPONSE:" status data)
           (t/is (= 204 status)))))))
 
