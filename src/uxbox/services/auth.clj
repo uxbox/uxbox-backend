@@ -9,7 +9,7 @@
             [suricatta.core :as sc]
             [clj-uuid :as uuid]
             [buddy.hashers :as hashers]
-            [buddy.sign.jwe :as jwe]
+            [buddy.sign.jwt :as jwt]
             [buddy.core.nonce :as nonce]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :as codecs]
@@ -44,7 +44,7 @@
 (defn generate-token
   [user]
   (let [data {:id (:id user)}]
-    (jwe/encrypt data secret +auth-opts+)))
+    (jwt/encrypt data secret +auth-opts+)))
 
 (defmethod usc/-novelty :auth/login
   [conn {:keys [username password scope]}]

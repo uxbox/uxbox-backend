@@ -11,14 +11,14 @@
              ;; "-Dcom.sun.management.jmxremote.rmi.port=9090"
              ;; "-Djava.rmi.server.hostname=0.0.0.0"
              "-XX:+UseG1GC" "-Xms1g" "-Xmx1g"]
-  :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha1" :scope "provided"]
                  [org.clojure/tools.logging "0.3.1"]
                  [funcool/struct "0.1.0"]
                  [funcool/suricatta "0.9.0"]
-                 [funcool/promesa "1.1.1"]
-                 [funcool/catacumba "0.15.0"]
+                 [funcool/promesa "1.2.0"]
+                 [funcool/catacumba "0.16.0"]
 
-                 [instaparse "1.4.1"]
+                 [instaparse "1.4.2"]
                  [hiccup "1.0.5"]
                  [org.im4java/im4java "1.4.0"]
 
@@ -27,7 +27,7 @@
                   :exclusions [org.clojure/tools.reader]]
                  [niwinz/migrante "0.1.0"]
 
-                 [buddy/buddy-sign "0.13.0" :exclusions [org.clojure/tools.reader]]
+                 [buddy/buddy-sign "1.0.0" :exclusions [org.clojure/tools.reader]]
                  [buddy/buddy-hashers "0.14.0"]
 
                  [org.xerial.snappy/snappy-java "1.1.2.4"]
@@ -36,8 +36,8 @@
                  [org.quartz-scheduler/quartz "2.2.3"]
                  [org.quartz-scheduler/quartz-jobs "2.2.3"]
                  [commons-io/commons-io "2.5"]
-                 [com.draines/postal "1.11.3"]
+                 [com.draines/postal "2.0.0"]
 
-                 [hikari-cp "1.6.1"]
+                 [hikari-cp "1.7.1"]
                  [mount "0.1.10"]
-                 [environ "1.0.2"]])
+                 [environ "1.0.3"]])
