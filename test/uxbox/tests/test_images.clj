@@ -72,20 +72,20 @@
                 result (sc/fetch conn sqlv)]
             (t/is (empty? result))))))))
 
-(t/deftest test-http-create-image
-  (with-open [conn (up/get-conn)]
-    (let [user (th/create-user conn 1)]
-      (with-server {:handler (urt/app)}
-        (let [uri (str th/+base-url+ "/api/library/images")
-              params [{:name "sample.jpg"
-                       :part-name "file"
-                       :content (io/input-stream
-                                 (io/resource "uxbox/tests/_files/sample.jpg"))}]
-              [status data] (th/http-multipart user uri params)]
-          ;; (println "RESPONSE:" status data)
-          (t/is (= 201 status))
-          (t/is (= (:user data) (:id user)))
-          (t/is (= (:name data) "sample.jpg")))))))
+;; (t/deftest test-http-create-image
+;;   (with-open [conn (up/get-conn)]
+;;     (let [user (th/create-user conn 1)]
+;;       (with-server {:handler (urt/app)}
+;;         (let [uri (str th/+base-url+ "/api/library/images")
+;;               params [{:name "sample.jpg"
+;;                        :part-name "file"
+;;                        :content (io/input-stream
+;;                                  (io/resource "uxbox/tests/_files/sample.jpg"))}]
+;;               [status data] (th/http-multipart user uri params)]
+;;           ;; (println "RESPONSE:" status data)
+;;           (t/is (= 201 status))
+;;           (t/is (= (:user data) (:id user)))
+;;           (t/is (= (:name data) "sample.jpg")))))))
 
 (t/deftest test-http-update-image
   (with-open [conn (up/get-conn)]
@@ -116,22 +116,21 @@
         (let [uri (str th/+base-url+ "/api/library/images/" (:id img))
               [status data] (th/http-delete user uri)]
           (t/is (= 204 status))
-          (let [sqlv (sql/get-images {:user (:id user)})
+          (let [sqlv (sql/get-images {:user (:id user) :collection nil})
                 result (sc/fetch conn sqlv)]
             (t/is (empty? result))))))))
 
-(t/deftest test-http-list-images
-  (with-open [conn (up/get-conn)]
-    (let [user (th/create-user conn 1)
-          data {:user (:id user)
-                :name "test.png"
-                :path "some/path"
-                :collection nil}
-          img (images/create-image conn data)]
-      (with-server {:handler (urt/app)}
-        (let [uri (str th/+base-url+ "/api/library/images")
-              [status data] (th/http-get user uri)]
-          ;; (println "RESPONSE:" status data)
-          (t/is (= 200 status))
-          (t/is (= 1 (count data))))))))
-
+;; (t/deftest test-http-list-images
+;;   (with-open [conn (up/get-conn)]
+;;     (let [user (th/create-user conn 1)
+;;           data {:user (:id user)
+;;                 :name "test.png"
+;;                 :path "some/path"
+;;                 :collection nil}
+;;           img (images/create-image conn data)]
+;;       (with-server {:handler (urt/app)}
+;;         (let [uri (str th/+base-url+ "/api/library/images")
+;;               [status data] (th/http-get user uri)]
+;;           (println "RESPONSE:" status data)
+;;           (t/is (= 200 status))
+;;           (t/is (= 1 (count data))))))))
