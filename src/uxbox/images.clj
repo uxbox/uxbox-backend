@@ -25,10 +25,12 @@
         thumbs-storage media/thumbnails-storage]
     (if @(st/exists? thumbs-storage final-path)
       (str (st/public-url thumbs-storage final-path))
-      (let [datapath @(st/lookup images-storage path)
-            content (images/thumbnail datapath cfg)
-            path @(st/save thumbs-storage final-path content)]
-        (str (st/public-url thumbs-storage path))))))
+      (if @(st/exists? images-storage path)
+        (let [datapath @(st/lookup images-storage path)
+              content (images/thumbnail datapath cfg)
+              path @(st/save thumbs-storage final-path content)]
+          (str (st/public-url thumbs-storage path)))
+        nil))))
 
 (defn populate-thumbnail
   [entry {:keys [src dst] :as cfg}]
