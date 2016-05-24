@@ -13,6 +13,9 @@
            java.io.ByteArrayInputStream
            java.io.ByteArrayOutputStream))
 
+;; Related info on how thumbnails generation
+;;  http://www.imagemagick.org/Usage/thumbnails/
+
 (defn thumbnail
   ([input] (thumbnail input nil))
   ([input {:keys [size quality format]
@@ -26,12 +29,13 @@
      (let [[width height] size
            pipe (Pipe. in out)
            op (doto (IMOperation.)
-                (.addImage (into-array String ["-"]))
-                (.thumbnail (int width) (int height))
+                (.addRawArgs ^java.util.List ["-"])
+                (.autoOrient)
+                (.thumbnail (int width) (int height) "^")
                 (.gravity "center")
                 (.extent (int width) (int height))
                 (.quality (double quality))
-                (.addImage (into-array String [(str format ":-")])))
+                (.addRawArgs ^java.util.List [(str format ":-")]))
            cmd (doto (ConvertCmd.)
                  (.setInputProvider pipe)
                  (.setOutputConsumer pipe))]
