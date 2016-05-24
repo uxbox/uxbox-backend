@@ -50,8 +50,11 @@
     (ct/routes
      [[:any (cauth/auth backend)]
       [:any (cmisc/autoreloader)]
+
       [:get "api" #'welcome-api]
       [:assets "media" {:dir "public/media"}]
+      [:assets "static" {:dir "public/static"}]
+
       [:prefix "api"
        [:any (cmisc/cors cors-conf)]
        [:any (cparse/body-params)]

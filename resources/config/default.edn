@@ -17,9 +17,13 @@
           :max-body-size 52428800
           :debug true}
 
- :storage
+ :media
  {:basedir "resources/public/media"
   :baseuri "http://localhost:6060/media/"}
+
+ :static
+ {:basedir "resources/public/static"
+  :baseuri "http://localhost:6060/static/"}
 
  :database
  {:adapter "postgresql"

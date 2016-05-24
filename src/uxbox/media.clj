@@ -14,14 +14,18 @@
             [storages.misc :refer (hashed scoped)]
             [uxbox.config :refer (config)]))
 
-(defstate storage
-  :start (let [{:keys [basedir baseuri]} (:storage config)]
+(defstate static-storage
+  :start (let [{:keys [basedir baseuri]} (:static config)]
+           (filesystem {:basedir basedir :baseuri baseuri})))
+
+(defstate media-storage
+  :start (let [{:keys [basedir baseuri]} (:media config)]
            (filesystem {:basedir basedir :baseuri baseuri})))
 
 (defstate images-storage
-  :start (-> storage
+  :start (-> media-storage
              (scoped "images")
              (hashed)))
 
 (defstate thumbnails-storage
-  :start (scoped storage "thumbs"))
+  :start (scoped media-storage "thumbs"))
