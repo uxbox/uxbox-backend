@@ -24,7 +24,7 @@
               :dst :photo
               :size [100 100]
               :quality 90
-              :format "webp"}]
+              :format "jpg"}]
     (images/populate-thumbnails user opts)))
 
 ;; --- Retrieve Profile
