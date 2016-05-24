@@ -21,8 +21,8 @@
 
 (def +thumbnail-options+ {:src :path
                           :dst :thumbnail
-                          :size [300 300]
-                          :quality 95
+                          :size [300 110]
+                          :quality 92
                           :format "jpg"})
 (def validate-form! (partial us/validate! :form/validation))
 (def validate-query! (partial us/validate! :query/validation))
