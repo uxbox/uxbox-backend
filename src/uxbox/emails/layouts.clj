@@ -55,7 +55,11 @@
                [:unsubscribe "Email preferences"]]]]]]]]]
        [:td]]]]]])
 
+(defn default-text
+  [body context]
+  body)
+
 (def default
   "Default layout instance."
   {:text/html default-html
-   :text/plain (constantly "")})
+   :text/plain default-text})

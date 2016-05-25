@@ -74,6 +74,7 @@
   "Schedule the email for sending."
   [{name :email/name
     priority :email/priority
+    :or {priority :high}
     :as context}]
   {:pre [(valid-priority? priority)
          (valid-email? name)]}

@@ -14,6 +14,8 @@
             [storages.misc :refer (hashed scoped)]
             [uxbox.config :refer (config)]))
 
+;; --- State
+
 (defstate static-storage
   :start (let [{:keys [basedir baseuri]} (:static config)]
            (filesystem {:basedir basedir :baseuri baseuri})))
@@ -29,3 +31,9 @@
 
 (defstate thumbnails-storage
   :start (scoped media-storage "thumbs"))
+
+;; --- Public Api
+
+(defn resolve-asset
+  [path]
+  (str (st/public-url static-storage path)))
