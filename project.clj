@@ -18,7 +18,6 @@
                  [funcool/promesa "1.2.0"]
                  [funcool/catacumba "0.16.0"]
 
-                 [instaparse "1.4.2"]
                  [hiccup "1.0.5"]
                  [org.im4java/im4java "1.4.0"]
 
