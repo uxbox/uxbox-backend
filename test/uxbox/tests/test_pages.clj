@@ -5,7 +5,7 @@
             [clj-uuid :as uuid]
             [catacumba.testing :refer (with-server)]
             [buddy.core.codecs :as codecs]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.projects :as uspr]
             [uxbox.services.pages :as uspg]
@@ -19,7 +19,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (t/deftest test-http-page-create
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})]
       (with-server {:handler (urt/app)}
@@ -39,7 +39,7 @@
           (t/is (= (:name data) "page1")))))))
 
 (t/deftest test-http-page-update
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
           data {:id (uuid/v4)
@@ -65,7 +65,7 @@
           (t/is (= (:name data) "page1")))))))
 
 (t/deftest test-http-page-update-metadata
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
           data {:id (uuid/v4)
@@ -91,7 +91,7 @@
           (t/is (= (:name data) "page1")))))))
 
 (t/deftest test-http-page-delete
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
           data {:id (uuid/v4)
@@ -116,7 +116,7 @@
             (t/is (empty? result))))))))
 
 (t/deftest test-http-page-list
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
           data {:id (uuid/v4)
@@ -138,7 +138,7 @@
           (t/is (= 1 (count response))))))))
 
 (t/deftest test-http-page-list-by-project
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj1 (uspr/create-project conn {:user (:id user) :name "proj1"})
           proj2 (uspr/create-project conn {:user (:id user) :name "proj2"})
@@ -161,7 +161,7 @@
           (t/is (= (:id (first response)) (:id page1))))))))
 
 (t/deftest test-http-page-history-retrieve
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
           data {:id (uuid/v4)
@@ -203,7 +203,7 @@
         ))))
 
 (t/deftest test-http-page-history-update
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
           data {:id (uuid/v4)

@@ -7,8 +7,8 @@
 (ns uxbox.migrations
   (:require [mount.core :as mount :refer (defstate)]
             [migrante.core :as mg :refer (defmigration)]
-            [uxbox.persistence :as up]
-            [uxbox.config :as ucfg]
+            [uxbox.db :as db]
+            [uxbox.config :as cfg]
             [uxbox.util.template :as tmpl]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -64,8 +64,8 @@
 
 (defn- migrate
   []
-  (let [options (:migrations ucfg/config {})]
-    (with-open [mctx (mg/context up/datasource options)]
+  (let [options (:migrations cfg/config {})]
+    (with-open [mctx (mg/context db/datasource options)]
       (mg/migrate mctx +migrations+)
       nil)))
 

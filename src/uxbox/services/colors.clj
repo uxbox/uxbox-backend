@@ -9,6 +9,7 @@
             [buddy.core.codecs :as codecs]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
+            [uxbox.db :as db]
             [uxbox.services.core :as usc]
             [uxbox.util.transit :as t]
             [uxbox.util.blob :as blob]
@@ -39,9 +40,10 @@
    :data [us/required us/string]})
 
 (defmethod usc/-novelty :create/color-collection
-  [conn params]
-  (->> (validate! params create-collection-schema)
-       (create-collection conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params create-collection-schema)
+         (create-collection conn))))
 
 ;; --- Update Collection
 
@@ -62,9 +64,10 @@
          :version [us/required us/integer]))
 
 (defmethod usc/-novelty :update/color-collection
-  [conn params]
-  (->> (validate! params update-collection-schema)
-       (update-collection conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-collection-schema)
+         (update-collection conn))))
 
 ;; --- Delete Collection
 
@@ -79,9 +82,10 @@
    :user [us/required us/uuid]})
 
 (defmethod usc/-novelty :delete/color-collection
-  [conn params]
-  (->> (validate! params delete-collection-schema)
-       (delete-collection conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params delete-collection-schema)
+         (delete-collection conn))))
 
 ;; --- List Collections
 
@@ -94,8 +98,9 @@
          (map decode-data))))
 
 (defmethod usc/-query :list/color-collections
-  [conn {:keys [user] :as params}]
-  (get-collections-for-user conn user))
+  [{:keys [user] :as params}]
+  (with-open [conn (db/connection)]
+    (get-collections-for-user conn user)))
 
 ;; --- Helpers
 

@@ -13,6 +13,7 @@
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
+            [uxbox.db :as db]
             [uxbox.util.transit :as t]
             [uxbox.services.core :as usc]
             [uxbox.util.data :as data])
@@ -38,9 +39,10 @@
    :name [us/required us/string]})
 
 (defmethod usc/-novelty :create/image-collection
-  [conn params]
-  (->> (validate! params create-collection-scheme)
-       (create-collection conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params create-collection-scheme)
+         (create-collection conn))))
 
 ;; --- Update Collection
 
@@ -58,9 +60,10 @@
          :version [us/required us/integer]))
 
 (defmethod usc/-novelty :update/image-collection
-  [conn params]
-  (->> (validate! params update-collection-scheme)
-       (update-collection conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-collection-scheme)
+         (update-collection conn))))
 
 ;; --- List Collections
 
@@ -71,8 +74,9 @@
          (map data/normalize-attrs))))
 
 (defmethod usc/-query :list/image-collections
-  [conn {:keys [user] :as params}]
-  (get-collections-by-user conn user))
+  [{:keys [user] :as params}]
+  (with-open [conn (db/connection)]
+    (get-collections-by-user conn user)))
 
 ;; --- Delete Collection
 
@@ -86,9 +90,10 @@
     (pos? (sc/execute conn sqlv))))
 
 (defmethod usc/-novelty :delete/image-collection
-  [conn params]
-  (->> (validate! params delete-collection-schema)
-       (delete-collection conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params delete-collection-schema)
+         (delete-collection conn))))
 
 ;; --- Create Image (Upload)
 
@@ -110,9 +115,10 @@
    :path [us/required us/string]})
 
 (defmethod usc/-novelty :create/image
-  [conn params]
-  (->> (validate! params create-image-schema)
-       (create-image conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params create-image-schema)
+         (create-image conn))))
 
 ;; --- Update Image
 
@@ -132,9 +138,10 @@
    :version [us/required us/integer]})
 
 (defmethod usc/-novelty :update/image
-  [conn params]
-  (->> (validate! params update-image-schema)
-       (update-image conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-image-schema)
+         (update-image conn))))
 
 ;; --- Delete Image
 
@@ -148,9 +155,10 @@
    :user [us/required us/uuid]})
 
 (defmethod usc/-novelty :delete/image
-  [conn params]
-  (->> (validate! params delete-image-schema)
-       (delete-image conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params delete-image-schema)
+         (delete-image conn))))
 
 ;; --- List Images
 
@@ -161,5 +169,6 @@
          (map data/normalize-attrs))))
 
 (defmethod usc/-query :list/images
-  [conn {:keys [user collection] :as params}]
-  (get-images-by-user conn user collection))
+  [{:keys [user collection] :as params}]
+  (with-open [conn (db/connection)]
+    (get-images-by-user conn user collection)))

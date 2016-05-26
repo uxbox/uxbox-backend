@@ -9,7 +9,7 @@
 (t/use-fixtures :each th/database-reset)
 
 (defmethod usc/-novelty ::testype1
-  [conn data]
+  [data]
   true)
 
 (t/deftest txlog-spec1

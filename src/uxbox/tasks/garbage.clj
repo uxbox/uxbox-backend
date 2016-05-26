@@ -7,7 +7,7 @@
 (ns uxbox.tasks.garbage
   "Garbage Collector related tasks."
   (:require [suricatta.core :as sc]
-            [uxbox.persistence :as ps]))
+            [uxbox.db :as db]))
 
 ;; --- Delete projects
 
@@ -23,6 +23,6 @@
   {:repeat? true
    :interval 3600}
   []
-  (with-open [conn (ps/get-conn)]
+  (with-open [conn (db/connection)]
     (sc/atomic conn
       (clean-deleted-projects conn))))

@@ -5,7 +5,7 @@
             [clj-uuid :as uuid]
             [catacumba.testing :refer (with-server)]
             [catacumba.serializers :as sz]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.projects :as uspr]
             [uxbox.services.pages :as uspg]
@@ -19,7 +19,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (t/deftest test-http-project-list
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})]
       (with-server {:handler (urt/app)}
@@ -30,7 +30,7 @@
           (t/is (= 1 (count data))))))))
 
 (t/deftest test-http-project-create
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/projects")
@@ -42,7 +42,7 @@
           (t/is (= (:name data) "proj1")))))))
 
 (t/deftest test-http-project-update
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})]
       (with-server {:handler (urt/app)}
@@ -55,7 +55,7 @@
           (t/is (= (:name data) "proj2")))))))
 
 (t/deftest test-http-project-delete
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})]
       (with-server {:handler (urt/app)}

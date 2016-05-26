@@ -8,7 +8,7 @@
   (:require [hiccup.core :refer (html)]
             [hiccup.page :refer (html4)]
             [suricatta.core :as sc]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.config :as cfg]
             [uxbox.sql :as sql]
             [uxbox.emails.layouts :as layouts]
@@ -83,6 +83,6 @@
         data (-> email t/encode blob/encode)
         priority (case priority :low 1 :high 10)
         sqlv (sql/insert-email {:data data :priority priority})]
-    (with-open [conn (up/get-conn)]
+    (with-open [conn (db/connection)]
       (sc/atomic conn
         (sc/execute conn sqlv)))))

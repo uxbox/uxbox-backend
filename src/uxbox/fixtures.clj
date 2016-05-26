@@ -13,13 +13,12 @@
             [clj-uuid :as uuid]
             [suricatta.core :as sc]
             [uxbox.config :as cfg]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.migrations]
             [uxbox.util.transit :as t]
             [uxbox.services.users :as susers]
             [uxbox.services.projects :as sproj]
-            [uxbox.services.pages :as spag])
-  (:import java.util.UUID))
+            [uxbox.services.pages :as spag]))
 
 (defn- mk-uuid
   [prefix i]
@@ -74,7 +73,7 @@
 (defn init
   []
   (mount/start)
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (sc/atomic conn
       (doseq [i (range num-users)]
         (create-user conn i))

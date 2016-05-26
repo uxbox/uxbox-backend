@@ -4,7 +4,7 @@
             [catacumba.testing :refer (with-server)]
             [catacumba.serializers :as sz]
             [uxbox.sql :as sql]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.colors :as colors]
             [uxbox.tests.helpers :as th]))
@@ -16,7 +16,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (t/deftest test-http-list-collection
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "coll1"
@@ -30,7 +30,7 @@
           (t/is (= 1 (count data))))))))
 
 (t/deftest test-http-create-collection
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/library/color-collections")
@@ -46,7 +46,7 @@
           (t/is (= (:name data) "coll1")))))))
 
 (t/deftest test-http-update-collection
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "coll1"
@@ -63,7 +63,7 @@
           (t/is (= (:name data) "coll2")))))))
 
 (t/deftest test-http-collection-delete
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "coll1"

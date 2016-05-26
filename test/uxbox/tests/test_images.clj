@@ -6,7 +6,7 @@
             [clojure.java.io :as io]
             [catacumba.testing :refer (with-server)]
             [buddy.core.codecs :as codecs]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.sql :as sql]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.images :as images]
@@ -16,7 +16,7 @@
 (t/use-fixtures :each th/database-reset)
 
 (t/deftest test-http-list-image-collections
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "coll1"}
@@ -29,7 +29,7 @@
           (t/is (= 1 (count data))))))))
 
 (t/deftest test-http-create-image-collection
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/library/image-collections")
@@ -43,7 +43,7 @@
           (t/is (= (:name data) "coll1")))))))
 
 (t/deftest test-http-update-image-collection
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "coll1"}
@@ -58,7 +58,7 @@
           (t/is (= (:name data) "coll2")))))))
 
 (t/deftest test-http-image-collection-delete
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "coll1"
@@ -73,7 +73,7 @@
             (t/is (empty? result))))))))
 
 ;; (t/deftest test-http-create-image
-;;   (with-open [conn (up/get-conn)]
+;;   (with-open [conn (db/connection)]
 ;;     (let [user (th/create-user conn 1)]
 ;;       (with-server {:handler (urt/app)}
 ;;         (let [uri (str th/+base-url+ "/api/library/images")
@@ -88,7 +88,7 @@
 ;;           (t/is (= (:name data) "sample.jpg")))))))
 
 (t/deftest test-http-update-image
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "test.png"
@@ -105,7 +105,7 @@
           (t/is (= (:name data) "my stuff")))))))
 
 (t/deftest test-http-delete-image
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           data {:user (:id user)
                 :name "test.png"
@@ -121,7 +121,7 @@
             (t/is (empty? result))))))))
 
 ;; (t/deftest test-http-list-images
-;;   (with-open [conn (up/get-conn)]
+;;   (with-open [conn (db/connection)]
 ;;     (let [user (th/create-user conn 1)
 ;;           data {:user (:id user)
 ;;                 :name "test.png"

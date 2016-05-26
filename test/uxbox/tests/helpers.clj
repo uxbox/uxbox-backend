@@ -13,7 +13,7 @@
             [uxbox.util.paths :as paths]
             [uxbox.migrations :as umg]
             [uxbox.media :as media]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.config :as ucfg]))
 
 (def +base-url+ "http://localhost:5050")
@@ -22,7 +22,7 @@
 (defn database-reset
   [next]
   (-> (mount/only #{#'uxbox.config/config
-                    #'uxbox.persistence/datasource
+                    #'uxbox.db/datasource
                     #'uxbox.migrations/migrations
                     #'uxbox.media/static-storage
                     #'uxbox.media/media-storage
@@ -31,7 +31,7 @@
                     #'uxbox.services.auth/secret})
       (mount/swap {#'uxbox.config/config +config+})
       (mount/start))
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [sql (str "SELECT table_name FROM information_schema.tables "
                    " WHERE table_schema = 'public' AND table_name != 'migrations';")
           result (->> (sc/fetch conn sql)

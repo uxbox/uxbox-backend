@@ -9,7 +9,7 @@
   (:require [clojure.tools.logging :as log]
             [suricatta.core :as sc]
             [postal.core :as postal]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.config :as cfg]
             [uxbox.sql :as sql]
             [uxbox.util.blob :as blob]
@@ -78,7 +78,7 @@
    :repeat? true}
   []
   (log/info "task-send-immediate-emails...")
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (sc/atomic conn
       (->> (fetch-immediate-emails conn)
            (send-emails conn)))))
@@ -89,7 +89,7 @@
    :repeat? true}
   []
   (log/info "task-send-pending-emails...")
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (sc/atomic conn
       (->> (fetch-pending-emails conn)
            (send-emails conn)))))
@@ -100,7 +100,7 @@
    :repeat? true}
   []
   (log/info "task-send-failed-emails...")
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (sc/atomic conn
       (->> (fetch-failed-emails conn)
            (send-emails conn)))))

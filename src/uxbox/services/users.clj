@@ -7,7 +7,6 @@
 (ns uxbox.services.users
   (:require [mount.core :as mount :refer (defstate)]
             [suricatta.core :as sc]
-            [clj-uuid :as uuid]
             [buddy.hashers :as hashers]
             [buddy.sign.jwe :as jwe]
             [buddy.core.nonce :as nonce]
@@ -15,10 +14,12 @@
             [buddy.core.codecs :as codecs]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
+            [uxbox.db :as db]
             [uxbox.services.core :as usc]
             [uxbox.util.transit :as t]
             [uxbox.util.exceptions :as ex]
-            [uxbox.util.blob :as blob]))
+            [uxbox.util.blob :as blob]
+            [uxbox.util.uuid :as uuid]))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
@@ -33,10 +34,11 @@
   {:user [us/required us/uuid]})
 
 (defmethod usc/-query :retrieve/profile
-  [conn params]
+  [params]
   (let [params (validate! params retrieve-profile-schema)]
-    (some-> (find-user-by-id conn (:user params))
-            (decode-user-data))))
+    (with-open [conn (db/connection)]
+      (some-> (find-user-by-id conn (:user params))
+              (decode-user-data)))))
 
 ;; --- Update User Profile (own)
 
@@ -61,9 +63,10 @@
             (dissoc :password))))
 
 (defmethod usc/-novelty :update/profile
-  [conn params]
-  (some->> (validate! params update-profile-schema)
-           (update-profile conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (some->> (validate! params update-profile-schema)
+             (update-profile conn))))
 
 ;; --- Update Password
 
@@ -87,10 +90,11 @@
     params))
 
 (defmethod usc/-novelty :update/password
-  [conn params]
-  (->> (validate! params update-password-schema)
-       (validate-old-password conn)
-       (update-password conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-password-schema)
+         (validate-old-password conn)
+         (update-password conn))))
 
 ;; --- Update Photo
 
@@ -104,9 +108,10 @@
    :path [us/required us/string]})
 
 (defmethod usc/-novelty :update/profile-photo
-  [conn params]
-  (->> (validate! params update-photo-schema)
-       (update-photo conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-photo-schema)
+         (update-photo conn))))
 
 ;; --- Create User
 
@@ -122,7 +127,7 @@
   [conn {:keys [id username password email fullname metadata] :as data}]
   (validate! data create-user-schema)
   (let [metadata (blob/encode metadata)
-        id (or id (uuid/v4))
+        id (or id (uuid/random))
         sqlv (sql/create-profile {:id id
                                   :fullname fullname
                                   :username username

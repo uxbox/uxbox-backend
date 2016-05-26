@@ -6,14 +6,14 @@
 
 (ns uxbox.services.projects
   (:require [suricatta.core :as sc]
-            [clj-uuid :as uuid]
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.services.core :as usc]
-            [uxbox.util.transit :as t]))
+            [uxbox.util.transit :as t]
+            [uxbox.util.uuid :as uuid]))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
@@ -26,15 +26,16 @@
 
 (defn create-project
   [conn {:keys [id user name] :as data}]
-  (let [id (or id (uuid/v4))
+  (let [id (or id (uuid/random))
         sqlv (sql/create-project {:id id :user user :name name})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs))))
 
 (defmethod usc/-novelty :create/project
-  [conn params]
-  (->> (validate! params create-project-schema)
-       (create-project conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params create-project-schema)
+         (create-project conn))))
 
 ;; --- Update Project
 
@@ -52,9 +53,10 @@
             (usc/normalize-attrs))))
 
 (defmethod usc/-novelty :update/project
-  [conn params]
-  (->> (validate! params update-project-schema)
-       (update-project conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-project-schema)
+         (update-project conn))))
 
 ;; --- Delete Project
 
@@ -68,9 +70,10 @@
     (pos? (sc/execute conn sqlv))))
 
 (defmethod usc/-novelty :delete/project
-  [conn params]
-  (->> (validate! params delete-project-schema)
-       (delete-project conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params delete-project-schema)
+         (delete-project conn))))
 
 ;; --- List Projects
 
@@ -81,5 +84,6 @@
          (map usc/normalize-attrs))))
 
 (defmethod usc/-query :list/projects
-  [conn {:keys [user] :as params}]
-  (get-projects-for-user conn user))
+  [{:keys [user] :as params}]
+  (with-open [conn (db/connection)]
+    (get-projects-for-user conn user)))

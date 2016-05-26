@@ -15,7 +15,7 @@
             [buddy.core.nonce :as nonce]
             [uxbox.config :as cfg]
             [uxbox.migrations]
-            [uxbox.persistence]
+            [uxbox.db]
             [uxbox.frontend]
             [uxbox.tasks])
   (:gen-class))

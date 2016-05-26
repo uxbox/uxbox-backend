@@ -5,7 +5,7 @@
             [clj-http.client :as http]
             [catacumba.testing :refer (with-server)]
             [buddy.hashers :as hashers]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.users :as usu]
             [uxbox.services :as usv]
@@ -14,7 +14,7 @@
 (t/use-fixtures :each th/database-reset)
 
 (t/deftest test-http-retrieve-profile
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/profile/me")
@@ -28,7 +28,7 @@
           (t/is (not (contains? data :password))))))))
 
 (t/deftest test-http-update-profile
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/profile/me")
@@ -47,7 +47,7 @@
           (t/is (not (contains? data :password))))))))
 
 (t/deftest test-http-update-profile-photo
-  (with-open [conn (up/get-conn)]
+  (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/profile/me/photo")

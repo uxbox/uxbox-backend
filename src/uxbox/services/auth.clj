@@ -7,7 +7,6 @@
 (ns uxbox.services.auth
   (:require [mount.core :as mount :refer (defstate)]
             [suricatta.core :as sc]
-            [clj-uuid :as uuid]
             [buddy.hashers :as hashers]
             [buddy.sign.jwt :as jwt]
             [buddy.core.nonce :as nonce]
@@ -15,7 +14,7 @@
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.services.core :as usc]
             [uxbox.services.users :as users]
             [uxbox.util.exceptions :as ex]))
@@ -47,10 +46,11 @@
     (jwt/encrypt data secret +auth-opts+)))
 
 (defmethod usc/-novelty :auth/login
-  [conn {:keys [username password scope]}]
-  (let [user (users/find-user-by-username-or-email conn username)]
-    (when-not user
-      (throw (ex/ex-info :auth/wrong-credentials {})))
-    (if (check-user-password user password)
-      {:token (generate-token user)}
-      (throw (ex/ex-info :auth/wrong-credentials {})))))
+  [{:keys [username password scope]}]
+  (with-open [conn (db/connection)]
+    (let [user (users/find-user-by-username-or-email conn username)]
+      (when-not user
+        (throw (ex/ex-info :auth/wrong-credentials {})))
+      (if (check-user-password user password)
+        {:token (generate-token user)}
+        (throw (ex/ex-info :auth/wrong-credentials {}))))))

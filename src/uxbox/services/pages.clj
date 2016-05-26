@@ -6,18 +6,18 @@
 
 (ns uxbox.services.pages
   (:require [suricatta.core :as sc]
-            [clj-uuid :as uuid]
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
-            [uxbox.persistence :as up]
+            [uxbox.db :as db]
             [uxbox.services.core :as usc]
             [uxbox.services.locks :as locks]
             [uxbox.services.auth :as usauth]
             [uxbox.util.time :as dt]
             [uxbox.util.transit :as t]
-            [uxbox.util.blob :as blob]))
+            [uxbox.util.blob :as blob]
+            [uxbox.util.uuid :as uuid]))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
@@ -41,7 +41,7 @@
 (defn create-page
   [conn {:keys [id user project name width
                 height layout data options] :as params}]
-  (let [opts {:id (or id (uuid/v4))
+  (let [opts {:id (or id (uuid/random))
               :user user
               :project project
               :name name
@@ -57,9 +57,10 @@
          (decode-page-options))))
 
 (defmethod usc/-novelty :create/page
-  [conn params]
-  (->> (validate! params create-page-schema)
-       (create-page conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params create-page-schema)
+         (create-page conn))))
 
 ;; --- Update Page
 
@@ -70,7 +71,7 @@
 (defn update-page
   [conn {:keys [id user project name width height
                 layout data version options] :as params}]
-  (let [opts {:id (or id (uuid/v4))
+  (let [opts {:id (or id (uuid/random))
               :user user
               :project project
               :name name
@@ -87,9 +88,10 @@
             (decode-page-options))))
 
 (defmethod usc/-novelty :update/page
-  [conn params]
-  (->> (validate! params update-page-schema)
-       (update-page conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-page-schema)
+         (update-page conn))))
 
 ;; --- Update Page Metadata
 
@@ -99,7 +101,7 @@
 (defn update-page-metadata
   [conn {:keys [id user project name width
                 height layout version options] :as params}]
-  (let [opts {:id (or id (uuid/v4))
+  (let [opts {:id (or id (uuid/random))
               :user user
               :project project
               :name name
@@ -115,9 +117,10 @@
             (decode-page-options))))
 
 (defmethod usc/-novelty :update/page-metadata
-  [conn params]
-  (->> (validate! params update-page-metadata-schema)
-       (update-page-metadata conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-page-metadata-schema)
+         (update-page-metadata conn))))
 
 ;; --- Delete Page
 
@@ -131,9 +134,10 @@
     (pos? (sc/execute conn sqlv))))
 
 (defmethod usc/-novelty :delete/page
-  [conn params]
-  (->> (validate! params delete-page-schema)
-       (delete-page conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params delete-page-schema)
+         (delete-page conn))))
 
 ;; --- List Pages
 
@@ -148,8 +152,9 @@
          (map decode-page-options))))
 
 (defmethod usc/-query :list/pages
-  [conn {:keys [user] :as params}]
-  (get-pages-for-user conn user))
+  [{:keys [user] :as params}]
+  (with-open [conn (db/connection)]
+    (get-pages-for-user conn user)))
 
 ;; --- List Pages by Project
 
@@ -166,9 +171,10 @@
          (map decode-page-options))))
 
 (defmethod usc/-query :list/pages-by-project
-  [conn {:keys [user project] :as params}]
-  (->> (validate! params list-pages-by-project-schema)
-       (get-pages-for-user-and-project conn)))
+  [{:keys [user project] :as params}]
+  (with-open [conn (db/connection)]
+    (->> (validate! params list-pages-by-project-schema)
+         (get-pages-for-user-and-project conn))))
 
 ;; --- Page History (Query)
 
@@ -193,9 +199,10 @@
          (map decode-page-data))))
 
 (defmethod usc/-query :list/page-history
-  [conn params]
-  (->> (validate! params list-page-history-schema)
-       (get-page-history conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params list-page-history-schema)
+         (get-page-history conn))))
 
 ;; --- Update Page History
 
@@ -216,9 +223,10 @@
             (decode-page-data))))
 
 (defmethod usc/-novelty :update/page-history
-  [conn params]
-  (->> (validate! params update-page-history-schema)
-       (update-page-history conn)))
+  [params]
+  (with-open [conn (db/connection)]
+    (->> (validate! params update-page-history-schema)
+         (update-page-history conn))))
 
 ;; --- Helpers
 
