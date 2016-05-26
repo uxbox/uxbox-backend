@@ -11,18 +11,16 @@
 
 ;; --- Main Api
 
-(defmulti -novelty
-  (fn [conn data] (:type data)))
+(defmulti -novelty :type)
 
-(defmulti -query
-  (fn [conn data] (:type data)))
+(defmulti -query :type)
 
 (defmethod -novelty :default
-  [conn data]
+  [data]
   (throw (ex/ex-info :not-implemented data)))
 
 (defmethod -query :default
-  [conn data]
+  [data]
   (throw (ex/ex-info :not-implemented data)))
 
 ;; --- Common Helpers

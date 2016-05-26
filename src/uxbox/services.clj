@@ -7,53 +7,54 @@
 (ns uxbox.services
   "Main namespace for access to all uxbox services."
   (:require [suricatta.core :as sc]
-            [catacumba.serializers :as sz]
-            [catacumba.impl.executor :as exec]
-            [clj-uuid :as uuid]
-            [uxbox.persistence :as up]
-            [uxbox.services.core :as usc]
-            [uxbox.services.auth]
-            [uxbox.services.projects]
-            [uxbox.services.pages]
-            [uxbox.services.images]
-            [uxbox.services.colors]
+            [executors.core :as exec]
+            [promesa.core :as p]
+            [uxbox.db :as db]
+            [uxbox.services.core :as core]
             [uxbox.util.transit :as t]
             [uxbox.util.blob :as blob]))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Impl.
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(load "services/auth")
+(load "services/projects")
+(load "services/pages")
+(load "services/images")
+(load "services/colors")
+
+;; --- Implementation
 
 (def ^:private encode (comp blob/encode t/encode))
 
 (defn- insert-txlog
-  [conn data]
-  (let [sql (str "INSERT INTO txlog (payload) VALUES (?)")
-        sqlv [sql (encode data)]]
-    (sc/execute conn sqlv)))
+  [data]
+  (with-open [conn (db/connection)]
+    (let [sql (str "INSERT INTO txlog (payload) VALUES (?)")
+          sqlv [sql (encode data)]]
+      (sc/execute conn sqlv))))
 
 (defn- handle-novelty
   [data]
-  (with-open [conn (up/get-conn)]
-    (sc/atomic conn
-      (let [result (usc/-novelty conn data)]
-        (insert-txlog conn data)
-        result))))
+  (let [rs (core/-novelty data)
+        rs (if (p/promise? rs) rs (p/resolved rs))]
+    ;; TODO: add `do` helper to promesa library
+    (p/map (fn [v]
+             (insert-txlog data)
+                v) rs)))
 
 (defn- handle-query
   [data]
-  (with-open [conn (up/get-conn)]
-    (sc/atomic conn
-      (usc/-query conn data))))
+  (let [result (core/-query data)]
+    (if (p/promise? result)
+      result
+      (p/resolved result))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Public Api
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Public Api
 
 (defn novelty
   [data]
-  (exec/submit (partial handle-novelty data)))
+  (->> (exec/submit (partial handle-novelty data))
+       (p/mapcat identity)))
 
 (defn query
   [data]
-  (exec/submit (partial handle-query data)))
+  (->> (exec/submit (partial handle-query data))
+       (p/mapcat identity)))
