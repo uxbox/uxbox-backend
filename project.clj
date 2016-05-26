@@ -11,7 +11,7 @@
              ;; "-Dcom.sun.management.jmxremote.rmi.port=9090"
              ;; "-Djava.rmi.server.hostname=0.0.0.0"
              "-XX:+UseG1GC" "-Xms1g" "-Xmx1g"]
-  :dependencies [[org.clojure/clojure "1.9.0-alpha3" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.9.0-alpha3"]
                  [org.clojure/tools.logging "0.3.1"]
                  [funcool/struct "0.1.0"]
                  [funcool/suricatta "0.9.0"]
@@ -31,7 +31,7 @@
 
                  [org.xerial.snappy/snappy-java "1.1.2.4"]
                  [com.github.spullara.mustache.java/compiler "0.9.1"]
-                 [org.postgresql/postgresql "9.4.1208" :scope "provided"]
+                 [org.postgresql/postgresql "9.4.1208"]
                  [org.quartz-scheduler/quartz "2.2.3"]
                  [org.quartz-scheduler/quartz-jobs "2.2.3"]
                  [commons-io/commons-io "2.5"]
