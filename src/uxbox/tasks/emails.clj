@@ -55,7 +55,9 @@
 (defn- send-email
   [{:keys [id data] :as entry}]
   (let [config (:smtp cfg/config)
-        result (postal/send-message config data)]
+        result (if (:noop config)
+                 {:error :SUCCESS}
+                 (postal/send-message config data))]
     (if (= (:error result) :SUCCESS)
       (log/debug "Message" id "sent successfully.")
       (log/warn "Message" id "failed with:" (:message result)))
