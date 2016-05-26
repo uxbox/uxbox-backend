@@ -63,10 +63,6 @@
 ;; Entry point (only for uberjar)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn run-all-tests
-  ([] (test/run-all-tests #"^uxbox.tests.*"))
-  ([re] (test/run-all-tests re)))
-
 (defn test-vars
   [& vars]
   (repl/refresh)
@@ -80,6 +76,10 @@
   [ns]
   (repl/refresh)
   (test/test-ns ns))
+
+(defn test-all
+  ([] (test/run-all-tests #"^uxbox.tests.*"))
+  ([re] (test/run-all-tests re)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point (only for uberjar)
