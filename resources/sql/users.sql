@@ -29,3 +29,21 @@ update users set password = :password
 update users set photo = :photo
  where id = :id and deleted = false;
 
+-- :name create-recovery-token :! :n
+insert into user_pswd_recovery ("user", token)
+values (:user, :token);
+
+-- :name get-recovery-token
+select * from user_pswd_recovery
+ where used_id is null
+   and token = :token;
+
+-- :name recovery-token-exists? :? :1
+select exists (select * from user_pswd_recovery
+                where used_at is null
+                  and token = :token) as token_exists;
+
+-- :name mark-recovery-token-used :! :n
+update user_pswd_recovery
+   set used_at = clock_timestamp()
+ where token = :token;

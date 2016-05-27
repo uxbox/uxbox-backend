@@ -12,9 +12,12 @@
             [uxbox.images :as images]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
+            [uxbox.services.users :as svu]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.paths :as paths]))
+
+;; --- Helpers
 
 (def validate-form! (partial us/validate! :form/validation))
 
@@ -70,7 +73,6 @@
     (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
 
-
 ;; --- Update Profile Photo
 
 (defn update-photo
@@ -88,3 +90,53 @@
     (->> (store-photo (:file data))
          (p/mapcat assign-photo)
          (p/map create-response))))
+
+;; --- Register User
+
+(def ^:private register-user-schema
+  svu/register-user-schema)
+
+(defn register-user
+  [{data :data}]
+  (let [data (validate-form! data register-user-schema)
+        message (assoc data :type :register)]
+    (->> (sv/novelty message)
+         (p/map #(http/ok (rsp %))))))
+
+
+;; --- Request Password Recovery
+
+(def ^:private request-password-recovery-schema
+  {:username [us/required us/string]})
+
+(defn request-password-recovery
+  [{data :data}]
+  (let [data (validate-form! data request-password-recovery-schema)
+        message (assoc data :type :request/password-recovery)]
+    (->> (sv/novelty message)
+         (p/map (fn [_] (http/no-content))))))
+
+;; --- Password Recovery
+
+(def ^:private password-recovery-schema
+  {:token [us/required us/string]
+   :password [us/required us/string]})
+
+(defn recover-password
+  [{data :data}]
+  (let [data (validate-form! data password-recovery-schema)
+        message (assoc data :type :recovery/password)]
+    (->> (sv/novelty message)
+         (p/map (fn [_] (http/no-content))))))
+
+;; --- Valiadate Recovery Token
+
+(defn validate-recovery-token
+  [{params :route-params}]
+  (let [message {:type :validate/password-recovery-token
+                 :token (:token params)}]
+    (->> (sv/query message)
+         (p/map (fn [v]
+                  (if v
+                    (http/no-content)
+                    (http/not-found "")))))))

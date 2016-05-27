@@ -17,6 +17,16 @@
   (let [response (select-keys (ex-data err) [:type :payload])]
     (http/bad-request (rsp response))))
 
+(defmethod handle-exception :service/not-found
+  [err]
+  (let [response (select-keys (ex-data err) [:type :payload])]
+    (http/not-found (rsp response))))
+
+(defmethod handle-exception :validation
+  [err]
+  (let [response (select-keys (ex-data err) [:type :payload])]
+    (http/bad-request (rsp response))))
+
 (defmethod handle-exception :query/validation
   [err]
   (let [response (select-keys (ex-data err) [:type :payload])]

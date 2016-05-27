@@ -12,9 +12,11 @@
             [buddy.core.nonce :as nonce]
             [buddy.core.hash :as hash]
             [buddy.core.codecs :as codecs]
+            [buddy.core.codecs.base64 :as b64]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
+            [uxbox.emails :as emails]
             [uxbox.services.core :as usc]
             [uxbox.util.transit :as t]
             [uxbox.util.exceptions :as ex]
@@ -24,6 +26,7 @@
 (def validate! (partial us/validate! :service/wrong-arguments))
 
 (declare decode-user-data)
+(declare trim-user-attrs)
 (declare find-user-by-id)
 (declare find-full-user-by-id)
 (declare find-user-by-username-or-email)
@@ -59,6 +62,7 @@
                                   :id id})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
+            (trim-user-attrs)
             (decode-user-data)
             (dissoc :password))))
 
@@ -136,7 +140,120 @@
                                   :metadata metadata})]
     (->> (sc/fetch-one conn sqlv)
          (usc/normalize-attrs)
+         (trim-user-attrs)
          (decode-user-data))))
+
+;; --- Register User
+
+(def register-user-schema
+  {:username [us/required us/string]
+   :fullname [us/required us/string]
+   :email [us/required us/email]
+   :password [us/required us/string]})
+
+(defn- register-user
+  [conn {:keys [id username fullname email password] :as data}]
+  (let [metadata (blob/encode (t/encode {}))
+        id (or id (uuid/random))
+        sqlv (sql/create-profile {:id id
+                                  :fullname fullname
+                                  :username username
+                                  :email email
+                                  :password password
+                                  :metadata metadata})]
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs)
+            (trim-user-attrs)
+            (decode-user-data))))
+
+(defn- user-registred?
+  "Check if the user identified by username or by email
+  is already registred in the platform."
+  [conn {:keys [username email]}]
+  (or (find-user-by-username-or-email conn username)
+      (find-user-by-username-or-email conn email)))
+
+(defmethod usc/-novelty :register
+  [params]
+  (let [params (validate! params register-user-schema)]
+    (with-open [conn (db/connection)]
+      (when (user-registred? conn params)
+        (throw (ex/ex-info :validation {})))
+      (let [user (register-user conn params)]
+        ;; TODO: move mail sending under txlog listener
+        ;;       when the txlog listeners are ready
+        (emails/send! {:email/name :uxbox/register
+                       :email/to (:email params)
+                       :email/priority :high
+                       :name (:fullname params)})
+        user))))
+
+;; --- Password Recover
+
+(defn- recovery-token-exists?
+  "Checks if the token exists in the system. Just
+  return `true` or `false`."
+  [conn token]
+  (let [sqlv (sql/recovery-token-exists? {:token token})
+        result (sc/fetch-one conn sqlv)]
+    (:token_exists result)))
+
+(defn- get-user-for-recovery-token
+  "Retrieve a user id (uuid) for the given token. If
+  no user is found, an exception is raised."
+  [conn token]
+  (let [sqlv (sql/get-recovery-token {:token token})
+        data (sc/fetch-one conn sqlv)]
+    (if-let [user (:user data)]
+      user
+      (throw (ex/ex-info :service/not-found {:token token})))))
+
+(defn- recovery-password
+  "Given a token and password, resets the password
+  to corresponding user or raise an exception."
+  [conn {:keys [token password]}]
+  (let [user (get-user-for-recovery-token conn token)]
+    (update-password conn user password)
+    nil))
+
+(defn- generate-random-token
+  []
+  (-> (nonce/random-bytes 1024)
+      (hash/blake2b-256)
+      (b64/encode true)
+      (codecs/bytes->str)))
+
+(defn- request-password-recovery
+  "Creates a new recovery password token and sends it via email
+  to the correspondig to the given username or email address."
+  [conn username]
+  (let [user (find-user-by-username-or-email conn username)
+        _    (when-not user
+               (ex/ex-info :service/not-found {:username username}))
+        token (generate-random-token)
+        sqlv (sql/create-recovery-token {:user (:id user) :token token})]
+    (sc/execute conn sqlv)
+    #_(emails/send! {:email/name :uxbox/password-recovery
+                     :email/to (:email user)
+                     :token token})
+    token))
+
+(defmethod usc/-query :validate/password-recovery-token
+  [{:keys [token]}]
+  (with-open [conn (db/connection)]
+    (recovery-token-exists? conn token)))
+
+(defmethod usc/-novelty :request/password-recovery
+  [{:keys [username]}]
+  (with-open [conn (db/connection)]
+    (sc/atomic conn
+      (request-password-recovery conn username))))
+
+(defmethod usc/-novelty :recovery/password
+  [{:keys [token password] :as params}]
+  (with-open [conn (db/connection)]
+    (sc/atomic conn
+      (recovery-password conn params))))
 
 ;; --- Helpers
 
@@ -144,22 +261,33 @@
   [conn id]
   (let [sqlv (sql/get-profile {:id id})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (usc/normalize-attrs)
+            (trim-user-attrs))))
 
 (defn find-user-by-id
   [conn id]
   (let [sqlv (sql/get-profile {:id id})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
+            (trim-user-attrs)
             (dissoc :password))))
 
 (defn find-user-by-username-or-email
   [conn username]
   (let [sqlv (sql/get-profile-by-username {:username username})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (usc/normalize-attrs)
+            (trim-user-attrs))))
 
 (defn- decode-user-data
   [{:keys [metadata] :as result}]
   (merge result (when metadata
                   {:metadata (blob/decode->str metadata)})))
+
+(defn trim-user-attrs
+  "Only selects a publicy visible user attrs."
+  [user]
+  (select-keys user [:id :username :fullname
+                     :password :metadata :email
+                     :created-at]))
+

@@ -3,6 +3,7 @@
             [clojure.java.io :as io]
             [promesa.core :as p]
             [clj-http.client :as http]
+            [suricatta.core :as sc]
             [catacumba.testing :refer (with-server)]
             [buddy.hashers :as hashers]
             [uxbox.db :as db]
@@ -59,3 +60,47 @@
           ;; (println "RESPONSE:" status data)
           (t/is (= 204 status)))))))
 
+(t/deftest test-http-register-user
+  (with-server {:handler (urt/app)}
+    (let [uri (str th/+base-url+ "/api/auth/register")
+          data {:fullname "Full Name"
+                :username "user222"
+                :email "user222@uxbox.io"
+                :password "user222"}
+          [status data] (th/http-post uri {:body data})]
+      ;; (println "RESPONSE:" status data)
+      (t/is (= 200 status)))))
+
+(t/deftest test-http-validate-recovery-token
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)]
+      (with-server {:handler (urt/app)}
+        (let [token (#'usu/request-password-recovery conn "user1")
+              uri1 (str th/+base-url+ "/api/auth/password/recovery/not-existing")
+              uri2 (str th/+base-url+ "/api/auth/password/recovery/" token)
+              [status1 data1] (th/http-get user uri1)
+              [status2 data2] (th/http-get user uri2)]
+          ;; (println "RESPONSE:" status1 data1)
+          ;; (println "RESPONSE:" status2 data2)
+          (t/is (= 404 status1))
+          (t/is (= 204 status2)))))))
+
+(t/deftest test-http-request-password-recovery
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)
+          sql "select * from user_pswd_recovery"
+          res (sc/fetch-one conn sql)]
+
+      ;; Initially no tokens exists
+      (t/is (nil? res))
+
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/auth/password/recovery")
+              data {:username "user1"}
+              [status data] (th/http-post user uri {:body data})]
+          ;; (println "RESPONSE:" status data)
+          (t/is (= 204 status)))
+
+        (let [res (sc/fetch-one conn sql)]
+          (t/is (not (nil? res)))
+          (t/is (= (:user res) (:id user))))))))
