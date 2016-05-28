@@ -76,8 +76,8 @@
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [token (#'usu/request-password-recovery conn "user1")
-              uri1 (str th/+base-url+ "/api/auth/password/recovery/not-existing")
-              uri2 (str th/+base-url+ "/api/auth/password/recovery/" token)
+              uri1 (str th/+base-url+ "/api/auth/recovery/not-existing")
+              uri2 (str th/+base-url+ "/api/auth/recovery/" token)
               [status1 data1] (th/http-get user uri1)
               [status2 data2] (th/http-get user uri2)]
           ;; (println "RESPONSE:" status1 data1)
@@ -95,7 +95,7 @@
       (t/is (nil? res))
 
       (with-server {:handler (urt/app)}
-        (let [uri (str th/+base-url+ "/api/auth/password/recovery")
+        (let [uri (str th/+base-url+ "/api/auth/recovery")
               data {:username "user1"}
               [status data] (th/http-post user uri {:body data})]
           ;; (println "RESPONSE:" status data)
@@ -110,7 +110,7 @@
     (let [user (th/create-user conn 1)]
       (with-server {:handler (urt/app)}
         (let [token (#'usu/request-password-recovery conn (:username user))
-              uri (str th/+base-url+ "/api/auth/password/recovery")
+              uri (str th/+base-url+ "/api/auth/recovery")
               data {:token token :password "mytestpassword"}
               [status data] (th/http-put user uri {:body data})
 
