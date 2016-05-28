@@ -16,7 +16,7 @@
   (let [data {:username "user1"
               :fullname "user 1"
               :metadata "1"
-              :password  (hashers/encrypt "user1")
+              :password  "user1"
               :email "user1@uxbox.io"}
         user (with-open [conn (db/connection)]
                (usu/create-user conn data))]
@@ -27,7 +27,7 @@
                   :scope "foobar"}
             uri (str th/+base-url+ "/api/auth/token")
             [status data] (th/http-post uri {:body data})]
-        ;; (println "RESPONSE:" response)
+        ;; (println "RESPONSE:" status data)
         (t/is (= status 200))
         (t/is (contains? data :token))))))
 
