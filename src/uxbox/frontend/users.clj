@@ -55,8 +55,9 @@
         message (assoc data
                        :type :update/profile
                        :user user)]
-    (-> (sv/novelty message)
-        (p/then #(http/ok (rsp %))))))
+    (->> (sv/novelty message)
+         (p/map resolve-thumbnail)
+         (p/map #(http/ok (rsp %))))))
 
 ;; --- Update Password
 
