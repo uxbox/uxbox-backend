@@ -29,8 +29,6 @@
   (-> (t/encode data)
       (codecs/bytes->str)))
 
-(def ^:private password (hashers/encrypt "123123"))
-
 (defn- create-user
   [conn i]
   (println "create user" i)
@@ -39,7 +37,7 @@
                        :id (mk-uuid "user" i)
                        :fullname (str "User " i)
                        :metadata (data-encode {})
-                       :password password
+                       :password "123123"
                        :email (str "user" i ".test@uxbox.io")}))
 
 (defn- create-project
@@ -66,7 +64,7 @@
                      :height 768
                      :layout "tablet"}))
 
-(def num-users 1000)
+(def num-users 50)
 (def num-projects 5)
 (def num-pages 5)
 
