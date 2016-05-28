@@ -167,7 +167,7 @@
                                   :password password
                                   :metadata metadata})]
     (sc/execute conn sqlv)
-    (emails/send! {:email/name :uxbox/register
+    (emails/send! {:email/name :register
                    :email/to (:email params)
                    :email/priority :high
                    :name (:fullname params)})
@@ -236,9 +236,10 @@
         _    (when-not user
                (ex/ex-info :service/not-found {:username username}))
         token (create-recovery-token conn (:id user))]
-    #_(emails/send! {:email/name :uxbox/password-recovery
-                     :email/to (:email user)
-                     :token token})
+    (emails/send! {:email/name :password-recovery
+                   :email/to (:email user)
+                   :name (:fullname user)
+                   :token token})
     token))
 
 (defmethod usc/-query :validate/password-recovery-token
