@@ -15,14 +15,16 @@ select * from users
 -- :name user-with-username-exists?
 select exists
   (select * from users
-    where id != :id
-      and username = :username) as val;
+    where username = :username
+--~ (when (:id params) "and id != :id")
+    ) as val;
 
 -- :name user-with-email-exists?
 select exists
   (select * from users
-    where id != :id
-      and email = :email) as val;
+    where email = :email
+--~ (when (:id params) "and id != :id")
+    ) as val;
 
 -- :name update-profile :<! :1
 update users

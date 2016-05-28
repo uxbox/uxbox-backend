@@ -155,20 +155,25 @@
 
 ;; --- Register User
 
-(defn- user-registred?
+(defn- check-user-registred
   "Check if the user identified by username or by email
   is already registred in the platform."
   [conn {:keys [username email]}]
-  (or (find-user-by-username-or-email conn username)
-      (find-user-by-username-or-email conn email)))
+  (let [sqlv1 (sql/user-with-email-exists? {:email email})
+        sqlv2 (sql/user-with-username-exists? {:username username})]
+    (when (:val (sc/fetch-one conn sqlv1))
+      (throw (ex/ex-info :form/validation
+                         {:email "errors.api.form.email-already-exists"})))
+    (when (:val (sc/fetch-one conn sqlv2))
+      (throw (ex/ex-info :form/validation
+                         {:username "errors.api.form.username-already-exists"})))))
 
 (defn- register-user
   "Create the user entry onthe database with limited input
   filling all the other fields with defaults."
   [conn {:keys [username fullname email password] :as params}]
 
-  (when (user-registred? conn params)
-    (throw (ex/ex-info :validation {})))
+  (check-user-registred conn params)
 
   (let [metadata (blob/encode (t/encode {}))
         password (hashers/encrypt password)
@@ -195,7 +200,7 @@
   [params]
   (with-open [conn (db/connection)]
     (->> (validate! params register-user-schema)
-         (sc/apply-atomic conn register-user-schema))))
+         (sc/apply-atomic conn register-user))))
 
 ;; --- Password Recover
 
