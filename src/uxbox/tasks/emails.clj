@@ -52,11 +52,21 @@
   (let [sqlv (sql/mark-email-as-failed {:id id})]
     (sc/execute conn sqlv)))
 
+(defn- send-email-to-console
+  [{:keys [id data] :as entry}]
+  (println "******** start email:" id "**********")
+  (println (->> (:body data)
+                (filter #(= (:uxbox.emails.core/type %) :text/plain))
+                (first)
+                (:content)))
+  (println "********** end email:" id "**********")
+  {:error :SUCCESS})
+
 (defn- send-email
   [{:keys [id data] :as entry}]
   (let [config (:smtp cfg/config)
         result (if (:noop config)
-                 {:error :SUCCESS}
+                 (send-email-to-console entry)
                  (postal/send-message config data))]
     (if (= (:error result) :SUCCESS)
       (log/debug "Message" id "sent successfully.")
