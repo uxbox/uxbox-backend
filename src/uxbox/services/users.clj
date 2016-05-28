@@ -98,7 +98,7 @@
   [conn {:keys [user old-password] :as params}]
   (let [user (find-full-user-by-id conn user)]
     (when-not (hashers/check old-password (:password user))
-      (let [params {:old-password '("errors.api.form.old-password-not-match")}]
+      (let [params {:old-password "errors.api.form.old-password-not-match"}]
         (throw (ex/ex-info :form/validation params))))
     params))
 
