@@ -167,7 +167,7 @@
                                   :password password
                                   :metadata metadata})]
     (sc/execute conn sqlv)
-    (emails/send! {:email/name :register
+    (emails/send! {:email/name :users/register
                    :email/to (:email params)
                    :email/priority :high
                    :name (:fullname params)})
@@ -236,7 +236,7 @@
         _    (when-not user
                (ex/ex-info :service/not-found {:username username}))
         token (create-recovery-token conn (:id user))]
-    (emails/send! {:email/name :password-recovery
+    (emails/send! {:email/name :users/password-recovery
                    :email/to (:email user)
                    :name (:fullname user)
                    :token token})

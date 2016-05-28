@@ -11,6 +11,7 @@
             [catacumba.handlers.auth :as cauth]
             [catacumba.handlers.parse :as cparse]
             [catacumba.handlers.misc :as cmisc]
+            [uxbox.config :as cfg]
             [uxbox.services.auth :as sauth]
             [uxbox.frontend.auth :as auth]
             [uxbox.frontend.users :as users]
@@ -19,6 +20,7 @@
             [uxbox.frontend.pages :as pages]
             [uxbox.frontend.colors :as colors]
             [uxbox.frontend.images :as images]
+            [uxbox.frontend.debug-emails :as dbgemails]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
@@ -35,6 +37,12 @@
   (if identity
     (ct/delegate {:identity (uuid/from-string (:id identity))})
     (http/forbidden (rsp {:message "Forbidden"}))))
+
+(defn- debug-only
+  [context]
+  (if (-> cfg/config :server :debug)
+    (ct/delegate)
+    (http/not-found "")))
 
 (def cors-conf
   {:origin "*"
@@ -54,6 +62,11 @@
       [:get "api" #'welcome-api]
       [:assets "media" {:dir "public/media"}]
       [:assets "static" {:dir "public/static"}]
+
+      [:prefix "debug"
+       [:any debug-only]
+       [:get "emails" #'dbgemails/list-emails]
+       [:get "emails/email" #'dbgemails/show-email]]
 
       [:prefix "api"
        [:any (cmisc/cors cors-conf)]

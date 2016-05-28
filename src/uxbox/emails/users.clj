@@ -14,7 +14,7 @@
 (defn- register-body-html
   [{:keys [name] :as ctx}]
   [:div
-   [:img.img-header {:src (md/resolve-asset "images/img-header.jpg")
+   [:img.img-header {:src (md/resolve-asset "images/email/img-header.jpg")
                      :alt "UXBOX"}]
    [:div.content
     [:table
@@ -23,8 +23,8 @@
        [:td
         [:h1 "Hi " name]
         [:p "Welcome to uxbox."]
-        #_[:p
-           [:a.btn-primary {:href "#"} "Sign in"]]
+        [:p
+         [:a.btn-primary {:href "#"} "Sign in"]]
         [:p "Sincerely," [:br] [:strong "The UXBOX Team"]]
         #_[:p "P.S. Having trouble signing up? please contact "
          [:a {:href "#"} "Support email"]]]]]]]])
@@ -35,7 +35,7 @@
        "Welcome to uxbox!\n\n"
        "Sincerely, the UXBOX team.\n"))
 
-(defemail :register
+(defemail :users/register
   :layout layouts/default
   :subject "UXBOX: Welcome!"
   :body {:text/html register-body-html
@@ -65,11 +65,11 @@
   [{:keys [name token] :as ctx}]
   (str "Hi " name "\n\n"
        "A password recovery is requested.\n\n"
-       "Please follow the following url in order to change the password.\n\n"
-       "  http://uxbox.io/....\n\n\n"
+       "Please follow the following url in order to change the password:\n\n"
+       "  http://uxbox.io/recovery/" token "\n\n\n"
        "Sincerely, the UXBOX team.\n"))
 
-(defemail :password-recovery
+(defemail :users/password-recovery
   :layout layouts/default
   :subject "Password recovery requested."
   :body {:text/html password-recovery-body-html

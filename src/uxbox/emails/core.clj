@@ -40,6 +40,7 @@
     {:content (cond-> (bodyfn context)
                 layoutfn (layoutfn context)
                 (= type :text/html) (html4))
+     ::type type
      :type (subs (str type) 1)}))
 
 (defn- render-body-alternatives
