@@ -2,10 +2,10 @@
   (:require [clojure.test :as t]
             [clojure.java.io :as io]
             [promesa.core :as p]
+            [buddy.hashers :as hashers]
             [clj-http.client :as http]
             [suricatta.core :as sc]
             [catacumba.testing :refer (with-server)]
-            [buddy.hashers :as hashers]
             [uxbox.db :as db]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.users :as usu]
@@ -104,3 +104,17 @@
         (let [res (sc/fetch-one conn sql)]
           (t/is (not (nil? res)))
           (t/is (= (:user res) (:id user))))))))
+
+(t/deftest test-http-validate-recovery-token
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)]
+      (with-server {:handler (urt/app)}
+        (let [token (#'usu/request-password-recovery conn (:username user))
+              uri (str th/+base-url+ "/api/auth/password/recovery")
+              data {:token token :password "mytestpassword"}
+              [status data] (th/http-put user uri {:body data})
+
+              user' (usu/find-full-user-by-id conn (:id user))]
+          (t/is (= status 204))
+          (t/is (hashers/check "mytestpassword" (:password user'))))))))
+

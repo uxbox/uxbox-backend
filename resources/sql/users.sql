@@ -35,7 +35,7 @@ values (:user, :token);
 
 -- :name get-recovery-token
 select * from user_pswd_recovery
- where used_id is null
+ where used_at is null
    and token = :token;
 
 -- :name recovery-token-exists? :? :1

@@ -140,7 +140,7 @@
   "Helper for create users"
   [conn i]
   (let [data {:username (str "user" i)
-              :password  (hashers/encrypt (str "user" i))
+              :password (str "user" i)
               :metadata (str i)
               :fullname (str "User " i)
               :email (str "user" i "@uxbox.io")}]

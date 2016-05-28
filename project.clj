@@ -14,7 +14,7 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha3"]
                  [org.clojure/tools.logging "0.3.1"]
                  [funcool/struct "0.1.0"]
-                 [funcool/suricatta "0.9.0"]
+                 [funcool/suricatta "1.1.0"]
                  [funcool/promesa "1.2.0"]
                  [funcool/catacumba "0.16.0"]
 

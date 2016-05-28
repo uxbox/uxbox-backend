@@ -9,10 +9,6 @@
             [suricatta.core :as sc]
             [buddy.hashers :as hashers]
             [buddy.sign.jwe :as jwe]
-            [buddy.core.nonce :as nonce]
-            [buddy.core.hash :as hash]
-            [buddy.core.codecs :as codecs]
-            [buddy.core.codecs.base64 :as b64]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
@@ -21,7 +17,8 @@
             [uxbox.util.transit :as t]
             [uxbox.util.exceptions :as ex]
             [uxbox.util.blob :as blob]
-            [uxbox.util.uuid :as uuid]))
+            [uxbox.util.uuid :as uuid]
+            [uxbox.util.token :as token]))
 
 (def validate! (partial us/validate! :service/wrong-arguments))
 
@@ -130,8 +127,9 @@
 (defn create-user
   [conn {:keys [id username password email fullname metadata] :as data}]
   (validate! data create-user-schema)
-  (let [metadata (blob/encode metadata)
-        id (or id (uuid/random))
+  (let [id (or id (uuid/random))
+        metadata (blob/encode metadata)
+        password (hashers/encrypt password)
         sqlv (sql/create-profile {:id id
                                   :fullname fullname
                                   :username username
@@ -145,27 +143,6 @@
 
 ;; --- Register User
 
-(def register-user-schema
-  {:username [us/required us/string]
-   :fullname [us/required us/string]
-   :email [us/required us/email]
-   :password [us/required us/string]})
-
-(defn- register-user
-  [conn {:keys [id username fullname email password] :as data}]
-  (let [metadata (blob/encode (t/encode {}))
-        id (or id (uuid/random))
-        sqlv (sql/create-profile {:id id
-                                  :fullname fullname
-                                  :username username
-                                  :email email
-                                  :password password
-                                  :metadata metadata})]
-    (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
-            (trim-user-attrs)
-            (decode-user-data))))
-
 (defn- user-registred?
   "Check if the user identified by username or by email
   is already registred in the platform."
@@ -173,20 +150,40 @@
   (or (find-user-by-username-or-email conn username)
       (find-user-by-username-or-email conn email)))
 
+(defn- register-user
+  "Create the user entry onthe database with limited input
+  filling all the other fields with defaults."
+  [conn {:keys [username fullname email password] :as params}]
+
+  (when (user-registred? conn params)
+    (throw (ex/ex-info :validation {})))
+
+  (let [metadata (blob/encode (t/encode {}))
+        password (hashers/encrypt password)
+        sqlv (sql/create-profile {:id (uuid/random)
+                                  :fullname fullname
+                                  :username username
+                                  :email email
+                                  :password password
+                                  :metadata metadata})]
+    (sc/execute conn sqlv)
+    (emails/send! {:email/name :uxbox/register
+                   :email/to (:email params)
+                   :email/priority :high
+                   :name (:fullname params)})
+    nil))
+
+(def register-user-schema
+  {:username [us/required us/string]
+   :fullname [us/required us/string]
+   :email [us/required us/email]
+   :password [us/required us/string]})
+
 (defmethod usc/-novelty :register
   [params]
-  (let [params (validate! params register-user-schema)]
-    (with-open [conn (db/connection)]
-      (when (user-registred? conn params)
-        (throw (ex/ex-info :validation {})))
-      (let [user (register-user conn params)]
-        ;; TODO: move mail sending under txlog listener
-        ;;       when the txlog listeners are ready
-        (emails/send! {:email/name :uxbox/register
-                       :email/to (:email params)
-                       :email/priority :high
-                       :name (:fullname params)})
-        user))))
+  (with-open [conn (db/connection)]
+    (->> (validate! params register-user-schema)
+         (sc/apply-atomic conn register-user-schema))))
 
 ;; --- Password Recover
 
@@ -198,7 +195,7 @@
         result (sc/fetch-one conn sqlv)]
     (:token_exists result)))
 
-(defn- get-user-for-recovery-token
+(defn- retrieve-user-for-recovery-token
   "Retrieve a user id (uuid) for the given token. If
   no user is found, an exception is raised."
   [conn token]
@@ -208,20 +205,28 @@
       user
       (throw (ex/ex-info :service/not-found {:token token})))))
 
-(defn- recovery-password
+(defn- mark-token-as-used
+  [conn token]
+  (let [sqlv (sql/mark-recovery-token-used {:token token})]
+    (pos? (sc/execute conn sqlv))))
+
+(defn- recover-password
   "Given a token and password, resets the password
   to corresponding user or raise an exception."
   [conn {:keys [token password]}]
-  (let [user (get-user-for-recovery-token conn token)]
-    (update-password conn user password)
+  (let [user (retrieve-user-for-recovery-token conn token)]
+    (update-password conn {:user user :password password})
+    (mark-token-as-used conn token)
     nil))
 
-(defn- generate-random-token
-  []
-  (-> (nonce/random-bytes 1024)
-      (hash/blake2b-256)
-      (b64/encode true)
-      (codecs/bytes->str)))
+(defn- create-recovery-token
+  "Creates a new recovery token for specified user and return it."
+  [conn userid]
+  (let [token (token/random)
+        sqlv (sql/create-recovery-token {:user userid
+                                         :token token})]
+    (sc/execute conn sqlv)
+    token))
 
 (defn- request-password-recovery
   "Creates a new recovery password token and sends it via email
@@ -230,9 +235,7 @@
   (let [user (find-user-by-username-or-email conn username)
         _    (when-not user
                (ex/ex-info :service/not-found {:username username}))
-        token (generate-random-token)
-        sqlv (sql/create-recovery-token {:user (:id user) :token token})]
-    (sc/execute conn sqlv)
+        token (create-recovery-token conn (:id user))]
     #_(emails/send! {:email/name :uxbox/password-recovery
                      :email/to (:email user)
                      :token token})
@@ -249,22 +252,25 @@
     (sc/atomic conn
       (request-password-recovery conn username))))
 
-(defmethod usc/-novelty :recovery/password
+(defmethod usc/-novelty :recover/password
   [{:keys [token password] :as params}]
   (with-open [conn (db/connection)]
     (sc/atomic conn
-      (recovery-password conn params))))
+      (recover-password conn params))))
 
-;; --- Helpers
+;; --- Query Helpers
 
 (defn find-full-user-by-id
+  "Find user by its id. This function is for internal
+  use only because it returns a lot of sensitive information.
+  If no user is found, `nil` is returned."
   [conn id]
   (let [sqlv (sql/get-profile {:id id})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
-            (trim-user-attrs))))
+            (usc/normalize-attrs))))
 
 (defn find-user-by-id
+  "Find user by its id. If no user is found, `nil` is returned."
   [conn id]
   (let [sqlv (sql/get-profile {:id id})]
     (some-> (sc/fetch-one conn sqlv)
@@ -273,11 +279,15 @@
             (dissoc :password))))
 
 (defn find-user-by-username-or-email
+  "Finds a user in the database by username and email. If no
+  user is found, `nil` is returned."
   [conn username]
   (let [sqlv (sql/get-profile-by-username {:username username})]
     (some-> (sc/fetch-one conn sqlv)
             (usc/normalize-attrs)
             (trim-user-attrs))))
+
+;; --- Attrs Helpers
 
 (defn- decode-user-data
   [{:keys [metadata] :as result}]

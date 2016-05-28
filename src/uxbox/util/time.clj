@@ -40,14 +40,14 @@
 (extend-protocol proto/IParamType
   Instant
   (-render [self ctx]
-    (if (proto/-render-inline? ctx)
+    (if (proto/-inline? ctx)
       (str "'" (.toString self) "'::timestamptz")
       "?::timestamptz"))
 
   (-bind [self ctx]
-    (when-not (proto/-render-inline? ctx)
-      (let [stmt (proto/-get-statement ctx)
-            idx  (proto/-get-next-bindindex ctx)
+    (when-not (proto/-inline? ctx)
+      (let [stmt (proto/-statement ctx)
+            idx  (proto/-next-bind-index ctx)
             obj (Timestamp/from self)]
         (.setTimestamp stmt idx obj)))))
 

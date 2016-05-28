@@ -9,11 +9,8 @@
             [suricatta.core :as sc]
             [buddy.hashers :as hashers]
             [buddy.sign.jwt :as jwt]
-            [buddy.core.nonce :as nonce]
             [buddy.core.hash :as hash]
-            [buddy.core.codecs :as codecs]
-            [uxbox.config :as ucfg]
-            [uxbox.schema :as us]
+            [uxbox.config :as cfg]
             [uxbox.db :as db]
             [uxbox.services.core :as usc]
             [uxbox.services.users :as users]
@@ -26,7 +23,7 @@
 
 (defn- initialize-auth-secret
   []
-  (let [main-secret (:secret ucfg/config)]
+  (let [main-secret (:secret cfg/config)]
     (when-not main-secret
       (throw (ex-info "Missing `:secret` key in config." {})))
     (hash/blake2b-256 main-secret)))

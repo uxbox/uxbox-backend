@@ -125,7 +125,7 @@
 (defn recover-password
   [{data :data}]
   (let [data (validate-form! data password-recovery-schema)
-        message (assoc data :type :recovery/password)]
+        message (assoc data :type :recover/password)]
     (->> (sv/novelty message)
          (p/map (fn [_] (http/no-content))))))
 

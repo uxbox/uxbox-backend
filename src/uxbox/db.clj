@@ -13,6 +13,7 @@
             [suricatta.core :as sc]
             [suricatta.proto :as scp]
             [suricatta.types :as sct]
+            [suricatta.transaction :as sctx]
             [uxbox.config :as cfg])
   (:import org.jooq.TransactionContext
            org.jooq.TransactionProvider
@@ -48,15 +49,15 @@
   "Asynchronous transaction handling."
   {:internal true}
   [ctx func]
-  (let [^Configuration conf (.derive (scp/-get-config ctx))
-        ^TransactionContext txctx (#'sc/transaction-context conf)
+  (let [^Configuration conf (.derive (scp/-config ctx))
+        ^TransactionContext txctx (sctx/transaction-context conf)
         ^TransactionProvider provider (.transactionProvider conf)]
     (doto conf
       (.data "suricatta.rollback" false)
       (.data "suricatta.transaction" true))
     (try
       (.begin provider txctx)
-      (->> (func (sct/->context conf))
+      (->> (func (sct/context conf))
            (p/map (fn [result]
                     (if (.data conf "suricatta.rollback")
                       (.rollback provider txctx)
