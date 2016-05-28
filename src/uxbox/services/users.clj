@@ -300,5 +300,5 @@
   [user]
   (select-keys user [:id :username :fullname
                      :password :metadata :email
-                     :created-at]))
+                     :created-at :photo]))
 
