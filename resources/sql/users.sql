@@ -12,6 +12,18 @@ select * from users
  where (username = :username or email = :username)
    and deleted = false;
 
+-- :name user-with-username-exists?
+select exists
+  (select * from users
+    where id != :id
+      and username = :username) as val;
+
+-- :name user-with-email-exists?
+select exists
+  (select * from users
+    where id != :id
+      and email = :email) as val;
+
 -- :name update-profile :<! :1
 update users
    set username = :username,

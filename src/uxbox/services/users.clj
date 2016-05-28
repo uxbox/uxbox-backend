@@ -42,15 +42,20 @@
 
 ;; --- Update User Profile (own)
 
-(def ^:private update-profile-schema
-  {:id [us/required us/uuid]
-   :username [us/required us/string]
-   :email [us/required us/email]
-   :fullname [us/required us/string]
-   :metadata [us/required us/string]})
+(defn- check-profile-existence
+  [conn {:keys [id username email]}]
+  (let [sqlv1 (sql/user-with-email-exists? {:id id :email email})
+        sqlv2 (sql/user-with-username-exists? {:id id :username username})]
+    (when (:val (sc/fetch-one conn sqlv1))
+      (throw (ex/ex-info :form/validation
+                         {:email "errors.api.form.email-already-exists"})))
+    (when (:val (sc/fetch-one conn sqlv2))
+      (throw (ex/ex-info :form/validation
+                         {:username "errors.api.form.username-already-exists"})))))
 
-(defn update-profile
-  [conn {:keys [id username email fullname metadata]}]
+(defn- update-profile
+  [conn {:keys [id username email fullname metadata] :as params}]
+  (check-profile-existence conn params)
   (let [metadata (blob/encode metadata)
         sqlv (sql/update-profile {:username username
                                   :fullname fullname
@@ -62,6 +67,13 @@
             (trim-user-attrs)
             (decode-user-data)
             (dissoc :password))))
+
+(def ^:private update-profile-schema
+  {:id [us/required us/uuid]
+   :username [us/required us/string]
+   :email [us/required us/email]
+   :fullname [us/required us/string]
+   :metadata [us/required us/string]})
 
 (defmethod usc/-novelty :update/profile
   [params]
