@@ -61,12 +61,12 @@
      :reply-to reply-to}))
 
 (def valid-priority? #{:high :low})
-(def valid-email? #(contains? @emails %))
+(def valid-email-identifier? #(contains? @emails %))
 
 (defn render
   "Render a email as data structure."
   [{name :email/name :as context}]
-  {:pre [(valid-email? name)]}
+  {:pre [(valid-email-identifier? name)]}
   (let [email (get @emails name)]
     (render-email email context)))
 
@@ -77,7 +77,7 @@
     :or {priority :high}
     :as context}]
   {:pre [(valid-priority? priority)
-         (valid-email? name)]}
+         (valid-email-identifier? name)]}
   (let [email (get @emails name)
         email (render-email email context)
         data (-> email t/encode blob/encode)
