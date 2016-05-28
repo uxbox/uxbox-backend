@@ -75,9 +75,9 @@
 
        [:post "auth/token" #'auth/login]
        [:post "auth/register" #'users/register-user]
-       [:get  "auth/password/recovery/:token" #'users/validate-recovery-token]
-       [:post "auth/password/recovery" #'users/request-password-recovery]
-       [:put  "auth/password/recovery" #'users/recover-password]
+       [:get  "auth/recovery/:token" #'users/validate-recovery-token]
+       [:post "auth/recovery" #'users/request-recovery]
+       [:put  "auth/recovery" #'users/recover-password]
 
        [:any #'authorization]
 

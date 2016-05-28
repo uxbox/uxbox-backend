@@ -107,12 +107,12 @@
 
 ;; --- Request Password Recovery
 
-(def ^:private request-password-recovery-schema
+(def ^:private request-recovery-schema
   {:username [us/required us/string]})
 
-(defn request-password-recovery
+(defn request-recovery
   [{data :data}]
-  (let [data (validate-form! data request-password-recovery-schema)
+  (let [data (validate-form! data request-recovery-schema)
         message (assoc data :type :request/password-recovery)]
     (->> (sv/novelty message)
          (p/map (fn [_] (http/no-content))))))

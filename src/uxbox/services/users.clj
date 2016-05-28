@@ -245,13 +245,19 @@
     (sc/execute conn sqlv)
     token))
 
+(defn- retrieve-user-for-password-recovery
+  [conn username]
+  (let [user (find-user-by-username-or-email conn username)]
+    (when-not user
+      (throw (->> {:username "errors.api.form.user-not-exists"}
+                  (ex/ex-info :form/validation))))
+    user))
+
 (defn- request-password-recovery
   "Creates a new recovery password token and sends it via email
   to the correspondig to the given username or email address."
   [conn username]
-  (let [user (find-user-by-username-or-email conn username)
-        _    (when-not user
-               (ex/ex-info :service/not-found {:username username}))
+  (let [user (retrieve-user-for-password-recovery conn username)
         token (create-recovery-token conn (:id user))]
     (emails/send! {:email/name :users/password-recovery
                    :email/to (:email user)
