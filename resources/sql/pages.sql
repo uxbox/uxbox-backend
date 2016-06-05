@@ -2,9 +2,9 @@
 -- :doc Insert new page entry in the database.
 insert into pages (id, "user", project, name, width,
                    height, layout, data, options)
-  values (:id, :user, :project, :name, :width,
-          :height, :layout, :data, :options)
-  returning *;
+values (:id, :user, :project, :name, :width,
+        :height, :layout, :data, :options)
+returning *;
 
 -- :name update-page :<! :1
 -- :doc Update the page entry by id and user.
