@@ -24,8 +24,7 @@
 
 (def ^:private read-handler
   (t/read-handler
-   (fn [v] (-> (Long/parseLong v)
-               (Instant/ofEpochMilli)))))
+   (fn [v] (Instant/ofEpochMilli v))))
 
 (def +read-handlers+
   {"m" read-handler})
