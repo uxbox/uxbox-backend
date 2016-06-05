@@ -53,15 +53,28 @@ select pg.* from pages as pg
         pg.deleted = false
   order by created_at asc;
 
+-- :name get-pages-for-project :? :*
+-- :doc Retrieve pages by user.
+select pg.* from pages as pg
+  where pg.project = :project and
+        pg.deleted = false
+  order by created_at asc;
+
 -- :name get-page-history :? :*
 -- :doc Retrieve page history.
-select pgh.* from pages_history as pgh
-  where pgh.user = :user and
-        pgh.page = :page and
-        pgh.version < :since
---~ (when (:pinned params) "and pgh.pinned = true")
-  order by pgh.version desc
+select ph.* from pages_history as ph
+  where ph.user = :user and
+        ph.page = :page and
+        ph.version < :since
+--~ (when (:pinned params) "and ph.pinned = true")
+  order by ph.version desc
   limit :max;
+
+-- :name get-page-history-for-project :? :*
+-- :doc Retrieve page history for the entire project
+select ph.* from pages_history as ph
+ inner join pages as p on (p.id = ph.page)
+ where p.project = :project;
 
 -- :name update-page-history
 -- :doc Update page history entry by user.
