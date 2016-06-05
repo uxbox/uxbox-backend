@@ -19,12 +19,12 @@
 (def ^:private write-handler
   (t/write-handler
    (constantly "m")
-   (fn [v] (.toEpochMilli v))
    (fn [v] (str (.toEpochMilli v)))))
 
 (def ^:private read-handler
   (t/read-handler
-   (fn [v] (Instant/ofEpochMilli v))))
+   (fn [v] (-> (Long/parseLong v)
+               (Instant/ofEpochMilli)))))
 
 (def +read-handlers+
   {"m" read-handler})
