@@ -7,7 +7,12 @@
 (ns uxbox.util.snappy
   "A lightweight abstraction layer for snappy compression library."
   (:require [buddy.core.codecs :as codecs])
-  (:import org.xerial.snappy.Snappy))
+  (:import org.xerial.snappy.Snappy
+           org.xerial.snappy.SnappyOutputStream
+           org.xerial.snappy.SnappyInputStream
+           java.io.OutputStream
+           java.io.InputStream))
+
 
 (defn compress
   "Compress data unsing snappy compression algorithm."
@@ -20,3 +25,15 @@
   [data]
   (-> (codecs/to-bytes data)
       (Snappy/uncompress)))
+
+(defn input-stream
+  "Create a Snappy framed input stream."
+  [^InputStream istream]
+  (SnappyInputStream. istream))
+
+(defn output-stream
+  "Create a Snappy framed output stream."
+  ([ostream]
+   (output-stream ostream nil))
+  ([^OutputStream ostream {:keys [block-size] :or {block-size 65536}}]
+   (SnappyOutputStream. ostream (int block-size))))
