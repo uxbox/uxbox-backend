@@ -29,7 +29,7 @@
                  [buddy/buddy-sign "1.0.0" :exclusions [org.clojure/tools.reader]]
                  [buddy/buddy-hashers "0.14.0"]
 
-                 [org.xerial.snappy/snappy-java "1.1.2.4"]
+                 [org.xerial.snappy/snappy-java "1.1.2.6"]
                  [com.github.spullara.mustache.java/compiler "0.9.1"]
                  [org.postgresql/postgresql "9.4.1208"]
                  [org.quartz-scheduler/quartz "2.2.3"]
