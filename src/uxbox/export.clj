@@ -20,14 +20,12 @@
   [conn writer id]
   (let [sql (sql/get-pages-for-project {:project id})
         results (sc/fetch conn sql)]
-    (println "write-pages:" results)
     (run! #(t/write! writer {::type :page ::payload %}) results)))
 
 (defn- write-pages-history
   [conn writer id]
   (let [sql (sql/get-page-history-for-project {:project id})
         results (sc/fetch conn sql)]
-    (println "write-pages-history:" results)
     (run! #(t/write! writer {::type :page-history ::payload %}) results)))
 
 (defn- export-project
