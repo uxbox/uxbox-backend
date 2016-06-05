@@ -28,6 +28,13 @@
   []
   (mount/start))
 
+(defn- start-minimal
+  []
+  (-> (mount/only #{#'uxbox.config/config
+                    #'uxbox.db/datasource
+                    #'uxbox.migrations/migrations})
+      (mount/start)))
+
 (defn- stop
   []
   (mount/stop))
