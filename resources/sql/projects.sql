@@ -19,6 +19,11 @@ update projects
   set deleted = true, deleted_at = clock_timestamp()
   where id = :id AND "user" = :user AND deleted = false;
 
+-- :name get-project-by-id :? :1
+select p.*
+  from projects as p
+ where p.id = :id;
+
 -- :name get-projects :? :*
 -- :doc Get the project list with page counter (by user)
 select pr.*, count(pg.id) as total_pages
