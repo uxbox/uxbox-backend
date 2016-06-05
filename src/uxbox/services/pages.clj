@@ -164,7 +164,8 @@
 
 (defn get-pages-for-user-and-project
   [conn {:keys [user project]}]
-  (let [sqlv (sql/get-pages-for-project {:user user :project project})]
+  (let [sqlv (sql/get-pages-for-user-and-project
+              {:user user :project project})]
     (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs)
          (map decode-page-data)
