@@ -13,18 +13,10 @@
            java.nio.file.attribute.FileAttribute
            java.nio.file.attribute.PosixFilePermissions))
 
-(defrecord CloseablePath [^Path path]
-  java.lang.AutoCloseable
-  (close [_]
-    (Files/deleteIfExists path)))
-
 (defn create
   "Create a temporal file."
-  [& {:keys [suffix prefix wrap]}]
+  [& {:keys [suffix prefix]}]
   (let [perms (PosixFilePermissions/fromString "rwxr-xr-x")
         attr (PosixFilePermissions/asFileAttribute perms)
-        attrs (into-array FileAttribute [attr])
-        file (Files/createTempFile prefix suffix attrs)]
-    (if wrap
-      (CloseablePath. file)
-      file)))
+        attrs (into-array FileAttribute [attr])]
+    (Files/createTempFile prefix suffix attrs)))
