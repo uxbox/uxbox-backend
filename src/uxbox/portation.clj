@@ -98,7 +98,8 @@
       (persist-entry conn entry)
       (recur (read-entry reader)))))
 
-(defn import
+(defn import!
+  "Given a path to the previously exported bundle, try to import it."
   [path]
   (with-open [istream (io/input-stream (paths/path path))
               zstream (snappy/input-stream istream)
