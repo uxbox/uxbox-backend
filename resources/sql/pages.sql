@@ -80,7 +80,7 @@ select ph.* from pages_history as ph
  inner join pages as p on (p.id = ph.page)
  where p.project = :project;
 
--- :name update-page-history
+-- :name update-page-history :? :*
 -- :doc Update page history entry by user.
 update pages_history
   set label = :label, pinned = :pinned
