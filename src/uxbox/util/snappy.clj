@@ -8,8 +8,9 @@
   "A lightweight abstraction layer for snappy compression library."
   (:require [buddy.core.codecs :as codecs])
   (:import org.xerial.snappy.Snappy
-           org.xerial.snappy.SnappyOutputStream
-           org.xerial.snappy.SnappyInputStream
+           org.xerial.snappy.SnappyFramedInputStream
+           org.xerial.snappy.SnappyFramedOutputStream
+
            java.io.OutputStream
            java.io.InputStream))
 
@@ -29,11 +30,11 @@
 (defn input-stream
   "Create a Snappy framed input stream."
   [^InputStream istream]
-  (SnappyInputStream. istream))
+  (SnappyFramedInputStream. istream))
 
 (defn output-stream
   "Create a Snappy framed output stream."
   ([ostream]
    (output-stream ostream nil))
   ([^OutputStream ostream {:keys [block-size] :or {block-size 65536}}]
-   (SnappyOutputStream. ostream (int block-size))))
+   (SnappyFramedOutputStream. ostream (int block-size) 1.0)))
