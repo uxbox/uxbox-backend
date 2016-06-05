@@ -8,8 +8,7 @@
   "Paths related utils."
   (:refer-clojure :exclude [name])
   (:require [storages.core :as st])
-  (:import java.nio.file.Files
-           java.nio.file.Path
+  (:import java.nio.file.Path
            java.nio.file.Paths
            java.nio.file.SimpleFileVisitor
            java.nio.file.FileVisitResult
