@@ -4,8 +4,8 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.export
-  "Support for exporting projects."
+(ns uxbox.portation
+  "Support for export/import operations of projects."
   (:refer-clojure :exclude [with-open])
   (:require [clojure.java.io :as io]
             [suricatta.core :as sc]
@@ -28,7 +28,9 @@
         results (sc/fetch conn sql)]
     (run! #(t/write! writer {::type :page-history ::payload %}) results)))
 
-(defn- export-project
+(defn export
+  "Given an id, returns a path to a temporal file with the exported
+  bundle of the specified project."
   [id]
   (let [path (tmpfile/create)]
     (with-open [ostream (io/output-stream path)
@@ -38,4 +40,3 @@
         (write-pages conn writer id)
         (write-pages-history conn writer id)
         path))))
-
