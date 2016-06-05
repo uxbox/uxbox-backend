@@ -145,7 +145,9 @@
 
 (defn list-images
   [{user :identity route-params :route-params}]
-  (let [params {:collection (uuid/from-string (:id route-params)) :user user :type :list/images}
+  (let [params {:collection (uuid/from-string (:id route-params))
+                :user user
+                :type :list/images}
         thumbnail-opts +thumbnail-options+
         populate-thumbnails-url #(images/populate-thumbnails % thumbnail-opts)]
     (-> (sv/query params)
