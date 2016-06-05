@@ -60,6 +60,10 @@ select pg.* from pages as pg
         pg.deleted = false
   order by created_at asc;
 
+-- :name create-page-history :! :n
+insert into page_history (id, "user", page, pinned, label, data, version);
+values (:id, :user, :page, :pinned :label, :data, :version);
+
 -- :name get-page-history :? :*
 -- :doc Retrieve page history.
 select ph.* from pages_history as ph
