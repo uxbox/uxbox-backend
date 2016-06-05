@@ -128,7 +128,7 @@
   [scheduler]
   (.shutdown ^Scheduler scheduler true))
 
-;; TODO: add proper jandling of `:delay` option that should allow
+;; TODO: add proper handling of `:delay` option that should allow
 ;; execute a task firstly delayed until some milliseconds or at certain time.
 
 (defn schedule!
