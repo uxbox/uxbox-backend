@@ -40,20 +40,24 @@
         results (sc/fetch conn sql)]
     (run! #(t/write! writer {::type ::page-history ::payload %}) results)))
 
+(defn- write-data
+  [path id]
+  (with-open [ostream (io/output-stream path)
+              zstream (snappy/output-stream ostream)
+              conn (db/connection)]
+    (let [writer (t/writer zstream {:type :msgpack})]
+      (sc/atomic conn
+        (write-project conn writer id)
+        (write-pages conn writer id)
+        (write-pages-history conn writer id)))))
+
 (defn export
   "Given an id, returns a path to a temporal file with the exported
   bundle of the specified project."
   [id]
   (let [path (tmpfile/create)]
-    (with-open [ostream (io/output-stream path)
-                zstream (snappy/output-stream ostream)
-                conn (db/connection)]
-      (let [writer (t/writer zstream {:type :msgpack})]
-        (sc/atomic conn
-          (write-project conn writer id)
-          (write-pages conn writer id)
-          (write-pages-history conn writer id)
-          path)))))
+    (write-data path id)
+    path))
 
 ;; --- Import
 
