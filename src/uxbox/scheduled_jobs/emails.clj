@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.tasks.emails
+(ns uxbox.scheduled-jobs.emails
   "Email sending async tasks."
   (:require [clojure.tools.logging :as log]
             [suricatta.core :as sc]
@@ -12,9 +12,12 @@
             [uxbox.db :as db]
             [uxbox.config :as cfg]
             [uxbox.sql :as sql]
+            [uxbox.util.quartz :as qtz]
             [uxbox.util.blob :as blob]
             [uxbox.util.transit :as t]
             [uxbox.util.data :as data]))
+
+;; --- Impl details
 
 (defn- decode-email-data
   [{:keys [data] :as result}]
@@ -84,10 +87,12 @@
             (mark-email-as-failed conn (:id entry)))
           (recur (rest entries))))))
 
-(defn task-send-immediate-emails
-  "Task that sends pending emails."
-  {:interval (* 60 1 1000) ;; every 1min
-   :repeat? true}
+;; --- Jobs
+
+(defn send-immediate-emails
+  {::qtz/interval (* 60 1 1000) ;; every 1min
+   ::qtz/repeat? true
+   ::qtz/job true}
   []
   (log/info "task-send-immediate-emails...")
   (with-open [conn (db/connection)]
@@ -95,21 +100,21 @@
       (->> (fetch-immediate-emails conn)
            (send-emails conn)))))
 
-(defn task-send-pending-emails
-  "Task that sends pending emails."
-  {:interval (* 60 5 1000) ;; every 5min
-   :repeat? true}
+(defn send-pending-emails
+  {::qtz/interval (* 60 5 1000) ;; every 5min
+   ::qtz/repeat? true
+   ::qtz/job true}
   []
-  (log/info "task-send-pending-emails...")
   (with-open [conn (db/connection)]
     (sc/atomic conn
       (->> (fetch-pending-emails conn)
            (send-emails conn)))))
 
-(defn task-send-failed-emails
-  "Task that sends pending emails."
-  {:interval (* 60 30 1000) ;; every 30min
-   :repeat? true}
+(defn send-failed-emails
+  "Job that resends failed to send messages."
+  {::qtz/interval (* 60 5 1000) ;; every 5min
+   ::qtz/repeat? true
+   ::qtz/job true}
   []
   (log/info "task-send-failed-emails...")
   (with-open [conn (db/connection)]

@@ -28,101 +28,101 @@
     (run! (fn [[k v]] (.setProperty p (name k) (str v))) (seq data))
     p))
 
-(deftype ^{org.quartz.PersistJobDataAfterExecution true
-           org.quartz.DisallowConcurrentExecution true}
-    PersistentJobImpl []
-  Job
-  (execute [_ context]
-    (let [^JobDataMap data (.. context getJobDetail getJobDataMap)
-          callable (.get data "callable")
-          state (.get data "state")
-          args (.get data "args")
-          result (apply callable state args)]
-      (.put ^JobDataMap data "state" result))))
-
 (deftype JobImpl []
   Job
   (execute [_ context]
     (let [^JobDataMap data (.. context getJobDetail getJobDataMap)
-          args (.get data "args")
+          args (.get data "arguments")
+          state (.get data "state")
           callable (.get data "callable")]
-      (apply callable args))))
+      (if state
+        (apply callable state args)
+        (apply callable args)))))
+
+(defn- resolve-var
+  [sym]
+  (let [ns (symbol (namespace sym))
+        func (symbol (name sym))]
+    (require ns)
+    (resolve func)))
 
 (defn- build-trigger
-  [{:keys [cron group name repeat? interval]
-    :or {repeat? true}
-    :as opts}]
-  (let [schedule (if cron
-                   (CronScheduleBuilder/cronSchedule cron)
-                   (let [schd (SimpleScheduleBuilder/simpleSchedule)
-                         schd (if (number? repeat?)
-                                (.withRepeatCount schd repeat?)
-                                (.repeatForever schd))]
-                     (.withIntervalInMilliseconds schd interval)))
-        name (str name "-trigger")
-        builder (doto (TriggerBuilder/newTrigger)
-                  (.startNow)
-                  (.withIdentity name group)
-                  (.withSchedule schedule))]
-    (.build builder)))
+  [opts]
+  (let [repeat? (::repeat? opts true)
+        interval (::interval opts 1000)
+        cron (::cron opts)
+        group (::group opts "uxbox")
+        schdl (if cron
+                (CronScheduleBuilder/cronSchedule cron)
+                (let [schdl (SimpleScheduleBuilder/simpleSchedule)
+                      schdl (if (number? repeat?)
+                              (.withRepeatCount schdl repeat?)
+                              (.repeatForever schdl))]
+                  (.withIntervalInMilliseconds schdl interval)))
+        name (str (:name opts) "-trigger")
+        bldr (doto (TriggerBuilder/newTrigger)
+               (.startNow)
+               (.withIdentity name group)
+               (.withSchedule schdl))]
+    (.build bldr)))
 
 (defn- build-job-detail
-  [f {:keys [group name state args] :as opts}]
-  (let [data (JobDataMap. {"callable" f
-                           "state" state
-                           "args" args})
-        builder (doto (JobBuilder/newJob (if state PersistentJobImpl JobImpl))
-                  (.storeDurably true)
-                  (.usingJobData data)
-                  (.withIdentity name group))]
-    (.build builder)))
+  [fvar args]
+  (let [opts (meta fvar)
+        state (::state opts)
+        group (::group opts "uxbox")
+        name  (str (:name opts))
+        data  {"callable" @fvar
+               "arguments" (into [] args)
+               "state" (if state (atom state) nil)}
+        bldr (doto (JobBuilder/newJob JobImpl)
+               (.storeDurably false)
+               (.usingJobData (JobDataMap. data))
+               (.withIdentity name group))]
+    (.build bldr)))
 
-(defn- resolve-fn
-  [func opts]
-  (cond
-    (symbol? func)
-    (let [ns (symbol (namespace func))
-          _  (require ns)
-          var (resolve func)
-          opts (assoc (merge (meta var) opts)
-                      :name (name (or (:name opts) (gensym "uxbox")))
-                      :group (name (:group opts "uxbox")))]
-      [@var opts])
-
-    (fn? func)
-    (let [opts (assoc opts
-                      :name (name (:name opts) (gensym "uxbox"))
-                      :group (name (:group opts "uxbox")))]
-      [func opts])))
-
-(defn- next-name
-  []
-  (str (gensym "uxbox")))
+(defn- make-scheduler-props
+  [{:keys [name daemon? threads thread-priority]
+    :or {name "uxbox-scheduler"
+         daemon? true
+         threads 1
+         thread-priority Thread/MIN_PRIORITY}}]
+  (map->props
+   {"org.quartz.threadPool.threadCount" threads
+    "org.quartz.threadPool.threadPriority" thread-priority
+    "org.quartz.threadPool.makeThreadsDaemons" (if daemon? "true" "false")
+    "org.quartz.scheduler.instanceName" name
+    "org.quartz.scheduler.makeSchedulerThreadDaemon" (if daemon? "true" "false")}))
 
 ;; --- Public Api
 
 (defn scheduler
   "Create a new scheduler instance."
   ([] (scheduler nil))
-  ([{:keys [name daemon? threads thread-priority]
-     :or {name "uxbox-scheduler"
-          daemon? true
-          threads 1
-          thread-priority Thread/MIN_PRIORITY}}]
-   (let [params {"org.quartz.threadPool.threadCount" threads
-                 "org.quartz.threadPool.threadPriority" thread-priority
-                 "org.quartz.threadPool.makeThreadsDaemons" (if daemon? "true" "false")
-                 "org.quartz.scheduler.instanceName" name
-                 "org.quartz.scheduler.makeSchedulerThreadDaemon" (if daemon? "true" "false")}
-         props (map->props params)
+  ([opts]
+   (let [props (make-scheduler-props opts)
          factory (StdSchedulerFactory. props)]
      (.getScheduler factory))))
 
+(declare schedule!)
+
 (defn start!
-  ([scheduler]
-   (.start ^Scheduler scheduler))
-  ([scheduler ms]
-   (.startDelayed ^Scheduler scheduler (int ms))))
+  ([schd]
+   (start! schd nil))
+  ([schd {:keys [delay search-on]}]
+   ;; Start the scheduler
+   (if (number? delay)
+     (.startDelayed schd (int delay))
+     (.start schd))
+
+   (when (coll? search-on)
+     (run! (fn [ns]
+             (require ns)
+             (doseq [v (vals (ns-publics ns))]
+               (when (::job (meta v))
+                 (schedule! schd v))))
+           search-on))
+   schd))
 
 (defn stop!
   [scheduler]
@@ -132,9 +132,8 @@
 ;; execute a task firstly delayed until some milliseconds or at certain time.
 
 (defn schedule!
-  ([schd f] (schedule! schd f nil))
-  ([schd f opts]
-   (let [[f opts] (resolve-fn f opts)
-         job (build-job-detail f opts)
-         trigger (build-trigger opts)]
-     (.scheduleJob ^Scheduler schd job trigger))))
+  [schd f & args]
+  (let [vf (if (symbol? f) (resolve-var f) f)
+        job (build-job-detail vf args)
+        trigger (build-trigger (meta vf))]
+    (.scheduleJob ^Scheduler schd job trigger)))

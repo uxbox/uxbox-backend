@@ -4,25 +4,19 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.tasks
-  "UXBOX asynchronous/scheduled tasks."
+(ns uxbox.scheduled-jobs
+  "Time-based scheduled jobs."
   (:require [mount.core :as mount :refer (defstate)]
             [uxbox.config :as cfg]
             [uxbox.db]
             [uxbox.util.quartz :as qtz]))
 
-(def ^:private tasks
-  ['uxbox.tasks.garbage/task-clean-deleted-projects
-   'uxbox.tasks.emails/task-send-immediate-emails
-   'uxbox.tasks.emails/task-send-pending-emails
-   'uxbox.tasks.emails/task-send-failed-emails])
-
 (defn- initialize
   []
-  (let [schd (qtz/scheduler)]
-    (qtz/start! schd)
-    (run! #(qtz/schedule! schd %) tasks)
-    schd))
+  (let [nss #{'uxbox.scheduled-jobs.garbage
+              'uxbox.scheduled-jobs.emails}]
+    (-> (qtz/scheduler)
+        (qtz/start! {:search-on nss}))))
 
 (defstate scheduler
   :start (initialize)
