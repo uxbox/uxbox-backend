@@ -17,7 +17,7 @@
             [uxbox.migrations]
             [uxbox.db]
             [uxbox.frontend]
-            [uxbox.tasks])
+            [uxbox.scheduled-jobs])
   (:gen-class))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
