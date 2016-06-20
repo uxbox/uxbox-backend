@@ -14,18 +14,39 @@
   In future it will allow easy adapt for the content
   negotiation that is coming to catacumba."
   (:require [catacumba.impl.handlers :as ch]
+            [catacumba.impl.context :as ctx]
+            [buddy.core.codecs :as codecs]
             [uxbox.util.transit :as t])
   (:import ratpack.handling.Context
            ratpack.http.Response
-           ratpack.http.MutableHeaders))
+           ratpack.http.Request
+           ratpack.http.Headers
+           ratpack.http.MutableHeaders
+           clojure.lang.Murmur3))
+
+(def digest (comp str #(Murmur3/hashUnencodedChars ^String %) codecs/bytes->str))
+
+(defn- etag-match?
+  [^Request request ^String new-tag]
+  (let [^Headers headers (.getHeaders request)]
+    (when-let [etag (.get headers "if-none-match")]
+      (= etag new-tag))))
 
 (deftype Rsp [data]
   ch/ISend
   (-send [_ ctx]
-    (let [^Response response (.getResponse ^Context ctx)
-          ^MutableHeaders headers (.getHeaders response)]
-      (.set headers "content-type" "application/transit+json")
-      (ch/-send (t/encode data) ctx))))
+    (let [^Response response (ctx/get-response* ctx)
+          ^Request  request (ctx/get-request* ctx)
+          data (t/encode data)
+          etag (digest data)]
+      (if (etag-match? request etag)
+        (do
+          (.status response 304)
+          (.send response))
+        (let [^MutableHeaders headers (.getHeaders response)]
+          (.set headers "content-type" "application/transit+json")
+          (.set headers "etag" etag)
+          (ch/-send data ctx))))))
 
 (defn rsp
   "A shortcut for create a response instance."
