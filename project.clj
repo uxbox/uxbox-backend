@@ -15,8 +15,8 @@
                  [org.clojure/tools.logging "0.3.1"]
                  [funcool/struct "0.1.0"]
                  [funcool/suricatta "1.1.0"]
-                 [funcool/promesa "1.2.0"]
-                 [funcool/catacumba "0.16.0"]
+                 [funcool/promesa "1.3.1"]
+                 [funcool/catacumba "1.0.0-SNAPSHOT"]
 
                  [hiccup "1.0.5"]
                  [org.im4java/im4java "1.4.0"]
@@ -26,11 +26,11 @@
                   :exclusions [org.clojure/tools.reader]]
                  [niwinz/migrante "0.1.0"]
 
-                 [buddy/buddy-sign "1.0.0" :exclusions [org.clojure/tools.reader]]
+                 [buddy/buddy-sign "1.1.0" :exclusions [org.clojure/tools.reader]]
                  [buddy/buddy-hashers "0.14.0"]
 
                  [org.xerial.snappy/snappy-java "1.1.2.6"]
-                 [com.github.spullara.mustache.java/compiler "0.9.1"]
+                 [com.github.spullara.mustache.java/compiler "0.9.2"]
                  [org.postgresql/postgresql "9.4.1208"]
                  [org.quartz-scheduler/quartz "2.2.3"]
                  [org.quartz-scheduler/quartz-jobs "2.2.3"]
