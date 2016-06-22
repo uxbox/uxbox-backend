@@ -37,15 +37,22 @@
   (-send [_ ctx]
     (let [^Response response (ctx/get-response* ctx)
           ^Request  request (ctx/get-request* ctx)
-          data (t/encode data)
-          etag (digest data)]
-      (if (etag-match? request etag)
+          ^MutableHeaders headers (.getHeaders response)
+          ^String method (.. request getMethod getName toLowerCase)
+          data (t/encode data)]
+      (if (= method "get")
+        (let [etag (digest data)]
+          (if (etag-match? request etag)
+            (do
+              (.set headers "etag" etag)
+              (.status response 304)
+              (.send response))
+            (do
+              (.set headers "content-type" "application/transit+json")
+              (.set headers "etag" etag)
+              (ch/-send data ctx))))
         (do
-          (.status response 304)
-          (.send response))
-        (let [^MutableHeaders headers (.getHeaders response)]
           (.set headers "content-type" "application/transit+json")
-          (.set headers "etag" etag)
           (ch/-send data ctx))))))
 
 (defn rsp
