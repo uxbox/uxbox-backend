@@ -75,6 +75,19 @@
     (->> (validate! params delete-project-schema)
          (delete-project conn))))
 
+;; --- Get Project (By ID)
+
+(defn get-project-by-id
+  [conn id]
+  (let [sqlv (sql/get-project-by-id {:id id})]
+    (some-> (sc/fetch-one conn sqlv)
+            (usc/normalize-attrs))))
+
+(defmethod usc/-query :retrieve/project-by-id
+  [{:keys [id] :as params}]
+  (with-open [conn (db/connection)]
+    (get-project-by-id conn id)))
+
 ;; --- List Projects
 
 (defn get-projects-for-user

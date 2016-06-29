@@ -142,13 +142,11 @@
 ;; --- List Pages by Project
 
 (def ^:private list-pages-by-project-schema
-  {:user [us/required us/uuid]
-   :project [us/required us/uuid]})
+  {:project [us/required us/uuid]})
 
-(defn get-pages-for-user-and-project
+(defn get-pages-for-project
   [conn {:keys [user project]}]
-  (let [sqlv (sql/get-pages-for-user-and-project
-              {:user user :project project})]
+  (let [sqlv (sql/get-pages-for-project {:project project})]
     (->> (sc/fetch conn sqlv)
          (map usc/normalize-attrs)
          (map decode-page-data)
@@ -158,7 +156,7 @@
   [{:keys [user project] :as params}]
   (with-open [conn (db/connection)]
     (->> (validate! params list-pages-by-project-schema)
-         (get-pages-for-user-and-project conn))))
+         (get-pages-for-project conn))))
 
 ;; --- Page History (Query)
 

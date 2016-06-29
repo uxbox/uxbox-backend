@@ -79,10 +79,12 @@
        [:post "auth/recovery" #'users/request-recovery]
        [:put  "auth/recovery" #'users/recover-password]
 
+       [:get "projects/:id/pages" #'pages/list-pages-by-project]
+       [:get "projects/:id" #'projects/retrieve-project]
+
        [:any #'authorization]
 
        ;; Projects
-       [:get "projects/:id/pages" #'pages/list-pages-by-project]
        [:put "projects/:id" #'projects/update-project]
        [:delete "projects/:id" #'projects/delete-project]
        [:post "projects" #'projects/create-project]

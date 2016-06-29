@@ -29,6 +29,28 @@
           (t/is (= 200 status))
           (t/is (= 1 (count data))))))))
 
+(t/deftest test-http-project-retrieve
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)
+          proj (uspr/create-project conn {:user (:id user) :name "proj1"})]
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/projects/" (:id proj))
+              [status data] (th/http-get user uri)]
+          ;; (println "RESPONSE:" status data)
+          (t/is (= (:id data) (:id proj)))
+          (t/is (= 200 status)))))))
+
+(t/deftest test-http-project-retrieve-without-user
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)
+          proj (uspr/create-project conn {:user (:id user) :name "proj1"})]
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/projects/" (:id proj))
+              [status data] (th/http-get nil uri)]
+          ;; (println "RESPONSE:" status data)
+          (t/is (= (:id data) (:id proj)))
+          (t/is (= 200 status)))))))
+
 (t/deftest test-http-project-create
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
