@@ -113,7 +113,6 @@
        [:put "pages/:id" #'pages/update-page]
        [:delete "pages/:id" #'pages/delete-page]
        [:post "pages" #'pages/create-page]
-       [:get "pages" #'pages/list-pages]
 
        [:get "profile/me" #'users/retrieve-profile]
        [:put "profile/me" #'users/update-profile]

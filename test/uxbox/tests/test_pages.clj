@@ -115,28 +115,6 @@
                 result (sc/fetch conn sqlv)]
             (t/is (empty? result))))))))
 
-(t/deftest test-http-page-list
-  (with-open [conn (db/connection)]
-    (let [user (th/create-user conn 1)
-          proj (uspr/create-project conn {:user (:id user) :name "proj1"})
-          data {:id (uuid/v4)
-                :user (:id user)
-                :project (:id proj)
-                :version 0
-                :data "1"
-                :options "2"
-                :name "page1"
-                :width 200
-                :height 200
-                :layout "mobil"}
-          page (uspg/create-page conn data)]
-      (with-server {:handler (urt/app)}
-        (let [uri (str th/+base-url+ (str "/api/pages"))
-              [status response] (th/http-get user uri)]
-          ;; (println "RESPONSE:" status response)
-          (t/is (= 200 status))
-          (t/is (= 1 (count response))))))))
-
 (t/deftest test-http-page-list-by-project
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)

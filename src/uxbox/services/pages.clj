@@ -139,23 +139,6 @@
     (->> (validate! params delete-page-schema)
          (delete-page conn))))
 
-;; --- List Pages
-
-;; TODO: consider using transducers
-
-(defn get-pages-for-user
-  [conn user]
-  (let [sqlv (sql/get-pages {:user user})]
-    (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs)
-         (map decode-page-data)
-         (map decode-page-options))))
-
-(defmethod usc/-query :list/pages
-  [{:keys [user] :as params}]
-  (with-open [conn (db/connection)]
-    (get-pages-for-user conn user)))
-
 ;; --- List Pages by Project
 
 (def ^:private list-pages-by-project-schema

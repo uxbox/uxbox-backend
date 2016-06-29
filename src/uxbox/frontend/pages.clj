@@ -17,12 +17,6 @@
 
 ;; --- List Pages
 
-(defn list-pages
-  [{user :identity}]
-  (let [params {:user user :type :list/pages}]
-    (-> (sv/query params)
-        (p/then #(http/ok (rsp %))))))
-
 (defn list-pages-by-project
   [{user :identity params :route-params}]
   (let [params {:user user
