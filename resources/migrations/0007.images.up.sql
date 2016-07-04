@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS images (
   deleted boolean NOT NULL DEFAULT false
 ) WITH (OIDS=FALSE);
 
-CREATE INDEX ON images (collection);
+CREATE INDEX images_collection_idx
+    ON images (collection);
 
 CREATE TRIGGER images_occ_tgr BEFORE UPDATE ON images
   FOR EACH ROW EXECUTE PROCEDURE handle_occ();
