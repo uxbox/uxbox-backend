@@ -13,27 +13,63 @@ CREATE TABLE IF NOT EXISTS projects (
   name text NOT NULL
 ) WITH (OIDS=FALSE);
 
+CREATE TABLE IF NOT EXISTS projects_share (
+  project uuid PRIMARY KEY REFERENCES projects(id),
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  token text
+) WITH (OIDS=FALSE);
+
 -- Triggers
 
+CREATE OR REPLACE FUNCTION handle_project_create()
+  RETURNS TRIGGER AS $$
+  DECLARE
+    token text;
+  BEGIN
+    SELECT encode(digest(gen_random_bytes(128), 'sha256'), 'hex')
+      INTO token;
+
+    INSERT INTO projects_share (project, token)
+    VALUES (NEW.id, token);
+
+    RETURN NEW;
+  END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION handle_project_delete()
-  RETURNS TRIGGER AS $projectdelete$
+  RETURNS TRIGGER AS $$
   BEGIN
     DELETE FROM pages WHERE project = OLD.id;
     RETURN OLD;
   END;
-$projectdelete$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER project_on_delete_tgr BEFORE DELETE ON projects
+CREATE TRIGGER project_on_create_tgr
+ AFTER INSERT ON projects
+  FOR EACH ROW EXECUTE PROCEDURE handle_project_create();
+
+CREATE TRIGGER project_on_delete_tgr
+ BEFORE DELETE ON projects
   FOR EACH ROW EXECUTE PROCEDURE handle_project_delete();
 
-CREATE TRIGGER project_occ_tgr BEFORE UPDATE ON projects
+CREATE TRIGGER project_occ_tgr
+ BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE PROCEDURE handle_occ();
 
-CREATE TRIGGER projects_modified_at_tgr BEFORE UPDATE ON projects
+CREATE TRIGGER projects_modified_at_tgr
+ BEFORE UPDATE ON projects
+  FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
+
+CREATE TRIGGER projects_share_modified_at_tgr
+ BEFORE UPDATE ON projects_share
   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
 
 -- Indexes
 
-CREATE INDEX deleted_projects_idx
-  ON projects(deleted)
-  WHERE deleted = true;
+CREATE INDEX projects_deleted_idx
+    ON projects(deleted)
+ WHERE deleted = true;
+
+CREATE INDEX projects_user_idx
+    ON projects("user");
