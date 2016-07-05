@@ -14,18 +14,6 @@
 
 (def validate-form! (partial us/validate! :form/validation))
 
-;; --- Get Project (By ID)
-
-(defn retrieve-project
-  [{params :route-params}]
-  (let [message {:type :retrieve/project-by-id
-                 :id (uuid/from-string (:id params))}]
-    (->> (sv/query message)
-         (p/map (fn [v]
-                  (if v
-                    (http/ok (rsp v))
-                    (http/not-found "")))))))
-
 ;; --- List Projects
 
 (defn list-projects

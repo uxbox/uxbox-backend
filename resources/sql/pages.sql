@@ -45,10 +45,11 @@ select pg.* from pages as pg
 -- :doc Retrieve page by id
 select pg.* from pages as pg where id = :id and deleted = false;
 
--- :name get-pages-for-project :? :*
+-- :name get-pages-for-user-and-project :? :*
 -- :doc Retrieve pages by user.
 select pg.* from pages as pg
-  where pg.project = :project and
+  where pg.user = :user and
+        pg.project = :project and
         pg.deleted = false
   order by created_at asc;
 
