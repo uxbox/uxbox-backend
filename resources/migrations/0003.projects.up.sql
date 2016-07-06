@@ -13,8 +13,9 @@ CREATE TABLE IF NOT EXISTS projects (
   name text NOT NULL
 ) WITH (OIDS=FALSE);
 
-CREATE TABLE IF NOT EXISTS projects_share (
-  project uuid PRIMARY KEY REFERENCES projects(id),
+CREATE TABLE IF NOT EXISTS project_shares (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  project uuid REFERENCES projects(id),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   token text
@@ -30,7 +31,7 @@ CREATE OR REPLACE FUNCTION handle_project_create()
     SELECT encode(digest(gen_random_bytes(128), 'sha256'), 'hex')
       INTO token;
 
-    INSERT INTO projects_share (project, token)
+    INSERT INTO project_shares (project, token)
     VALUES (NEW.id, token);
 
     RETURN NEW;
@@ -61,8 +62,8 @@ CREATE TRIGGER projects_modified_at_tgr
  BEFORE UPDATE ON projects
   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
 
-CREATE TRIGGER projects_share_modified_at_tgr
- BEFORE UPDATE ON projects_share
+CREATE TRIGGER project_shares_modified_at_tgr
+ BEFORE UPDATE ON project_shares
   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
 
 -- Indexes
@@ -73,3 +74,6 @@ CREATE INDEX projects_deleted_idx
 
 CREATE INDEX projects_user_idx
     ON projects("user");
+
+CREATE UNIQUE INDEX projects_shares_token_idx
+    ON project_shares(token);
