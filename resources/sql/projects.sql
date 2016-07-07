@@ -34,3 +34,16 @@ select pr.*, count(pg.id) as total_pages
         pr.deleted = false
   group by pr.id
   order by pr.created_at desc;
+
+-- :name get-project-by-share-token :? :*
+select p.*
+  from projects as p
+  inner join project_shares as ps
+          on (p.id = ps.project)
+  where ps.token = :token;
+
+-- :name get-share-tokens-for-project
+select s.*
+  from project_shares as s
+ where s.project = :project
+ order by s.created_at desc;
