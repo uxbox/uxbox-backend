@@ -15,6 +15,7 @@
             [uxbox.services.locks :as locks]
             [uxbox.services.auth :as usauth]
             [uxbox.util.time :as dt]
+            [uxbox.util.data :as data]
             [uxbox.util.transit :as t]
             [uxbox.util.blob :as blob]
             [uxbox.util.uuid :as uuid]))
@@ -52,7 +53,7 @@
               :options (blob/encode options)}
         sqlv (sql/create-page opts)]
     (->> (sc/fetch-one conn sqlv)
-         (usc/normalize-attrs)
+         (data/normalize-attrs)
          (decode-page-data)
          (decode-page-options))))
 
@@ -83,7 +84,7 @@
               :options (blob/encode options)}
         sqlv (sql/update-page opts)]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
+            (data/normalize-attrs)
             (decode-page-data)
             (decode-page-options))))
 
@@ -112,7 +113,7 @@
               :options (blob/encode options)}
         sqlv (sql/update-page-metadata opts)]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
+            (data/normalize-attrs)
             (decode-page-data)
             (decode-page-options))))
 
@@ -149,7 +150,7 @@
   [conn project]
   (let [sqlv (sql/get-pages-for-project {:project project})]
     (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs)
+         (map data/normalize-attrs)
          (map decode-page-data)
          (map decode-page-options))))
 
@@ -158,7 +159,7 @@
   (let [sqlv (sql/get-pages-for-user-and-project
               {:user user :project project})]
     (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs)
+         (map data/normalize-attrs)
          (map decode-page-data)
          (map decode-page-options))))
 
@@ -187,7 +188,7 @@
                                     :max max
                                     :pinned pinned})]
     (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs)
+         (map data/normalize-attrs)
          (map decode-page-data))))
 
 (defmethod usc/-query :list/page-history
@@ -211,7 +212,7 @@
                                        :label label
                                        :pinned pinned})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
+            (data/normalize-attrs)
             (decode-page-data))))
 
 (defmethod usc/-novelty :update/page-history
@@ -236,6 +237,6 @@
   [conn id]
   (let [sqlv (sql/get-page-by-id {:id id})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
+            (data/normalize-attrs)
             (decode-page-data)
             (decode-page-options))))

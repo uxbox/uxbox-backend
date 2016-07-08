@@ -22,19 +22,3 @@
 (defmethod -query :default
   [data]
   (throw (ex/ex-info :not-implemented data)))
-
-;; --- Common Helpers
-
-(defn normalize-attrs
-  "Recursively transforms all map keys from strings to keywords."
-  {:deperecated true}
-  [m]
-  (letfn [(tf [[k v]]
-            (let [ks (-> (name k)
-                         (str/replace "_" "-"))]
-              [(keyword ks) v]))
-          (walker [x]
-            (if (map? x)
-              (into {} (map tf) x)
-              x))]
-    (walk/postwalk walker m)))

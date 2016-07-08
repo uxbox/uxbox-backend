@@ -16,6 +16,7 @@
             [uxbox.services.core :as usc]
             [uxbox.util.transit :as t]
             [uxbox.util.exceptions :as ex]
+            [uxbox.util.data :as data]
             [uxbox.util.blob :as blob]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.token :as token]))
@@ -63,7 +64,7 @@
                                   :email email
                                   :id id})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
+            (data/normalize-attrs)
             (trim-user-attrs)
             (decode-user-data)
             (dissoc :password))))
@@ -149,7 +150,7 @@
                                   :password password
                                   :metadata metadata})]
     (->> (sc/fetch-one conn sqlv)
-         (usc/normalize-attrs)
+         (data/normalize-attrs)
          (trim-user-attrs)
          (decode-user-data))))
 
@@ -291,14 +292,14 @@
   [conn id]
   (let [sqlv (sql/get-profile {:id id})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (data/normalize-attrs))))
 
 (defn find-user-by-id
   "Find user by its id. If no user is found, `nil` is returned."
   [conn id]
   (let [sqlv (sql/get-profile {:id id})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
+            (data/normalize-attrs)
             (trim-user-attrs)
             (dissoc :password))))
 
@@ -308,7 +309,7 @@
   [conn username]
   (let [sqlv (sql/get-profile-by-username {:username username})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs)
+            (data/normalize-attrs)
             (trim-user-attrs))))
 
 ;; --- Attrs Helpers
