@@ -26,13 +26,17 @@ select p.*
 
 -- :name get-projects :? :*
 -- :doc Get the project list with page counter (by user)
-select pr.*, count(pg.id) as total_pages
+select pr.*,
+       count(pg.id) as total_pages,
+       ps.token as share_token
   from projects as pr
-  left outer join pages as pg
-  on pg.project = pr.id
+  inner join project_shares as ps
+         on (ps.project = pr.id)
+  left join pages as pg
+         on (pg.project = pr.id)
   where pr.user = :user AND
         pr.deleted = false
-  group by pr.id
+  group by pr.id, ps.token
   order by pr.created_at desc;
 
 -- :name get-project-by-share-token :? :*
