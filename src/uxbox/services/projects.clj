@@ -14,6 +14,7 @@
             [uxbox.db :as db]
             [uxbox.services.core :as usc]
             [uxbox.services.pages :as pages]
+            [uxbox.util.data :as data]
             [uxbox.util.transit :as t]
             [uxbox.util.uuid :as uuid]))
 
@@ -31,7 +32,8 @@
   (let [id (or id (uuid/random))
         sqlv (sql/create-project {:id id :user user :name name})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (data/normalize-attrs)
+            (data/strip-delete-attrs))))
 
 (defmethod usc/-novelty :create/project
   [params]
@@ -52,7 +54,8 @@
                                   :id id
                                   :user user})]
     (some-> (sc/fetch-one conn sqlv)
-            (usc/normalize-attrs))))
+            (data/normalize-attrs)
+            (data/strip-delete-attrs))))
 
 (defmethod usc/-novelty :update/project
   [params]
@@ -83,7 +86,8 @@
   [conn user]
   (let [sqlv (sql/get-projects {:user user})]
     (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs))))
+         (map data/normalize-attrs)
+         (map data/strip-delete-attrs))))
 
 (defmethod usc/-query :list/projects
   [{:keys [user] :as params}]
@@ -97,7 +101,7 @@
   [conn token]
   (let [sqlv (sql/get-project-by-share-token {:token token})
         project (some-> (sc/fetch-one conn sqlv)
-                        (usc/normalize-attrs))]
+                        (data/normalize-attrs))]
     (when-let [id (:id project)]
       (let [pages (vec (pages/get-pages-for-project conn id))]
         (assoc project :pages pages)))))
@@ -113,4 +117,5 @@
   [conn project]
   (let [sqlv (sql/get-share-tokens-for-project {:project project})]
     (->> (sc/fetch conn sqlv)
-         (map usc/normalize-attrs))))
+         (map data/normalize-attrs)
+         (map data/strip-delete-attrs))))

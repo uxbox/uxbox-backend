@@ -33,3 +33,7 @@
               x))]
     (walk/postwalk walker m)))
 
+
+(defn strip-delete-attrs
+  [m]
+  (dissoc m :deleted :deleted-at))
