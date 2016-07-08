@@ -66,3 +66,27 @@
                       (:id user)]
                 result (sc/fetch conn sqlv)]
             (t/is (empty? result))))))))
+
+(t/deftest test-http-project-retrieve-by-share-token
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)
+          proj (uspr/create-project conn {:user (:id user) :name "proj1"})
+          page (uspg/create-page conn {:id (uuid/v4)
+                                       :user (:id user)
+                                       :project (:id proj)
+                                       :version 0
+                                       :data "1"
+                                       :options "2"
+                                       :name "page1"
+                                       :width 200
+                                       :height 200
+                                       :layout "mobil"})
+          shares (uspr/get-share-tokens-for-project conn (:id proj))]
+      (with-server {:handler (urt/app)}
+        (let [token (:token (first shares))
+              uri (str th/+base-url+ "/api/projects-by-token/" token)
+              [status data] (th/http-get user uri)]
+          ;; (println "RESPONSE:" status data)
+          (t/is (= status 200))
+          (t/is (vector? (:pages data)))
+          (t/is (= 1 (count (:pages data)))))))))

@@ -5,13 +5,15 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.services.projects
-  (:require [suricatta.core :as sc]
+  (:require [clojure.spec :as s]
+            [suricatta.core :as sc]
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
             [uxbox.services.core :as usc]
+            [uxbox.services.pages :as pages]
             [uxbox.util.transit :as t]
             [uxbox.util.uuid :as uuid]))
 
@@ -87,3 +89,28 @@
   [{:keys [user] :as params}]
   (with-open [conn (db/connection)]
     (get-projects-for-user conn user)))
+
+
+;; --- Retrieve Project by share token
+
+(defn- get-project-by-share-token
+  [conn token]
+  (let [sqlv (sql/get-project-by-share-token {:token token})
+        project (some-> (sc/fetch-one conn sqlv)
+                        (usc/normalize-attrs))]
+    (when-let [id (:id project)]
+      (let [pages (vec (pages/get-pages-for-project conn id))]
+        (assoc project :pages pages)))))
+
+(defmethod usc/-query :retrieve/project-by-share-token
+  [{:keys [token]}]
+  (with-open [conn (db/connection)]
+    (get-project-by-share-token conn token)))
+
+;; --- Retrieve share tokens
+
+(defn get-share-tokens-for-project
+  [conn project]
+  (let [sqlv (sql/get-share-tokens-for-project {:project project})]
+    (->> (sc/fetch conn sqlv)
+         (map usc/normalize-attrs))))

@@ -145,6 +145,14 @@
   {:user [us/required us/uuid]
    :project [us/required us/uuid]})
 
+(defn get-pages-for-project
+  [conn project]
+  (let [sqlv (sql/get-pages-for-project {:project project})]
+    (->> (sc/fetch conn sqlv)
+         (map usc/normalize-attrs)
+         (map decode-page-data)
+         (map decode-page-options))))
+
 (defn get-pages-for-user-and-project
   [conn {:keys [user project]}]
   (let [sqlv (sql/get-pages-for-user-and-project

@@ -79,6 +79,8 @@
        [:post "auth/recovery" #'users/request-recovery]
        [:put  "auth/recovery" #'users/recover-password]
 
+       [:get "projects-by-token/:token" #'projects/retrieve-project-by-share-token]
+
        [:any #'authorization]
 
        ;; Projects
