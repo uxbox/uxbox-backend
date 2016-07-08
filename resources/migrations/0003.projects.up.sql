@@ -77,3 +77,6 @@ CREATE INDEX projects_user_idx
 
 CREATE UNIQUE INDEX projects_shares_token_idx
     ON project_shares(token);
+
+CREATE UNIQUE INDEX projects_shares_project_idx
+    ON project_shares(project);
