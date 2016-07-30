@@ -47,18 +47,22 @@ select pg.* from pages as pg where id = :id and deleted = false;
 
 -- :name get-pages-for-user-and-project :? :*
 -- :doc Retrieve pages by user.
-select pg.* from pages as pg
-  where pg.user = :user and
-        pg.project = :project and
-        pg.deleted = false
-  order by created_at asc;
+select pg.*,
+       (row_number() OVER (order by created_at asc) -1) as index
+  from pages as pg
+ where pg.user = :user and
+       pg.project = :project and
+       pg.deleted = false
+ order by created_at asc;
 
 -- :name get-pages-for-project :? :*
 -- :doc Retrieve pages by user.
-select pg.* from pages as pg
-  where pg.project = :project and
-        pg.deleted = false
-  order by created_at asc;
+select pg.*,
+       (row_number() OVER (order by created_at asc) -1) as index
+  from pages as pg
+ where pg.project = :project and
+       pg.deleted = false
+ order by created_at asc;
 
 -- :name create-page-history :! :n
 insert into page_history (id, "user", page, pinned, label, data, version);
