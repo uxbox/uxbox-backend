@@ -27,11 +27,6 @@
   (let [response (select-keys (ex-data err) [:type :payload])]
     (http/bad-request (rsp response))))
 
-(defmethod handle-exception :query/validation
-  [err]
-  (let [response (select-keys (ex-data err) [:type :payload])]
-    (http/bad-request (rsp response))))
-
 (defmethod handle-exception :auth/wrong-credentials
   [err]
   (let [response (select-keys (ex-data err) [:type :payload])]
