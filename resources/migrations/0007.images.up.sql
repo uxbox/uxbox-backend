@@ -24,6 +24,9 @@ CREATE TABLE IF NOT EXISTS images (
   modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz DEFAULT NULL,
 
+  width int NOT NULL,
+  height int NOT NULL,
+
   version bigint NOT NULL DEFAULT 0,
   "user" uuid NOT NULL REFERENCES users(id),
 

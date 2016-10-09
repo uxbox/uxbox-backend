@@ -93,6 +93,8 @@
           data {:user (:id user)
                 :name "test.png"
                 :path "some/path"
+                :width 100
+                :height 100
                 :collection nil}
           img (images/create-image conn data)]
       (with-server {:handler (urt/app)}
@@ -110,6 +112,8 @@
           data {:user (:id user)
                 :name "test.png"
                 :path "some/path"
+                :width 100
+                :height 100
                 :collection nil}
           img (images/create-image conn data)]
       (with-server {:handler (urt/app)}
