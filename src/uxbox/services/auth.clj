@@ -5,14 +5,16 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.services.auth
-  (:require [mount.core :as mount :refer (defstate)]
+  (:require [clojure.spec :as s]
+            [mount.core :as mount :refer (defstate)]
             [suricatta.core :as sc]
             [buddy.hashers :as hashers]
             [buddy.sign.jwt :as jwt]
             [buddy.core.hash :as hash]
             [uxbox.config :as cfg]
+            [uxbox.schema :as us]
             [uxbox.db :as db]
-            [uxbox.services.core :as usc]
+            [uxbox.services.core :as core]
             [uxbox.services.users :as users]
             [uxbox.util.exceptions :as ex]))
 
@@ -42,8 +44,13 @@
   (let [data {:id (:id user)}]
     (jwt/encrypt data secret +auth-opts+)))
 
-(defmethod usc/-novelty :auth/login
-  [{:keys [username password scope]}]
+(s/def ::scope string?)
+(s/def ::login
+  (s/keys :req-un [::us/username ::us/password ::scope]))
+
+(defmethod core/novelty :login
+  [{:keys [username password scope] :as params}]
+  (s/assert ::login params)
   (with-open [conn (db/connection)]
     (let [user (users/find-user-by-username-or-email conn username)]
       (when-not user

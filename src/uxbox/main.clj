@@ -9,6 +9,7 @@
             [clojure.walk :refer [macroexpand-all]]
             [clojure.pprint :refer [pprint]]
             [clojure.test :as test]
+            [clojure.java.io :as io]
             [mount.core :as mount]
             [buddy.core.codecs :as codecs]
             [buddy.core.codecs.base64 :as b64]
@@ -20,9 +21,7 @@
             [uxbox.scheduled-jobs])
   (:gen-class))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Development Stuff
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Development Stuff
 
 (defn- start
   []
@@ -66,9 +65,7 @@
       (b64/encode true)
       (codecs/bytes->str)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Entry point (only for uberjar)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Entry point (only for uberjar)
 
 (defn test-vars
   [& vars]
@@ -88,12 +85,8 @@
   ([] (test/run-all-tests #"^uxbox.tests.*"))
   ([re] (test/run-all-tests re)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Entry point (only for uberjar)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; --- Entry point (only for uberjar)
 
 (defn -main
   [& args]
   (mount/start))
-
-

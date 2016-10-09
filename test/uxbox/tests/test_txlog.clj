@@ -8,7 +8,7 @@
 
 (t/use-fixtures :each th/database-reset)
 
-(defmethod usc/-novelty ::testype1
+(defmethod usc/novelty ::testype1
   [data]
   true)
 

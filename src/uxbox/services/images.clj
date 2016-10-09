@@ -6,43 +6,44 @@
 
 (ns uxbox.services.images
   "Images library related services."
-  (:require [suricatta.core :as sc]
-            [clj-uuid :as uuid]
+  (:require [clojure.spec :as s]
+            [suricatta.core :as sc]
             [buddy.core.codecs :as codecs]
             [storages.core :as st]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
+            [uxbox.services.core :as core]
             [uxbox.util.transit :as t]
-            [uxbox.services.core :as usc]
+            [uxbox.util.uuid :as uuid]
             [uxbox.util.data :as data])
   (:import ratpack.form.UploadedFile
            org.apache.commons.io.FilenameUtils))
 
-(def validate! (partial us/validate! :service/wrong-arguments))
+(s/def ::user uuid?)
+(s/def ::path string?)
+(s/def ::collection uuid?)
 
 ;; --- Create Collection
 
 (defn create-collection
   [conn {:keys [id user name]}]
-  (let [id (or id (uuid/v4))
-        sqlv (sql/create-image-collection {:id id
-                                           :user user
-                                           :name name})]
+  (let [id (or id (uuid/random))
+        params {:id id :user user :name name}
+        sqlv (sql/create-image-collection params)]
     (-> (sc/fetch-one conn sqlv)
         (data/normalize-attrs))))
 
-(def create-collection-scheme
-  {:id [us/uuid]
-   :user [us/required us/uuid]
-   :name [us/required us/string]})
+(s/def ::create-image-collection
+  (s/keys :req-un [::user ::us/name]
+          :opt-un [::us/id]))
 
-(defmethod usc/-novelty :create/image-collection
+(defmethod core/novelty :create-image-collection
   [params]
+  (s/assert ::create-image-collection params)
   (with-open [conn (db/connection)]
-    (->> (validate! params create-collection-scheme)
-         (create-collection conn))))
+    (create-collection conn params)))
 
 ;; --- Update Collection
 
@@ -55,15 +56,15 @@
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs))))
 
-(def update-collection-scheme
-  (assoc create-collection-scheme
-         :version [us/required us/integer]))
+(s/def ::update-image-collection
+  (s/keys :req-un [::user ::us/name ::us/version]
+          :opt-un [::us/id]))
 
-(defmethod usc/-novelty :update/image-collection
+(defmethod core/novelty :update-image-collection
   [params]
+  (s/assert ::update-image-collection params)
   (with-open [conn (db/connection)]
-    (->> (validate! params update-collection-scheme)
-         (update-collection conn))))
+    (update-collection conn params)))
 
 ;; --- List Collections
 
@@ -73,33 +74,34 @@
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs))))
 
-(defmethod usc/-query :list/image-collections
+(defmethod core/query :list-image-collections
   [{:keys [user] :as params}]
+  (s/assert ::user user)
   (with-open [conn (db/connection)]
     (get-collections-by-user conn user)))
 
 ;; --- Delete Collection
-
-(def  delete-collection-schema
-  {:id [us/required us/uuid]
-   :user [us/required us/uuid]})
 
 (defn delete-collection
   [conn {:keys [id user]}]
   (let [sqlv (sql/delete-image-collection {:id id :user user})]
     (pos? (sc/execute conn sqlv))))
 
-(defmethod usc/-novelty :delete/image-collection
+(s/def ::delete-image-collection
+  (s/keys :req-un [::user]
+          :opt-un [::us/id]))
+
+(defmethod core/novelty :delete-image-collection
   [params]
+  (s/assert ::delete-image-collection params)
   (with-open [conn (db/connection)]
-    (->> (validate! params delete-collection-schema)
-         (delete-collection conn))))
+    (delete-collection conn params)))
 
 ;; --- Create Image (Upload)
 
 (defn create-image
   [conn {:keys [id user name path collection]}]
-  (let [id (or id (uuid/v4))
+  (let [id (or id (uuid/random))
         sqlv (sql/create-image {:id id
                                 :name name
                                 :path path
@@ -108,17 +110,15 @@
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs))))
 
-(def create-image-schema
-  {:id [us/uuid]
-   :user [us/required us/uuid]
-   :name [us/required us/string]
-   :path [us/required us/string]})
+(s/def ::create-image
+  (s/keys :req-un [::user ::us/name ::path]
+          :opt-un [::us/id]))
 
-(defmethod usc/-novelty :create/image
+(defmethod core/novelty :create-image
   [params]
+  (s/assert ::create-image params)
   (with-open [conn (db/connection)]
-    (->> (validate! params create-image-schema)
-         (create-image conn))))
+    (create-image conn params)))
 
 ;; --- Update Image
 
@@ -131,17 +131,15 @@
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs))))
 
-(def update-image-schema
-  {:id [us/uuid]
-   :user [us/required us/uuid]
-   :name [us/required us/string]
-   :version [us/required us/integer]})
+(s/def ::update-image
+  (s/keys :req-un [::user ::us/name ::path ::us/version]
+          :opt-un [::us/id]))
 
-(defmethod usc/-novelty :update/image
+(defmethod core/novelty :update-image
   [params]
+  (s/assert ::update-image params)
   (with-open [conn (db/connection)]
-    (->> (validate! params update-image-schema)
-         (update-image conn))))
+    (update-image conn params)))
 
 ;; --- Delete Image
 
@@ -150,25 +148,30 @@
   (let [sqlv (sql/delete-image {:id id :user user})]
     (pos? (sc/execute conn sqlv))))
 
-(def delete-image-schema
-  {:id [us/uuid]
-   :user [us/required us/uuid]})
+(s/def ::delete-image
+  (s/keys :req-un [::user]
+          :opt-un [::us/id]))
 
-(defmethod usc/-novelty :delete/image
+(defmethod core/novelty :delete-image
   [params]
+  (s/assert ::delete-image params)
   (with-open [conn (db/connection)]
-    (->> (validate! params delete-image-schema)
-         (delete-image conn))))
+    (delete-image conn params)))
 
 ;; --- List Images
 
 (defn get-images-by-user
   [conn user collection]
   (let [sqlv (sql/get-images {:user user :collection collection})]
+    (println sqlv)
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs))))
 
-(defmethod usc/-query :list/images
+(s/def ::list-images
+  (s/keys :req-un [::user ::collection]))
+
+(defmethod core/query :list-images
   [{:keys [user collection] :as params}]
+  (s/assert ::list-images params)
   (with-open [conn (db/connection)]
     (get-images-by-user conn user collection)))

@@ -13,26 +13,24 @@
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
-(def validate-form! (partial us/validate! :form/validation))
-
 ;; --- List Projects
 
 (defn list-projects
   [{user :identity}]
-  (let [message {:user user :type :list/projects}]
+  (let [message {:user user :type :list-projects}]
     (->> (sv/query message)
          (p/map #(http/ok (rsp %))))))
 
 ;; --- Create Projects
 
-(def ^:private create-project-schema
-  {:id [us/uuid] :name [us/required us/string]})
+(s/def ::create-project
+  (s/keys :req-un [::us/name] :opt-un [::us/id]))
 
 (defn create-project
   [{user :identity data :data}]
-  (let [data (validate-form! data create-project-schema)
+  (let [data (us/conform ::create-project data)
         message (assoc data
-                       :type :create/project
+                       :type :create-project
                        :user user)]
     (->> (sv/novelty message)
          (p/map (fn [result]
@@ -41,17 +39,15 @@
 
 ;; --- Update Project
 
-(def ^:private update-project-schema
-  {:id [us/uuid]
-   :name [us/required us/string]
-   :version [us/required us/integer]})
+(s/def ::update-project
+  (s/keys :req-un [::us/name ::us/version]))
 
 (defn update-project
   [{user :identity params :route-params data :data}]
-  (let [data (validate-form! data update-project-schema)
+  (let [data (us/conform ::update-project data)
         message (assoc data
                        :id (uuid/from-string (:id params))
-                       :type :update/project
+                       :type :update-project
                        :user user)]
     (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
@@ -61,7 +57,7 @@
 (defn delete-project
   [{user :identity params :route-params}]
   (let [message {:id (uuid/from-string (:id params))
-                 :type :delete/project
+                 :type :delete-project
                  :user user}]
     (-> (sv/novelty message)
         (p/then (fn [v] (http/no-content))))))
@@ -72,6 +68,6 @@
 (defn retrieve-project-by-share-token
   [{params :route-params}]
   (let [message {:token (:token params)
-                 :type :retrieve/project-by-share-token}]
+                 :type :retrieve-project-by-share-token}]
     (->> (sv/query message)
          (p/map #(http/ok (rsp %))))))

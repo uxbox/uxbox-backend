@@ -9,16 +9,14 @@
             [cuerdas.core :as str]
             [uxbox.util.exceptions :as ex]))
 
-;; --- Main Api
+(defmulti novelty :type)
 
-(defmulti -novelty :type)
+(defmulti query :type)
 
-(defmulti -query :type)
-
-(defmethod -novelty :default
+(defmethod novelty :default
   [data]
   (throw (ex/ex-info :not-implemented data)))
 
-(defmethod -query :default
+(defmethod query :default
   [data]
   (throw (ex/ex-info :not-implemented data)))

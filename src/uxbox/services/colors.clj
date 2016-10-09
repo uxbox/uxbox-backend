@@ -7,18 +7,21 @@
 (ns uxbox.services.colors
   (:require [suricatta.core :as sc]
             [buddy.core.codecs :as codecs]
+            [clojure.spec :as s]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
-            [uxbox.services.core :as usc]
+            [uxbox.services.core :as core]
             [uxbox.util.transit :as t]
             [uxbox.util.blob :as blob]
             [uxbox.util.data :as data]
             [uxbox.util.uuid :as uuid]))
 
-(def validate! (partial us/validate! :service/wrong-arguments))
-
 (declare decode-data)
+
+(s/def ::user uuid?)
+(s/def ::data string?)
+(s/def ::collection uuid?)
 
 ;; --- Create Collection
 
@@ -33,17 +36,15 @@
         (data/normalize-attrs)
         (decode-data))))
 
-(def create-collection-schema
-  {:id [us/uuid]
-   :user [us/required us/uuid]
-   :name [us/required us/string]
-   :data [us/required us/string]})
+(s/def ::create-color-collection
+  (s/keys :req-un [::user ::us/name ::data]
+          :opt-un [::us/id]))
 
-(defmethod usc/-novelty :create/color-collection
+(defmethod core/novelty :create-color-collection
   [params]
+  (s/assert ::create-color-collection params)
   (with-open [conn (db/connection)]
-    (->> (validate! params create-collection-schema)
-         (create-collection conn))))
+    (create-collection conn params)))
 
 ;; --- Update Collection
 
@@ -59,15 +60,15 @@
             (data/normalize-attrs)
             (decode-data))))
 
-(def update-collection-schema
-  (assoc create-collection-schema
-         :version [us/required us/integer]))
+(s/def ::update-color-collection
+  (s/keys :req-un [::user ::us/name ::data ::us/version]
+          :opt-un [::us/id]))
 
-(defmethod usc/-novelty :update/color-collection
+(defmethod core/novelty :update-color-collection
   [params]
+  (s/assert ::update-color-collection params)
   (with-open [conn (db/connection)]
-    (->> (validate! params update-collection-schema)
-         (update-collection conn))))
+    (update-collection conn params)))
 
 ;; --- Delete Collection
 
@@ -77,28 +78,27 @@
               {:id id :user user})]
     (pos? (sc/execute conn sqlv))))
 
-(def delete-collection-schema
-  {:id [us/required us/uuid]
-   :user [us/required us/uuid]})
+(s/def ::delete-collection-schema
+  (s/keys :req-un [::us/id ::user]))
 
-(defmethod usc/-novelty :delete/color-collection
+(defmethod core/novelty :delete-color-collection
   [params]
+  (s/assert ::delete-collection-schema params)
   (with-open [conn (db/connection)]
-    (->> (validate! params delete-collection-schema)
-         (delete-collection conn))))
+    (delete-collection conn params)))
 
 ;; --- List Collections
 
 (defn get-collections-for-user
   [conn user]
-  (let [sqlv (sql/get-color-collections
-              {:user user})]
+  (let [sqlv (sql/get-color-collections {:user user})]
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs)
          (map decode-data))))
 
-(defmethod usc/-query :list/color-collections
+(defmethod core/query :list-color-collections
   [{:keys [user] :as params}]
+  (s/assert ::user user)
   (with-open [conn (db/connection)]
     (get-collections-for-user conn user)))
 
@@ -106,5 +106,6 @@
 
 (defn- decode-data
   [{:keys [data] :as result}]
+  (s/assert ::us/bytes data)
   (merge result (when data
                   {:data (blob/decode->str data)})))

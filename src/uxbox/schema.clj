@@ -6,78 +6,95 @@
 
 (ns uxbox.schema
   (:refer-clojure :exclude [keyword uuid vector boolean map set])
-  (:require [struct.core :as st]
+  (:require [clojure.spec :as s]
             [uxbox.util.exceptions :as ex])
   (:import java.time.Instant))
 
-;; --- Validators
+;; --- Constants
 
-(def datetime
-  {:message "must be an instant"
-   :optional true
-   :validate #(instance? Instant %)})
+(def email-rx
+  #"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
 
-(def required
-  (assoc st/required :message "errors.form.required"))
-
-(def string
-  (assoc st/string :message "errors.form.string"))
-
-(def number
-  (assoc st/number :message "errors.form.number"))
-
-(def integer
-  (assoc st/integer :message "errors.form.integer"))
-
-(def boolean
-  (assoc st/boolean :message "errors.form.bool"))
-
-(def identical-to
-  (assoc st/identical-to :message "errors.form.identical-to"))
-
-(def in-range st/in-range)
-(def uuid-str st/uuid-str)
-(def uuid st/uuid)
-(def integer-str st/integer-str)
-(def boolean-str st/boolean-str)
-(def email st/email)
-(def set st/set)
-(def map st/map)
-(def coll st/coll)
-(def positive st/positive)
-
-(def max-len
-  {:message "errors.form.max-len"
-   :optional true
-   :validate (fn [v n]
-               (let [len (count v)]
-                 (>= len v)))})
-
-(def min-len
-  {:message "errors.form.min-len"
-   :optional true
-   :validate (fn [v n]
-               (>= (count v) n))})
-
-(def uploaded-file
-  {:message "errors.form.file"
-   :optional true
-   :validate #(instance? ratpack.form.UploadedFile %)})
-
-(def path
-  {:message "errors.form.path"
-   :optional true
-   :validate #(instance? java.nio.file.Path %)})
+(def uuid-rx
+  #"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 
 ;; --- Public Api
 
-(def validate st/validate)
+(defn conform
+  [spec data]
+  (let [result (s/conform spec data)]
+    (if (= result ::s/invalid)
+      (throw (ex/ex-info :validation
+                         (s/explain-data spec data)
+                         (s/explain-str spec data)))
+      result)))
 
-(defn validate!
-  ([data schema]
-   (validate! :validation data schema))
-  ([type data schema]
-   (let [[errors data] (st/validate data schema)]
-     (if errors
-       (throw (ex/ex-info type errors))
-       data))))
+;; --- Predicates
+
+(defn email?
+  [v]
+  (and string?
+       (re-matches email-rx v)))
+
+(defn instant?
+  [v]
+  (instance? Instant v))
+
+(defn path?
+  [v]
+  (instance? java.nio.file.Path v))
+
+;; --- Conformers
+
+(defn- uuid-conformer
+  [v]
+  (cond
+    (uuid? v) v
+    (string? v)
+    (if (re-matches uuid-rx v)
+      (java.util.UUID/fromString v)
+      ::s/invalid)
+    :else ::s/invalid))
+
+(defn- integer-conformer
+  [v]
+  (cond
+    (integer? v) v
+    (string? v)
+    (if (re-matches #"^[-+]?\d+$" v)
+      (Long/parseLong v)
+      ::s/invalid)
+    :else ::s/invalid))
+
+(defn boolean-conformer
+  [v]
+  (cond
+    (boolean? v) v
+    (string? v)
+    (if (re-matches #"^(?:t|true|false|f|0|1)$" v)
+      (contains? #{"t" "true" "1"} v)
+      ::s/invalid)
+    :else ::s/invalid))
+
+(defn boolean-unformer
+  [v]
+  (if v "true" "false"))
+
+;; --- Default Specs
+
+(s/def ::integer-string (s/conformer integer-conformer str))
+(s/def ::uuid-string (s/conformer uuid-conformer str))
+(s/def ::boolean-string (s/conformer boolean-conformer boolean-unformer))
+(s/def ::positive-integer #(< 0 % Long/MAX_VALUE))
+(s/def ::uploaded-file #(instance? ratpack.form.UploadedFile %))
+(s/def ::bytes bytes?)
+(s/def ::path path?)
+
+(s/def ::id ::uuid-string)
+(s/def ::name string?)
+(s/def ::username string?)
+(s/def ::password string?)
+(s/def ::version integer?)
+(s/def ::email email?)
+(s/def ::token string?)
+

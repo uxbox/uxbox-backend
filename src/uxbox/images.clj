@@ -7,10 +7,14 @@
 (ns uxbox.images
   "Image postprocessing."
   (:require [storages.core :as st]
+            [clojure.spec :as s]
+            [uxbox.schema :as us]
             [uxbox.media :as media]
             [uxbox.util.paths :as paths]
             [uxbox.util.images :as images]
             [uxbox.util.data :refer (dissoc-in)]))
+
+;; FIXME: add spec for thumbnail config
 
 (defn make-thumbnail
   [path {:keys [size format quality] :as cfg}]
@@ -34,6 +38,8 @@
 
 (defn populate-thumbnail
   [entry {:keys [src dst] :as cfg}]
+  (assert (map? entry) "`entry` should be map")
+
   (let [src (if (vector? src) src [src])
         dst (if (vector? dst) dst [dst])
         src (get-in entry src)]
@@ -47,6 +53,8 @@
 
 (defn populate-urls
   [entry storage src dst]
+  (assert (map? entry) "`entry` should be map")
+  (assert (st/storage? storage) "`storage` should be a valid storage instance.")
   (let [src (if (vector? src) src [src])
         dst (if (vector? dst) dst [dst])
         value (get-in entry src)]

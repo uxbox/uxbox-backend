@@ -9,23 +9,21 @@
             [suricatta.core :as sc]
             [buddy.core.codecs :as codecs]
             [uxbox.config :as ucfg]
-            [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
-            [uxbox.services.core :as usc]
+            [uxbox.schema :as us]
+            [uxbox.services.core :as core]
             [uxbox.services.pages :as pages]
             [uxbox.util.data :as data]
             [uxbox.util.transit :as t]
             [uxbox.util.uuid :as uuid]))
 
-(def validate! (partial us/validate! :service/wrong-arguments))
+
+(s/def ::data string?)
+(s/def ::user uuid?)
+(s/def ::project uuid?)
 
 ;; --- Create Project
-
-(def ^:private create-project-schema
-  {:id [us/uuid]
-   :user [us/required us/uuid]
-   :name [us/required us/string]})
 
 (defn create-project
   [conn {:keys [id user name] :as data}]
@@ -35,17 +33,17 @@
             (data/normalize-attrs)
             (data/strip-delete-attrs))))
 
-(defmethod usc/-novelty :create/project
+(s/def ::create-project
+  (s/keys :req-un [::user ::us/name]
+          :opt-un [::us/id]))
+
+(defmethod core/novelty :create-project
   [params]
+  (s/assert ::create-project params)
   (with-open [conn (db/connection)]
-    (->> (validate! params create-project-schema)
-         (create-project conn))))
+    (create-project conn params)))
 
 ;; --- Update Project
-
-(def ^:private update-project-schema
-  (assoc create-project-schema
-         :version [us/required us/integer]))
 
 (defn- update-project
   [conn {:keys [name version id user] :as data}]
@@ -57,28 +55,30 @@
             (data/normalize-attrs)
             (data/strip-delete-attrs))))
 
-(defmethod usc/-novelty :update/project
+(s/def ::update-project
+  (s/merge ::create-project (s/keys :req-un [::us/version])))
+
+(defmethod core/novelty :update-project
   [params]
+  (s/assert ::update-project params)
   (with-open [conn (db/connection)]
-    (->> (validate! params update-project-schema)
-         (update-project conn))))
+    (update-project conn params)))
 
 ;; --- Delete Project
-
-(def ^:private delete-project-schema
-  {:id [us/required us/uuid]
-   :user [us/required us/uuid]})
 
 (defn- delete-project
   [conn {:keys [id user] :as data}]
   (let [sqlv (sql/delete-project {:id id :user user})]
     (pos? (sc/execute conn sqlv))))
 
-(defmethod usc/-novelty :delete/project
+(s/def ::delete-project
+  (s/keys :req-un [::us/id ::user]))
+
+(defmethod core/novelty :delete-project
   [params]
+  (s/assert ::delete-project params)
   (with-open [conn (db/connection)]
-    (->> (validate! params delete-project-schema)
-         (delete-project conn))))
+    (delete-project conn params)))
 
 ;; --- List Projects
 
@@ -89,11 +89,11 @@
          (map data/normalize-attrs)
          (map data/strip-delete-attrs))))
 
-(defmethod usc/-query :list/projects
+(defmethod core/query :list-projects
   [{:keys [user] :as params}]
+  (s/assert ::user user)
   (with-open [conn (db/connection)]
     (get-projects-for-user conn user)))
-
 
 ;; --- Retrieve Project by share token
 
@@ -106,8 +106,11 @@
       (let [pages (vec (pages/get-pages-for-project conn id))]
         (assoc project :pages pages)))))
 
-(defmethod usc/-query :retrieve/project-by-share-token
+(s/def ::token string?)
+
+(defmethod core/query :retrieve-project-by-share-token
   [{:keys [token]}]
+  (s/assert ::token token)
   (with-open [conn (db/connection)]
     (get-project-by-share-token conn token)))
 
@@ -115,6 +118,7 @@
 
 (defn get-share-tokens-for-project
   [conn project]
+  (s/assert ::project project)
   (let [sqlv (sql/get-share-tokens-for-project {:project project})]
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs)

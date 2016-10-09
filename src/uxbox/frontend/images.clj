@@ -5,14 +5,14 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.frontend.images
-  (:require [promesa.core :as p]
+  (:require [clojure.spec :as s]
+            [promesa.core :as p]
             [catacumba.http :as http]
             [storages.core :as st]
             [uxbox.media :as media]
             [uxbox.images :as images]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
-            [uxbox.services.images :as si]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.paths :as paths]))
@@ -24,20 +24,17 @@
                           :size [300 110]
                           :quality 92
                           :format "jpg"})
-(def validate-form! (partial us/validate! :form/validation))
-(def validate-query! (partial us/validate! :query/validation))
 
 ;; --- Create Collection
 
-(def ^:private create-collection-schema
-  {:id [us/uuid]
-   :name [us/required us/string]})
+(s/def ::create-collection
+  (s/keys :req-un [::us/name] :opt-un [::us/id]))
 
 (defn create-collection
   [{user :identity data :data}]
-  (let [data (validate-form! data create-collection-schema)
+  (let [data (us/conform ::create-collection data)
         message (assoc data
-                       :type :create/image-collection
+                       :type :create-image-collection
                        :user user)]
     (->> (sv/novelty message)
          (p/map (fn [result]
@@ -46,16 +43,15 @@
 
 ;; --- Update Collection
 
-(def ^:private update-collection-schema
-  (assoc create-collection-schema
-         :version [us/required us/integer]))
+(s/def ::update-collection
+  (s/merge ::create-collection (s/keys :req-un [::us/version])))
 
 (defn update-collection
   [{user :identity params :route-params data :data}]
-  (let [data (validate-form! data update-collection-schema)
+  (let [data (us/conform ::update-collection data)
         message (assoc data
                        :id (uuid/from-string (:id params))
-                       :type :update/image-collection
+                       :type :update-image-collection
                        :user user)]
     (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
@@ -65,7 +61,7 @@
 (defn delete-collection
   [{user :identity params :route-params}]
   (let [message {:id (uuid/from-string (:id params))
-                 :type :delete/image-collection
+                 :type :delete-image-collection
                  :user user}]
     (-> (sv/novelty message)
         (p/then (fn [v] (http/no-content))))))
@@ -74,25 +70,26 @@
 
 (defn list-collections
   [{user :identity}]
-  (let [params {:user user :type :list/image-collections}]
+  (let [params {:user user
+                :type :list-image-collections}]
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
 ;; --- Create image
 
-(def create-image-schema
-  {:id [us/uuid-str]
-   :file [us/required us/uploaded-file]})
+(s/def ::file ::us/uploaded-file)
+(s/def ::create-image
+  (s/keys :req-un [::file] :opt-un [::us/id]))
 
 (defn create-image
   [{user :identity params :route-params  data :data}]
-  (let [{:keys [file id] :as data} (validate-form! data create-image-schema)
+  (let [{:keys [file id] :as data} (us/conform ::create-image data)
         id (or id (uuid/random))
         filename (paths/base-name file)
         storage media/images-storage]
     (letfn [(persist-image-entry [path]
               (sv/novelty {:id id
-                           :type :create/image
+                           :type :create-image
                            :user user
                            :collection (uuid/from-string (:id params))
                            :name filename
@@ -116,30 +113,28 @@
 
 ;; --- Update Image
 
-(def update-image-schema
-  {:id [us/uuid]
-   :name [us/required us/string]
-   :version [us/required us/integer]})
+(s/def ::update-image
+  (s/keys :req-un [::us/name ::us/version] :opt-un [::us/id]))
 
 (defn update-image
   [{user :identity params :route-params data :data}]
-  (let [data (validate-form! data update-image-schema)
+  (let [data (s/conform ::update-image data)
         message (assoc data
                        :id (uuid/from-string (:id params))
-                       :type :update/image
+                       :type :update-image
                        :user user)]
-    (-> (sv/novelty message)
-        (p/then #(http/ok (rsp %))))))
+    (->> (sv/novelty message)
+         (p/map #(http/ok (rsp %))))))
 
 ;; --- Delete Image
 
 (defn delete-image
   [{user :identity params :route-params}]
   (let [message {:id (uuid/from-string (:id params))
-                 :type :delete/image
+                 :type :delete-image
                  :user user}]
-    (-> (sv/novelty message)
-        (p/then (fn [v] (http/no-content))))))
+    (->> (sv/novelty message)
+         (p/map (fn [v] (http/no-content))))))
 
 ;; --- List collections
 
@@ -147,8 +142,8 @@
   [{user :identity route-params :route-params}]
   (let [params {:collection (uuid/from-string (:id route-params))
                 :user user
-                :type :list/images}
+                :type :list-images}
         thumbnail-opts +thumbnail-options+
         populate-thumbnails-url #(images/populate-thumbnails % thumbnail-opts)]
-    (-> (sv/query params)
-        (p/then #(http/ok (rsp (map populate-thumbnails-url %)))))))
+    (->> (sv/query params)
+         (p/map #(http/ok (rsp (map populate-thumbnails-url %)))))))

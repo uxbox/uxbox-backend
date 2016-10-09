@@ -5,36 +5,35 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.frontend.colors
-  (:require [promesa.core :as p]
+  (:require [clojure.spec :as s]
+            [promesa.core :as p]
             [catacumba.http :as http]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
-(def validate-form! (partial us/validate! :form/validation))
-
 ;; --- List Collections
 
 (defn list-collections
   [{user :identity}]
   (let [message {:user user
-                 :type :list/color-collections}]
+                 :type :list-color-collections}]
     (->> (sv/query message)
          (p/map #(http/ok (rsp %))))))
 
 ;; --- Create Collection
 
-(def ^:private create-collection-schema
-  {:id [us/uuid]
-   :name [us/required us/string]
-   :data [us/required us/string]})
+(s/def ::data string?)
+(s/def ::create-collection
+  (s/keys :req-un [::us/name ::data]
+          :opt-un [::us/id]))
 
 (defn create-collection
   [{user :identity data :data}]
-  (let [params (validate-form! data create-collection-schema)
+  (let [params (us/conform ::create-collection data)
         message (assoc params
-                       :type :create/color-collection
+                       :type :create-color-collection
                        :user user)]
     (->> (sv/novelty message)
          (p/map (fn [result]
@@ -43,16 +42,15 @@
 
 ;; --- Update Collection
 
-(def ^:private update-collection-schema
-  (assoc create-collection-schema
-         :version [us/required us/integer]))
+(s/def ::update-collection
+  (s/merge ::create-collection (s/keys :req-un [::us/version])))
 
 (defn update-collection
   [{user :identity params :route-params data :data}]
-  (let [data (validate-form! data update-collection-schema)
+  (let [data (us/conform ::update-collection data)
         message (assoc data
                        :id (uuid/from-string (:id params))
-                       :type :update/color-collection
+                       :type :update-color-collection
                        :user user)]
     (->> (sv/novelty message)
          (p/map #(http/ok (rsp %))))))
@@ -62,7 +60,7 @@
 (defn delete-collection
   [{user :identity params :route-params}]
   (let [message {:id (uuid/from-string (:id params))
-                 :type :delete/color-collection
+                 :type :delete-color-collection
                  :user user}]
     (->> (sv/novelty message)
          (p/map (fn [v] (http/no-content))))))

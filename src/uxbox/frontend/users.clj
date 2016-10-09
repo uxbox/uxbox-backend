@@ -5,7 +5,8 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.frontend.users
-  (:require [promesa.core :as p]
+  (:require [clojure.spec :as s]
+            [promesa.core :as p]
             [catacumba.http :as http]
             [storages.core :as st]
             [uxbox.media :as media]
@@ -18,8 +19,6 @@
             [uxbox.util.paths :as paths]))
 
 ;; --- Helpers
-
-(def validate-form! (partial us/validate! :form/validation))
 
 (defn- resolve-thumbnail
   [user]
@@ -35,25 +34,24 @@
 (defn retrieve-profile
   [{user :identity}]
   (let [message {:user user
-                 :type :retrieve/profile}]
+                 :type :retrieve-profile}]
     (->> (sv/query message)
          (p/map resolve-thumbnail)
          (p/map #(http/ok (rsp %))))))
 
 ;; --- Update Profile
 
-(def ^:private update-profile-schema
-  {:id [us/required us/uuid]
-   :username [us/required us/string]
-   :email [us/required us/email]
-   :fullname [us/required us/string]
-   :metadata [us/required us/string]})
+(s/def ::fullname string?)
+(s/def ::metadata string?)
+(s/def ::update-profile
+  (s/keys :req-un [::us/id ::us/username ::us/email
+                   ::fullname ::metadata]))
 
 (defn update-profile
   [{user :identity data :data}]
-  (let [data (validate-form! data update-profile-schema)
+  (let [data (us/conform ::update-profile data)
         message (assoc data
-                       :type :update/profile
+                       :type :update-profile
                        :user user)]
     (->> (sv/novelty message)
          (p/map resolve-thumbnail)
@@ -61,20 +59,23 @@
 
 ;; --- Update Password
 
-(def ^:private update-password-schema
-  {:password [us/required us/string [us/min-len 6]]
-   :old-password [us/required us/string]})
+(s/def ::old-password ::us/password)
+(s/def ::update-password
+  (s/keys :req-un [::us/password ::old-password]))
 
 (defn update-password
   [{user :identity data :data}]
-  (let [data (validate-form! data update-password-schema)
+  (let [data (us/conform ::update-password data)
         message (assoc data
-                      :type :update/password
+                      :type :update-profile-password
                       :user user)]
     (-> (sv/novelty message)
         (p/then #(http/ok (rsp %))))))
 
 ;; --- Update Profile Photo
+
+(s/def ::file ::us/uploaded-file)
+(s/def ::update-photo (s/keys :req-un [::file]))
 
 (defn update-photo
   [{user :identity data :data}]
@@ -85,48 +86,53 @@
           (assign-photo [path]
             (sv/novelty {:user user
                          :path (str path)
-                         :type :update/profile-photo}))
+                         :type :update-profile-photo}))
           (create-response [_]
             (http/no-content))]
-    (->> (store-photo (:file data))
-         (p/mapcat assign-photo)
-         (p/map create-response))))
+    (let [{:keys [file]} (us/conform ::update-photo data)]
+      (->> (store-photo file)
+           (p/mapcat assign-photo)
+           (p/map create-response)))))
 
 ;; --- Register User
 
-(def ^:private register-user-schema
-  svu/register-user-schema)
+(s/def ::register
+  (s/keys :req-un [::us/username ::us/email ::us/password ::fullname]))
 
 (defn register-user
   [{data :data}]
-  (let [data (validate-form! data register-user-schema)
-        message (assoc data :type :register)]
+  (let [data (us/conform ::register data)
+        message (assoc data :type :register-profile)]
     (->> (sv/novelty message)
          (p/map #(http/ok (rsp %))))))
 
 
 ;; --- Request Password Recovery
 
-(def ^:private request-recovery-schema
-  {:username [us/required us/string]})
+;; FIXME: rename for consistency
+
+(s/def ::request-recovery
+  (s/keys :req-un [::us/username]))
 
 (defn request-recovery
   [{data :data}]
-  (let [data (validate-form! data request-recovery-schema)
-        message (assoc data :type :request/password-recovery)]
+  (let [data (us/conform ::request-recovery data)
+        message (assoc data :type :request-profile-password-recovery)]
     (->> (sv/novelty message)
          (p/map (fn [_] (http/no-content))))))
 
 ;; --- Password Recovery
 
-(def ^:private password-recovery-schema
-  {:token [us/required us/string]
-   :password [us/required us/string]})
+;; FIXME: rename for consistency
+
+(s/def ::token string?)
+(s/def ::password-recovery
+  (s/keys :req-un [::token ::us/password]))
 
 (defn recover-password
   [{data :data}]
-  (let [data (validate-form! data password-recovery-schema)
-        message (assoc data :type :recover/password)]
+  (let [data (us/conform ::password-recovery data)
+        message (assoc data :type :recover-profile-password)]
     (->> (sv/novelty message)
          (p/map (fn [_] (http/no-content))))))
 
@@ -134,7 +140,7 @@
 
 (defn validate-recovery-token
   [{params :route-params}]
-  (let [message {:type :validate/password-recovery-token
+  (let [message {:type :validate-profile-password-recovery-token
                  :token (:token params)}]
     (->> (sv/query message)
          (p/map (fn [v]

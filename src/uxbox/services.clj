@@ -14,6 +14,7 @@
             [uxbox.util.transit :as t]
             [uxbox.util.blob :as blob]))
 
+;; Load relevant subnamespaces with the implementation
 (load "services/auth")
 (load "services/projects")
 (load "services/pages")
@@ -33,16 +34,15 @@
 
 (defn- handle-novelty
   [data]
-  (let [rs (core/-novelty data)
+  (let [rs (core/novelty data)
         rs (if (p/promise? rs) rs (p/resolved rs))]
-    ;; TODO: add `do` helper to promesa library
     (p/map (fn [v]
              (insert-txlog data)
-                v) rs)))
+             v) rs)))
 
 (defn- handle-query
   [data]
-  (let [result (core/-query data)]
+  (let [result (core/query data)]
     (if (p/promise? result)
       result
       (p/resolved result))))

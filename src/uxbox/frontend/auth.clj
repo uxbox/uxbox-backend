@@ -5,22 +5,20 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.frontend.auth
-  (:require [catacumba.http :as http]
+  (:require [clojure.spec :as s]
+            [catacumba.http :as http]
             [promesa.core :as p]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.util.response :refer (rsp)]))
 
-(def validate-form! (partial us/validate! :form/validation))
-
-(def ^:private auth-schema
-  {:username [us/required us/string]
-   :password [us/required us/string]
-   :scope [us/required us/string]})
+(s/def ::scope string?)
+(s/def ::login
+  (s/keys :req-un [::us/username ::us/password ::scope]))
 
 (defn login
   [{data :data}]
-  (let [data (validate-form! data auth-schema)
-        message (assoc data :type :auth/login)]
+  (let [data (us/conform ::login data)
+        message (assoc data :type :login)]
     (->> (sv/novelty message)
          (p/map #(http/ok (rsp %))))))

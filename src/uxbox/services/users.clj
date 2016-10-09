@@ -5,15 +5,16 @@
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
 (ns uxbox.services.users
-  (:require [mount.core :as mount :refer (defstate)]
+  (:require [clojure.spec :as s]
+            [mount.core :as mount :refer (defstate)]
             [suricatta.core :as sc]
             [buddy.hashers :as hashers]
             [buddy.sign.jwe :as jwe]
-            [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
+            [uxbox.schema :as us]
             [uxbox.emails :as emails]
-            [uxbox.services.core :as usc]
+            [uxbox.services.core :as core]
             [uxbox.util.transit :as t]
             [uxbox.util.exceptions :as ex]
             [uxbox.util.data :as data]
@@ -21,29 +22,30 @@
             [uxbox.util.uuid :as uuid]
             [uxbox.util.token :as token]))
 
-(def validate! (partial us/validate! :service/wrong-arguments))
-
 (declare decode-user-data)
 (declare trim-user-attrs)
 (declare find-user-by-id)
 (declare find-full-user-by-id)
 (declare find-user-by-username-or-email)
 
+(s/def ::user uuid?)
+(s/def ::fullname string?)
+(s/def ::metadata string?)
+(s/def ::old-password string?)
+(s/def ::path string?)
+
 ;; --- Retrieve User Profile (own)
 
-(def ^:private retrieve-profile-schema
-  {:user [us/required us/uuid]})
-
-(defmethod usc/-query :retrieve/profile
-  [params]
-  (let [params (validate! params retrieve-profile-schema)]
-    (with-open [conn (db/connection)]
-      (some-> (find-user-by-id conn (:user params))
-              (decode-user-data)))))
+(defmethod core/query :retrieve-profile
+  [{:keys [user] :as params}]
+  (s/assert ::user user)
+  (with-open [conn (db/connection)]
+    (some-> (find-user-by-id conn (:user params))
+            (decode-user-data))))
 
 ;; --- Update User Profile (own)
 
-(defn- check-profile-existence
+(defn- check-profile-existence!
   [conn {:keys [id username email]}]
   (let [sqlv1 (sql/user-with-email-exists? {:id id :email email})
         sqlv2 (sql/user-with-username-exists? {:id id :username username})]
@@ -56,7 +58,7 @@
 
 (defn- update-profile
   [conn {:keys [id username email fullname metadata] :as params}]
-  (check-profile-existence conn params)
+  (check-profile-existence! conn params)
   (let [metadata (blob/encode metadata)
         sqlv (sql/update-profile {:username username
                                   :fullname fullname
@@ -69,25 +71,16 @@
             (decode-user-data)
             (dissoc :password))))
 
-(def ^:private update-profile-schema
-  {:id [us/required us/uuid]
-   :username [us/required us/string]
-   :email [us/required us/email]
-   :fullname [us/required us/string]
-   :metadata [us/required us/string]})
+(s/def ::update-profile
+  (s/keys :req-un [::us/id ::us/username ::us/email ::fullname ::metadata]))
 
-(defmethod usc/-novelty :update/profile
+(defmethod core/novelty :update-profile
   [params]
+  (s/assert ::update-profile params)
   (with-open [conn (db/connection)]
-    (some->> (validate! params update-profile-schema)
-             (update-profile conn))))
+    (update-profile conn params)))
 
 ;; --- Update Password
-
-(def ^:private update-password-schema
-  {:user [us/required us/uuid]
-   :password [us/required us/string]
-   :old-password [us/required us/string]})
 
 (defn update-password
   [conn {:keys [user password]}]
@@ -103,10 +96,14 @@
         (throw (ex/ex-info :form/validation params))))
     params))
 
-(defmethod usc/-novelty :update/password
+(s/def ::update-password
+  (s/keys :req-un [::user ::us/password ::old-password]))
+
+(defmethod core/novelty :update-profile-password
   [params]
+  (s/assert ::update-password params)
   (with-open [conn (db/connection)]
-    (->> (validate! params update-password-schema)
+    (->> params
          (validate-old-password conn)
          (update-password conn))))
 
@@ -117,29 +114,26 @@
   (let [sqlv (sql/update-profile-photo {:id user :photo path})]
     (pos? (sc/execute conn sqlv))))
 
-(def update-photo-schema
-  {:user [us/required us/uuid]
-   :path [us/required us/string]})
+(s/def ::update-photo
+  (s/keys :req-un [::user ::path]))
 
-(defmethod usc/-novelty :update/profile-photo
+(defmethod core/novelty :update-profile-photo
   [params]
+  (s/assert ::update-photo params)
   (with-open [conn (db/connection)]
-    (->> (validate! params update-photo-schema)
-         (update-photo conn))))
+    (update-photo conn params)))
 
 ;; --- Create User
 
-(def ^:private create-user-schema
-  {:id [us/uuid]
-   :metadata [us/required us/string]
-   :username [us/required us/string]
-   :fullname [us/required us/string]
-   :email [us/required us/email]
-   :password [us/required us/string]})
+(s/def ::metadata string?)
+
+(s/def ::create-user
+  (s/keys :req-un [::metadata ::fullname ::us/email ::us/password]
+          :opt-un [::us/id]))
 
 (defn create-user
   [conn {:keys [id username password email fullname metadata] :as data}]
-  (validate! data create-user-schema)
+  (s/assert ::create-user data)
   (let [id (or id (uuid/random))
         metadata (blob/encode metadata)
         password (hashers/encrypt password)
@@ -191,17 +185,14 @@
                    :name (:fullname params)})
     nil))
 
-(def register-user-schema
-  {:username [us/required us/string]
-   :fullname [us/required us/string]
-   :email [us/required us/email]
-   :password [us/required us/string]})
+(s/def ::register
+  (s/keys :req-un [::us/username ::us/email ::us/password ::fullname]))
 
-(defmethod usc/-novelty :register
+(defmethod core/novelty :register-profile
   [params]
+  (s/assert ::register params)
   (with-open [conn (db/connection)]
-    (->> (validate! params register-user-schema)
-         (sc/apply-atomic conn register-user))))
+    (sc/apply-atomic conn register-user params)))
 
 ;; --- Password Recover
 
@@ -266,19 +257,25 @@
                    :token token})
     token))
 
-(defmethod usc/-query :validate/password-recovery-token
+(defmethod core/query :validate-profile-password-recovery-token
   [{:keys [token]}]
+  (s/assert ::us/token token)
   (with-open [conn (db/connection)]
     (recovery-token-exists? conn token)))
 
-(defmethod usc/-novelty :request/password-recovery
+(defmethod core/novelty :request-profile-password-recovery
   [{:keys [username]}]
+  (s/assert ::us/username username)
   (with-open [conn (db/connection)]
     (sc/atomic conn
       (request-password-recovery conn username))))
 
-(defmethod usc/-novelty :recover/password
-  [{:keys [token password] :as params}]
+(s/def ::recover-password
+  (s/keys :req-un [::us/token ::us/password]))
+
+(defmethod core/novelty :recover-profile-password
+  [params]
+  (s/assert ::recover-password params)
   (with-open [conn (db/connection)]
     (sc/atomic conn
       (recover-password conn params))))
@@ -325,4 +322,3 @@
   (select-keys user [:id :username :fullname
                      :password :metadata :email
                      :created-at :photo]))
-

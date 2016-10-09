@@ -25,7 +25,7 @@
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/library/color-collections")
               [status data] (th/http-get user uri)]
-          ;; (println "RESPONSE:" status data)
+          (println "RESPONSE:" status data)
           (t/is (= 200 status))
           (t/is (= 1 (count data))))))))
 
