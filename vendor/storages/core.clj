@@ -48,3 +48,8 @@
 (defn public-url
   [storage path]
   (pt/-public-uri storage path))
+
+(defn storage?
+  "Return `true` if `v` implements IStorage protocol"
+  [v]
+  (satisfies? pt/IStorage v))
