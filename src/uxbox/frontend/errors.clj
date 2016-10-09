@@ -39,7 +39,9 @@
         response (assoc response :message (.getMessage err))]
     (http/internal-server-error (rsp response))))
 
-(defn handle-data-access-exception
+;; --- Entry Point
+
+(defn- handle-data-access-exception
   [err]
   (let [err (.getCause err)
         state (.getSQLState err)
@@ -58,7 +60,7 @@
                   :payload nil})
             (http/internal-server-error))))))
 
-(defn handle-unexpected-exception
+(defn- handle-unexpected-exception
   [err]
   (.printStackTrace err)
   (let [message (.getMessage err)]
@@ -66,8 +68,6 @@
               :type :unexpected
               :payload nil})
         (http/internal-server-error))))
-
-;; --- Entry Point
 
 (defn handler
   [context err]
