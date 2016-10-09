@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.services.locks
+(ns uxbox.locks
   "Advirsory locks for specific handling concurrent modifications
   on particular objects in the database."
   (:require [suricatta.core :as sc])
