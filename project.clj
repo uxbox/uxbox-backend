@@ -13,6 +13,7 @@
              "-Dclojure.spec.check-asserts=true"
              "-Dclojure.spec.compile-asserts=true"
              "-XX:+UseG1GC" "-Xms1g" "-Xmx1g"]
+  :global-vars {*assert* true}
   :dependencies [[org.clojure/clojure "1.9.0-alpha13"]
                  [org.clojure/tools.logging "0.3.1"]
                  [funcool/struct "1.0.0"]
