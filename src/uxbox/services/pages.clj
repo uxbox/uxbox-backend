@@ -21,16 +21,13 @@
             [uxbox.util.uuid :as uuid]))
 
 (declare decode-page-data)
-(declare decode-page-options)
+(declare decode-page-metadata)
 (declare encode-data)
 
 (s/def ::data string?)
 (s/def ::user uuid?)
 (s/def ::project uuid?)
-(s/def ::options string?)
-(s/def ::width integer?)
-(s/def ::height integer?)
-(s/def ::layout string?)
+(s/def ::metadata string?)
 (s/def ::max integer?)
 (s/def ::pinned boolean?)
 (s/def ::since integer?)
@@ -38,26 +35,21 @@
 ;; --- Create Page
 
 (defn create-page
-  [conn {:keys [id user project name width
-                height layout data options] :as params}]
+  [conn {:keys [id user project name data metadata] :as params}]
   (let [opts {:id (or id (uuid/random))
               :user user
               :project project
               :name name
-              :width width
-              :height height
-              :layout layout
               :data (blob/encode data)
-              :options (blob/encode options)}
+              :metadata (blob/encode metadata)}
         sqlv (sql/create-page opts)]
     (->> (sc/fetch-one conn sqlv)
          (data/normalize-attrs)
          (decode-page-data)
-         (decode-page-options))))
+         (decode-page-metadata))))
 
 (s/def ::create-page
-  (s/keys :req-un [::data ::user ::project ::us/name
-                   ::width ::height ::layout ::options]
+  (s/keys :req-un [::data ::user ::project ::us/name ::metadata]
           :opt-un [::us/id]))
 
 (defmethod core/novelty :create-page
@@ -69,23 +61,20 @@
 ;; --- Update Page
 
 (defn update-page
-  [conn {:keys [id user project name width height
-                layout data version options] :as params}]
+  [conn {:keys [id user project name
+                data version metadata] :as params}]
   (let [opts {:id (or id (uuid/random))
               :user user
               :project project
               :name name
-              :width width
               :version version
-              :height height
-              :layout layout
               :data (blob/encode data)
-              :options (blob/encode options)}
+              :metadata (blob/encode metadata)}
         sqlv (sql/update-page opts)]
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs)
             (decode-page-data)
-            (decode-page-options))))
+            (decode-page-metadata))))
 
 (s/def ::update-page
   (s/merge ::create-page (s/keys :req-un [::us/version])))
@@ -99,27 +88,23 @@
 ;; --- Update Page Metadata
 
 (defn update-page-metadata
-  [conn {:keys [id user project name width
-                height layout version options] :as params}]
+  [conn {:keys [id user project name
+                version metadata] :as params}]
   (let [opts {:id (or id (uuid/random))
               :user user
               :project project
               :name name
-              :width width
               :version version
-              :height height
-              :layout layout
-              :options (blob/encode options)}
+              :metadata (blob/encode metadata)}
         sqlv (sql/update-page-metadata opts)]
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs)
             (decode-page-data)
-            (decode-page-options))))
+            (decode-page-metadata))))
 
 (s/def ::update-page-metadata
-  (s/keys :req-un [::data ::user ::project ::us/name ::us/version
-                   ::width ::height ::layout ::options]
-          :opt-un [::us/id]))
+  (s/keys :req-un [::user ::project ::us/name ::us/version ::metadata]
+          :opt-un [::us/id ::data]))
 
 (defmethod core/novelty :update-page-metadata
   [params]
@@ -151,7 +136,7 @@
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs)
          (map decode-page-data)
-         (map decode-page-options))))
+         (map decode-page-metadata))))
 
 (defn get-pages-for-user-and-project
   [conn {:keys [user project]}]
@@ -160,7 +145,7 @@
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs)
          (map decode-page-data)
-         (map decode-page-options))))
+         (map decode-page-metadata))))
 
 (s/def ::list-pages-by-project
   (s/keys :req-un [::user ::project]))
@@ -219,11 +204,11 @@
 
 ;; --- Helpers
 
-(defn- decode-page-options
-  [{:keys [options] :as result}]
-  (s/assert ::us/bytes options)
-  (merge result (when options
-                  {:options (blob/decode->str options)})))
+(defn- decode-page-metadata
+  [{:keys [metadata] :as result}]
+  (s/assert ::us/bytes metadata)
+  (merge result (when metadata
+                  {:metadata (blob/decode->str metadata)})))
 
 (defn- decode-page-data
   [{:keys [data] :as result}]
@@ -238,4 +223,4 @@
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs)
             (decode-page-data)
-            (decode-page-options))))
+            (decode-page-metadata))))

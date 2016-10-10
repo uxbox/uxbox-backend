@@ -1,31 +1,23 @@
 -- :name create-page :<! :1
 -- :doc Insert new page entry in the database.
-insert into pages (id, "user", project, name, width,
-                   height, layout, data, options)
-values (:id, :user, :project, :name, :width,
-        :height, :layout, :data, :options)
+insert into pages (id, "user", project, name, data, metadata)
+values (:id, :user, :project, :name, :data, :metadata)
 returning *;
 
 -- :name update-page :<! :1
 -- :doc Update the page entry by id and user.
 update pages set name = :name,
-                 width = :width,
-                 height = :height,
-                 layout = :layout,
                  data = :data,
                  version = :version,
-                 options = :options
+                 metadata = :metadata
   where id = :id and "user" = :user and deleted = false
   returning *;
 
 -- :name update-page-metadata :<! :1
 -- :doc A limited version of update-page function.
 update pages set name = :name,
-                 width = :width,
-                 height = :height,
-                 layout = :layout,
                  version = :version,
-                 options = :options
+                 metadata = :metadata
   where id = :id and "user" = :user and deleted = false
   returning *;
 

@@ -58,11 +58,10 @@
                      :user (mk-uuid "user" ui)
                      :project (mk-uuid "project" pi)
                      :data (data-encode nil)
-                     :options (data-encode nil)
-                     :name (str "page " i)
-                     :width 1024
-                     :height 768
-                     :layout "tablet"}))
+                     :metadata (data-encode {:width 1024
+                                             :height 768
+                                             :layout "tablet"})
+                     :name (str "page " i)}))
 
 (def num-users 50)
 (def num-projects 5)

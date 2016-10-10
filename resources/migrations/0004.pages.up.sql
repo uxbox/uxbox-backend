@@ -10,14 +10,10 @@ CREATE TABLE IF NOT EXISTS pages (
   project uuid NOT NULL REFERENCES projects(id),
   name text NOT NULL,
   data bytea NOT NULL,
-  options bytea NOT NULL,
+  metadata bytea NOT NULL,
 
   deleted boolean DEFAULT false,
-  version bigint DEFAULT 0,
-
-  width bigint NOT NULL,
-  height bigint NOT NULL,
-  layout text NOT NULL
+  version bigint DEFAULT 0
 ) WITH (OIDS=FALSE);
 
 CREATE TABLE IF NOT EXISTS pages_history (

@@ -27,7 +27,7 @@
               params {:body {:project (:id proj)
                              :name "page1"
                              :data "1"
-                             :options "1"
+                             :metadata "1"
                              :width 200
                              :height 200
                              :layout "mobile"}}
@@ -47,7 +47,7 @@
                 :project (:id proj)
                 :version 0
                 :data "1"
-                :options "2"
+                :metadata "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -73,7 +73,7 @@
                 :project (:id proj)
                 :version 0
                 :data "1"
-                :options "2"
+                :metadata "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -99,7 +99,7 @@
                 :project (:id proj)
                 :version 0
                 :data "1"
-                :options "2"
+                :metadata "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -123,7 +123,7 @@
           data {:user (:id user)
                 :version 0
                 :data "1"
-                :options "2"
+                :metadata "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -147,7 +147,7 @@
                 :project (:id proj)
                 :version 0
                 :data "1"
-                :options "2"
+                :metadata "2"
                 :name "page1"
                 :width 200
                 :height 200
@@ -189,7 +189,7 @@
                 :project (:id proj)
                 :version 0
                 :data "1"
-                :options "2"
+                :metadata "2"
                 :name "page1"
                 :width 200
                 :height 200

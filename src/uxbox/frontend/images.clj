@@ -78,8 +78,8 @@
 ;; --- Create image
 
 (s/def ::file ::us/uploaded-file)
-(s/def ::width integer?)
-(s/def ::height integer?)
+(s/def ::width ::us/integer-string)
+(s/def ::height ::us/integer-string)
 (s/def ::create-image
   (s/keys :req-un [::file ::width ::height] :opt-un [::us/id]))
 

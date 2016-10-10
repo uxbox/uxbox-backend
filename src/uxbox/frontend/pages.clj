@@ -26,13 +26,10 @@
 ;; --- Create Page
 
 (s/def ::data string?)
-(s/def ::options string?)
+(s/def ::metadata string?)
 (s/def ::project ::us/id)
-(s/def ::width integer?)
-(s/def ::height integer?)
-(s/def ::layout string?)
 (s/def ::create-page
-  (s/keys :req-un [::data ::options ::project ::us/name ::width ::height ::layout]
+  (s/keys :req-un [::data ::metadata ::project ::us/name]
           :opt-un [::us/id]))
 
 (defn create-page
@@ -64,7 +61,7 @@
 ;; --- Update Page Metadata
 
 (s/def ::update-page-metadata
-  (s/keys :req-un [::options ::project ::us/name ::width ::height ::layout]
+  (s/keys :req-un [::metadata ::project ::us/name]
           :opt-un [::us/id]))
 
 (defn update-page-metadata
