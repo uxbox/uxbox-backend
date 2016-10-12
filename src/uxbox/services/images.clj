@@ -23,6 +23,7 @@
 
 (s/def ::width integer?)
 (s/def ::height integer?)
+(s/def ::mimetype string?)
 (s/def ::user uuid?)
 (s/def ::path string?)
 (s/def ::collection uuid?)
@@ -102,10 +103,12 @@
 ;; --- Create Image (Upload)
 
 (defn create-image
-  [conn {:keys [id user name path collection height width]}]
+  [conn {:keys [id user name path collection
+                height width mimetype]}]
   (let [id (or id (uuid/random))
         sqlv (sql/create-image {:id id
                                 :name name
+                                :mimetype mimetype
                                 :path path
                                 :width width
                                 :height height
@@ -115,7 +118,7 @@
             (data/normalize-attrs))))
 
 (s/def ::create-image
-  (s/keys :req-un [::user ::us/name ::path ::width ::height]
+  (s/keys :req-un [::user ::us/name ::path ::width ::height ::mimetype]
           :opt-un [::us/id]))
 
 (defmethod core/novelty :create-image

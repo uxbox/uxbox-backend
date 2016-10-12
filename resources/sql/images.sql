@@ -28,8 +28,8 @@ select * from images
 order by created_at desc;
 
 -- :name create-image :<! :1
-insert into images ("user", name, collection, path, width, height)
-values (:user, :name, :collection, :path, :width, :height)
+insert into images ("user", name, collection, path, width, height, mimetype)
+values (:user, :name, :collection, :path, :width, :height, :mimetype)
 returning *;
 
 -- :name update-image :<! :1

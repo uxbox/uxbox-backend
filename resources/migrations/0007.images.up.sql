@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS images (
 
   width int NOT NULL,
   height int NOT NULL,
+  mimetype text NOT NULL,
 
   version bigint NOT NULL DEFAULT 0,
   "user" uuid NOT NULL REFERENCES users(id),

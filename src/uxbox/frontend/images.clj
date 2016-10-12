@@ -19,6 +19,11 @@
 
 ;; --- Constants & Config
 
+(s/def ::file ::us/uploaded-file)
+(s/def ::width ::us/integer-string)
+(s/def ::height ::us/integer-string)
+(s/def ::mimetype string?)
+
 (def +thumbnail-options+ {:src :path
                           :dst :thumbnail
                           :size [300 110]
@@ -77,15 +82,12 @@
 
 ;; --- Create image
 
-(s/def ::file ::us/uploaded-file)
-(s/def ::width ::us/integer-string)
-(s/def ::height ::us/integer-string)
 (s/def ::create-image
-  (s/keys :req-un [::file ::width ::height] :opt-un [::us/id]))
+  (s/keys :req-un [::file ::width ::height ::mimetype] :opt-un [::us/id]))
 
 (defn create-image
   [{user :identity params :route-params  data :data}]
-  (let [{:keys [file id width height] :as data} (us/conform ::create-image data)
+  (let [{:keys [file id width height mimetype] :as data} (us/conform ::create-image data)
         id (or id (uuid/random))
         filename (paths/base-name file)
         storage media/images-storage]
@@ -95,6 +97,7 @@
                            :user user
                            :width width
                            :height height
+                           :mimetype mimetype
                            :collection (uuid/from-string (:id params))
                            :name filename
                            :path (str path)}))

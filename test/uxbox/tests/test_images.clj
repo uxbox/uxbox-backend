@@ -95,6 +95,7 @@
                 :path "some/path"
                 :width 100
                 :height 100
+                :mimetype "image/png"
                 :collection nil}
           img (images/create-image conn data)]
       (with-server {:handler (urt/app)}
@@ -114,6 +115,7 @@
                 :path "some/path"
                 :width 100
                 :height 100
+                :mimetype "image/png"
                 :collection nil}
           img (images/create-image conn data)]
       (with-server {:handler (urt/app)}
