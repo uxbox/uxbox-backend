@@ -31,6 +31,12 @@
                           :quality 92
                           :format "jpg"})
 
+(def populate-thumbnails
+  #(images/populate-thumbnails % +thumbnail-options+))
+
+(def populate-urls
+  #(images/populate-urls % media/images-storage :path :url))
+
 ;; --- Create Collection
 
 (s/def ::create-collection
@@ -105,16 +111,9 @@
                            :name filename
                            :path (str path)}))
 
-            (populate-thumbnails [entry]
-              (images/populate-thumbnails entry +thumbnail-options+))
-
-            (populate-urls [v]
-              (images/populate-urls v storage :path :url))
-
             (create-response [entry]
               (let [loc (str "/api/library/images/" (:id entry))]
                 (http/created loc (rsp entry))))]
-
       (->> (st/save storage filename file)
            (p/mapcat persist-image-entry)
            (p/map populate-thumbnails)
@@ -148,12 +147,17 @@
 
 ;; --- List collections
 
+(s/def ::list-images
+  (s/keys :opt-un [::us/id]))
+
 (defn list-images
   [{user :identity route-params :route-params}]
-  (let [params {:collection (uuid/from-string (:id route-params))
-                :user user
-                :type :list-images}
-        thumbnail-opts +thumbnail-options+
-        populate-thumbnails-url #(images/populate-thumbnails % thumbnail-opts)]
+  (let [{:keys [id]} (us/conform ::list-images route-params)
+        params {:collection id
+                :type :list-images
+                :user user}]
     (->> (sv/query params)
-         (p/map #(http/ok (rsp (map populate-thumbnails-url %)))))))
+         (p/map (partial map populate-thumbnails))
+         (p/map (partial map populate-urls))
+         (p/map rsp)
+         (p/map http/ok))))
