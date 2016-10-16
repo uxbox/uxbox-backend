@@ -96,11 +96,13 @@
        [:get "library/image-collections" #'images/list-collections]
        [:post "library/image-collections" #'images/create-collection]
        [:get "library/image-collections/:id/images" #'images/list-images]
-       [:post "library/image-collections/:id/images" #'images/create-image]
+       [:get "library/image-collections/images" #'images/list-images]
 
        ;; Images
        [:delete "library/images/:id" #'images/delete-image]
+       [:get "library/images/:id" #'images/retrieve-image]
        [:put "library/images/:id" #'images/update-image]
+       [:post "library/images" #'images/create-image]
 
        ;; Color Collections
        [:put "library/color-collections/:id" #'colors/update-collection]
@@ -116,6 +118,7 @@
        [:delete "pages/:id" #'pages/delete-page]
        [:post "pages" #'pages/create-page]
 
+       ;; Profile
        [:get "profile/me" #'users/retrieve-profile]
        [:put "profile/me" #'users/update-profile]
        [:put "profile/me/password" #'users/update-password]
