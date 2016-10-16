@@ -87,7 +87,22 @@
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
-;; --- Create image
+;; --- Retrieve Image
+
+(s/def ::retrieve-image
+  (s/keys :req-un [::us/id]))
+
+(defn retrieve-image
+  [{user :identity params :route-params}]
+  (let [params (us/conform ::retrieve-image params)
+        params (assoc params :user user :type :retrieve-image)]
+    (->> (sv/query params)
+         (p/map populate-thumbnails)
+         (p/map populate-urls)
+         (p/map rsp)
+         (p/map http/ok))))
+
+;; --- Create Image
 
 (s/def ::create-image
   (s/keys :req-un [::file ::width ::height ::mimetype]
