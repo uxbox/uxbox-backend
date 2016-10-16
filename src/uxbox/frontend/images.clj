@@ -127,7 +127,7 @@
 
 (defn update-image
   [{user :identity params :route-params data :data}]
-  (let [data (s/conform ::update-image data)
+  (let [data (us/conform ::update-image data)
         message (assoc data
                        :id (uuid/from-string (:id params))
                        :type :update-image
