@@ -26,7 +26,7 @@
 (s/def ::mimetype string?)
 (s/def ::user uuid?)
 (s/def ::path string?)
-(s/def ::collection uuid?)
+(s/def ::collection (s/nilable uuid?))
 
 ;; --- Create Collection
 
