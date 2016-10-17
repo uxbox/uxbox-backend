@@ -187,7 +187,6 @@
 (defn get-images-by-user
   [conn user collection]
   (let [sqlv (sql/get-images {:user user :collection collection})]
-    (println sqlv)
     (->> (sc/fetch conn sqlv)
          (map data/normalize-attrs))))
 
