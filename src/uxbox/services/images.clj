@@ -100,6 +100,23 @@
   (with-open [conn (db/connection)]
     (delete-collection conn params)))
 
+;; --- Retrieve Image
+
+(defn retrieve-image
+  [conn {:keys [user id]}]
+  (let [sqlv (sql/get-image {:user user :id id})]
+    (->> (sc/fetch-one conn sqlv)
+         (data/normalize-attrs))))
+
+(s/def ::retrieve-image
+  (s/keys :req-un [::user ::us/id]))
+
+(defmethod core/query :retrieve-image
+  [params]
+  (s/assert ::retrieve-image params)
+  (with-open [conn (db/connection)]
+    (retrieve-image conn params)))
+
 ;; --- Create Image (Upload)
 
 (defn create-image
