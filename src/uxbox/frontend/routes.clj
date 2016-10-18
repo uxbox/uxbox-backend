@@ -20,6 +20,7 @@
             [uxbox.frontend.pages :as pages]
             [uxbox.frontend.colors :as colors]
             [uxbox.frontend.images :as images]
+            [uxbox.frontend.icons :as icons]
             [uxbox.frontend.debug-emails :as dbgemails]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
@@ -103,6 +104,20 @@
        [:get "library/images/:id" #'images/retrieve-image]
        [:put "library/images/:id" #'images/update-image]
        [:post "library/images" #'images/create-image]
+
+       ;; Image Collections
+       [:put "library/icon-collections/:id" #'icons/update-collection]
+       [:delete "library/icon-collections/:id" #'icons/delete-collection]
+       [:get "library/icon-collections" #'icons/list-collections]
+       [:post "library/icon-collections" #'icons/create-collection]
+       [:get "library/icon-collections/:id/icons" #'icons/list-icons]
+       [:get "library/icon-collections/icons" #'icons/list-icons]
+
+       ;; Icons
+       [:delete "library/icons/:id" #'icons/delete-icon]
+       [:get "library/icons/:id" #'icons/retrieve-icon]
+       [:put "library/icons/:id" #'icons/update-icon]
+       [:post "library/icons" #'icons/create-icon]
 
        ;; Color Collections
        [:put "library/color-collections/:id" #'colors/update-collection]

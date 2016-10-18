@@ -47,6 +47,10 @@
   "Create initial tables for image collections."
   :up (mg/resource "migrations/0007.images.up.sql"))
 
+(defmigration icons-0008
+  "Create initial tables for image collections."
+  :up (mg/resource "migrations/0008.icons.up.sql"))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Entry point
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,7 +64,8 @@
            [:0004 pages-0004]
            [:0005 color-collections-0005]
            [:0006 emails-queue-0006]
-           [:0007 images-0007]]})
+           [:0007 images-0007]
+           [:0008 icons-0008]]})
 
 (defn- migrate
   []
