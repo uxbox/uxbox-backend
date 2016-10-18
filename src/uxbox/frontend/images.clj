@@ -97,10 +97,13 @@
   (let [params (us/conform ::retrieve-image params)
         params (assoc params :user user :type :retrieve-image)]
     (->> (sv/query params)
-         (p/map populate-thumbnails)
-         (p/map populate-urls)
-         (p/map rsp)
-         (p/map http/ok))))
+         (p/map (fn [result]
+                  (if result
+                    (-> (populate-thumbnails result)
+                        (populate-urls)
+                        (rsp)
+                        (http/ok))
+                    (http/not-found "")))))))
 
 ;; --- Create Image
 
