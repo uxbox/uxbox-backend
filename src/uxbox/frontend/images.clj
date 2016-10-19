@@ -140,7 +140,7 @@
 ;; --- Update Image
 
 (s/def ::update-image
-  (s/keys :req-un [::us/name ::us/version] :opt-un [::us/id]))
+  (s/keys :req-un [::us/name ::us/version ::collection] :opt-un [::us/id]))
 
 (defn update-image
   [{user :identity params :route-params data :data}]

@@ -46,6 +46,7 @@ returning *;
 -- :name update-icon :<! :1
 update icons
    set name = :name,
+       collection = :collection,
        version = :version
  where id = :id and "user" = :user
 returning *;

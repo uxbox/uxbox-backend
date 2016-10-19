@@ -105,7 +105,7 @@
 ;; --- Update Icon
 
 (s/def ::update-icon
-  (s/keys :req-un [::us/name ::us/version] :opt-un [::us/id]))
+  (s/keys :req-un [::us/name ::us/version ::collection] :opt-un [::us/id]))
 
 (defn update-icon
   [{user :identity params :route-params data :data}]

@@ -142,8 +142,9 @@
 ;; --- Update Icon
 
 (defn update-icon
-  [conn {:keys [id name version user]}]
+  [conn {:keys [id name version user collection]}]
   (let [sqlv (sql/update-icon {:id id
+                               :collection collection
                                :name name
                                :user user
                                :version version})]
@@ -152,7 +153,7 @@
             (decode-metadata))))
 
 (s/def ::update-icon
-  (s/keys :req-un [::us/id ::user ::us/name ::us/version]))
+  (s/keys :req-un [::us/id ::user ::us/name ::us/version ::collection]))
 
 (defmethod core/novelty :update-icon
   [params]

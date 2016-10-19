@@ -44,6 +44,7 @@ returning *;
 -- :name update-image :<! :1
 update images
    set name = :name,
+       collection = :collection,
        version = :version
  where id = :id and "user" = :user
 returning *;

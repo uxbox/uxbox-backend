@@ -147,8 +147,9 @@
 ;; --- Update Image
 
 (defn update-image
-  [conn {:keys [id name version user]}]
+  [conn {:keys [id name version user collection]}]
   (let [sqlv (sql/update-image {:id id
+                                :collection collection
                                 :name name
                                 :user user
                                 :version version})]
@@ -156,7 +157,7 @@
             (data/normalize-attrs))))
 
 (s/def ::update-image
-  (s/keys :req-un [::user ::us/name ::path ::us/version]
+  (s/keys :req-un [::user ::us/name ::us/version ::collection]
           :opt-un [::us/id]))
 
 (defmethod core/novelty :update-image
