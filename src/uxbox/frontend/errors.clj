@@ -24,7 +24,11 @@
 
 (defmethod handle-exception :validation
   [err]
-  (let [response (select-keys (ex-data err) [:type :payload])]
+  (let [message (.getMessage err)
+        {:keys [type payload]} (ex-data err)
+        response {:message message
+                  :type type
+                  :payload payload}]
     (http/bad-request (rsp response))))
 
 (defmethod handle-exception :auth/wrong-credentials
