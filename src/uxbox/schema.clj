@@ -7,6 +7,7 @@
 (ns uxbox.schema
   (:refer-clojure :exclude [keyword uuid vector boolean map set])
   (:require [clojure.spec :as s]
+            [cuerdas.core :as str]
             [uxbox.util.exceptions :as ex])
   (:import java.time.Instant))
 
@@ -51,8 +52,14 @@
   (cond
     (uuid? v) v
     (string? v)
-    (if (re-matches uuid-rx v)
+    (cond
+      (re-matches uuid-rx v)
       (java.util.UUID/fromString v)
+
+      (str/empty? v)
+      nil
+
+      :else
       ::s/invalid)
     :else ::s/invalid))
 

@@ -128,7 +128,6 @@
                            :collection collection
                            :name filename
                            :path (str path)}))
-
             (create-response [entry]
               (let [loc (str "/api/library/images/" (:id entry))]
                 (http/created loc (rsp entry))))]
