@@ -25,9 +25,17 @@ update icon_collections
        deleted_at = clock_timestamp()
  where id = :id and "user" = :user;
 
+-- :name get-icons-by-collection :? :*
+select *
+  from icons as i
+ where i."user" = :user
+   and i.deleted = false
+   and i."collection" = :collection
+ order by i.created_at desc;
+
 -- :name get-icons :? :*
 select * from icons
- where "user" = :user and deleted = false and "collection" = :collection
+ where "user" = :user and deleted = false and "collection" is null
 order by created_at desc;
 
 -- :name get-icon :? :1
