@@ -38,10 +38,6 @@ select * from icons
  where "user" = :user and deleted = false and "collection" is null
 order by created_at desc;
 
--- :name get-icon :? :1
-select * from icons
- where "user" = :user and id = :id and deleted = false;
-
 -- :name create-icon :<! :1
 insert into icons ("user", name, collection, metadata, content)
 values (:user, :name, :collection, :metadata, :content)
