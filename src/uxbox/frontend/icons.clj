@@ -95,6 +95,7 @@
                       :type :create-icon
                       :user user
                       :name name
+                      :collection collection
                       :metadata metadata
                       :content content})
          (p/map (fn [entry]
