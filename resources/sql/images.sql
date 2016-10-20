@@ -22,9 +22,14 @@ update image_collections
        deleted_at = clock_timestamp()
  where id = :id and "user" = :user;
 
--- :name get-images :? :*
+-- :name get-images-by-collection :? :*
 select * from images
  where "user" = :user and deleted = false and "collection" = :collection
+order by created_at desc;
+
+-- :name get-images :? :*
+select * from images
+ where "user" = :user and deleted = false and "collection" is null
 order by created_at desc;
 
 -- :name get-image :? :1
