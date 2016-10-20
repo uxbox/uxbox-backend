@@ -19,6 +19,7 @@
 (load "services/projects")
 (load "services/pages")
 (load "services/images")
+(load "services/icons")
 (load "services/colors")
 
 ;; --- Implementation
