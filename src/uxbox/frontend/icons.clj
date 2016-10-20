@@ -81,19 +81,6 @@
     (-> (sv/query params)
         (p/then #(http/ok (rsp %))))))
 
-;; --- Retrieve Icon
-
-(s/def ::retrieve-icon
-  (s/keys :req-un [::us/id]))
-
-(defn retrieve-icon
-  [{user :identity params :route-params}]
-  (let [params (us/conform ::retrieve-icon params)
-        params (assoc params :user user :type :retrieve-icon)]
-    (->> (sv/query params)
-         (p/map rsp)
-         (p/map http/ok))))
-
 ;; --- Create Icon
 
 (s/def ::create-icon
