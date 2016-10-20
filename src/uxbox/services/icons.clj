@@ -23,12 +23,16 @@
 
 (s/def ::user uuid?)
 (s/def ::collection (s/nilable uuid?))
-(s/def ::width (s/and integer? pos?))
-(s/def ::height (s/and integer? pos?))
-(s/def ::view-box vector?)
+(s/def ::width (s/and number? pos?))
+(s/def ::height (s/and number? pos?))
+(s/def ::view-box (s/and (s/coll-of number?)
+                         #(= 4 (count %))
+                         vector?))
+
 (s/def ::content string?)
+(s/def ::mimetype string?)
 (s/def ::metadata
-  (s/keys :opt-un [::width ::height ::view-box]))
+  (s/keys :opt-un [::width ::height ::view-box ::mimetype]))
 
 (defn decode-metadata
   [{:keys [metadata] :as data}]
