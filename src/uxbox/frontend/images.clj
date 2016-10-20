@@ -150,6 +150,8 @@
                        :type :update-image
                        :user user)]
     (->> (sv/novelty message)
+         (p/map populate-thumbnails)
+         (p/map populate-urls)
          (p/map #(http/ok (rsp %))))))
 
 ;; --- Delete Image
