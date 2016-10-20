@@ -18,7 +18,17 @@
 ;; --- Constants & Config
 
 (s/def ::collection (s/nilable ::us/uuid-string))
-(s/def ::metadata map?)
+
+(s/def ::width (s/and number? pos?))
+(s/def ::height (s/and number? pos?))
+(s/def ::view-box (s/and (s/coll-of number?)
+                         #(= 4 (count %))
+                         vector?))
+
+(s/def ::mimetype string?)
+(s/def ::metadata
+  (s/keys :opt-un [::width ::height ::view-box ::mimetype]))
+
 (s/def ::content string?)
 
 ;; --- Create Collection
