@@ -12,9 +12,12 @@ update icon_collections
 returning *;
 
 -- :name get-icon-collections :? :*
-select * from icon_collections
- where "user" = :user and deleted = false
-order by created_at desc;
+select *,
+       (select count(*) from icons where collection = ic.id) as num_icons
+  from icon_collections as ic
+ where ic."user" = :user
+   and ic.deleted = false
+ order by ic.created_at desc;
 
 -- :name delete-icon-collection :! :n
 update icon_collections
