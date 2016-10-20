@@ -112,23 +112,6 @@
   (with-open [conn (db/connection)]
     (delete-collection conn params)))
 
-;; --- Retrieve Icon
-
-(defn retrieve-icon
-  [conn {:keys [user id]}]
-  (let [sqlv (sql/get-icon {:user user :id id})]
-    (->> (sc/fetch-one conn sqlv)
-         (data/normalize-attrs))))
-
-(s/def ::retrieve-icon
-  (s/keys :req-un [::user ::us/id]))
-
-(defmethod core/query :retrieve-icon
-  [params]
-  (s/assert ::retrieve-icon params)
-  (with-open [conn (db/connection)]
-    (retrieve-icon conn params)))
-
 ;; --- Create Icon (Upload)
 
 (defn create-icon
