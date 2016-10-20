@@ -48,7 +48,7 @@
         params {:id id :user user :name name}
         sqlv (sql/create-icon-collection params)]
     (-> (sc/fetch-one conn sqlv)
-        (data/normalize-attrs))))
+        (data/normalize))))
 
 (s/def ::create-icon-collection
   (s/keys :req-un [::user ::us/name]
@@ -69,7 +69,7 @@
                                            :name name
                                            :version version})]
     (some-> (sc/fetch-one conn sqlv)
-            (data/normalize-attrs))))
+            (data/normalize))))
 
 (s/def ::update-icon-collection
   (s/keys :req-un [::user ::us/name ::us/version]
@@ -87,7 +87,7 @@
   [conn user]
   (let [sqlv (sql/get-icon-collections {:user user})]
     (->> (sc/fetch conn sqlv)
-         (map data/normalize-attrs))))
+         (map data/normalize))))
 
 (defmethod core/query :list-icon-collections
   [{:keys [user] :as params}]
@@ -116,7 +116,7 @@
 
 (defn create-icon
   [conn {:keys [id user name collection
-                metadata content]}]
+                metadata content] :as params}]
   (let [id (or id (uuid/random))
         params {:id id
                 :name name
@@ -126,7 +126,7 @@
                 :user user}
         sqlv (sql/create-icon params)]
     (some-> (sc/fetch-one conn sqlv)
-            (data/normalize-attrs)
+            (data/normalize)
             (decode-metadata))))
 
 (s/def ::create-icon
@@ -148,7 +148,7 @@
                                :user user
                                :version version})]
     (some-> (sc/fetch-one conn sqlv)
-            (data/normalize-attrs)
+            (data/normalize)
             (decode-metadata))))
 
 (s/def ::update-icon
@@ -181,9 +181,12 @@
 
 (defn get-icons-by-user
   [conn user collection]
-  (let [sqlv (sql/get-icons {:user user :collection collection})]
+  (let [sqlv (if collection
+               (sql/get-icons-by-collection {:user user :collection collection})
+               (sql/get-icons {:user user}))]
     (->> (sc/fetch conn sqlv)
-         (map data/normalize-attrs))))
+         (map data/normalize)
+         (map decode-metadata))))
 
 (s/def ::list-icons
   (s/keys :req-un [::user ::collection]))

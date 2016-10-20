@@ -33,7 +33,12 @@
               x))]
     (walk/postwalk walker m)))
 
-
 (defn strip-delete-attrs
   [m]
   (dissoc m :deleted :deleted-at))
+
+(defn normalize
+  "Perform a common normalization transformation
+  for a entity (database retrieved) data structure."
+  [m]
+  (-> m normalize-attrs strip-delete-attrs))
