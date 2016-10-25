@@ -12,9 +12,11 @@ update image_collections
 returning *;
 
 -- :name get-image-collections :? :*
-select * from image_collections
+select *,
+       (select count(*) from images where collection = ic.id) as num_images
+  from image_collections as ic
  where "user" = :user and deleted = false
-order by created_at desc;
+ order by created_at desc;
 
 -- :name delete-image-collection :! :n
 update image_collections
