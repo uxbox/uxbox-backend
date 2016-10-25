@@ -1,8 +1,8 @@
 (ns storages.tests
   (:require [clojure.test :as t]
             [storages.core :as st]
-            [storages.fs :as fs]
-            [storages.misc :as misc])
+            [storages.fs.local :as fs]
+            [storages.fs.misc :as misc])
   (:import java.io.File
            org.apache.commons.io.FileUtils))
 

@@ -1,0 +1,55 @@
+{:icons
+ [{:name "Material Design (Action)"
+   :import-type :dir
+   :path "./material/action/svg/production"
+   :regex #"^.*_48px\.svg$"}]
+
+ :images
+ [{:name "Generic Collection 1"
+   :import-type :dir
+   :path "./my-images/collection1/"
+   :regex #"^.*\.(png|jpg|webp)$"}
+  {:name "Realistic Shots"
+   :import-type :list
+   :data
+   {"Foo" "https://s3-us-west-1.amazonaws.com/realisticshots/2016/0250.jpg"
+    "Bar" "https://s3-us-west-1.amazonaws.com/realisticshots/2016/0239.jpg"}}]
+
+ :colors
+ [{:name "Grays"
+   :colors #{"#D3D3D3"
+             "#C0C0C0"
+             "#A9A9A9"
+             "#DCDCDC"
+             "#808080"
+             "#696969"
+             "#000000"}}
+  {:name "Silver"
+   :colors #{"#D3D3D3"
+             "#C0C0C0"
+             "#A9A9A9"
+             "#808080"}}
+  {:name "Blues"
+   :colors #{"#F0F8FF"
+             "#E6E6FA"
+             "#B0E0E6"
+             "#ADD8E6"
+             "#87CEFA"
+             "#87CEEB"
+             "#00BFFF"
+             "#B0C4DE"
+             "#1E90FF"
+             "#6495ED"
+             "#4682B4"
+             "#5F9EA0"
+             "#7B68EE"
+             "#6A5ACD"
+             "#483D8B"
+             "#4169E1"
+             "#0000FF"
+             "#0000CD"
+             "#00008B"
+             "#000080"
+             "#191970"
+             "#8A2BE2"
+             "#4B0082"}}]}
