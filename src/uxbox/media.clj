@@ -10,8 +10,8 @@
             [clojure.java.io :as io]
             [cuerdas.core :as str]
             [storages.core :as st]
-            [storages.fs :refer (filesystem)]
-            [storages.misc :refer (hashed scoped)]
+            [storages.fs.local :refer (filesystem)]
+            [storages.fs.misc :refer (hashed scoped)]
             [uxbox.config :refer (config)]))
 
 ;; --- State
