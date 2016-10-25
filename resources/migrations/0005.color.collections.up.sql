@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS color_collections (
   deleted boolean DEFAULT false,
   version bigint NOT NULL DEFAULT 0,
 
-  "user" uuid NOT NULL REFERENCES users(id),
+  "user" uuid REFERENCES users(id),
   name text NOT NULL,
   data bytea NOT NULL
 ) WITH (OIDS=FALSE);

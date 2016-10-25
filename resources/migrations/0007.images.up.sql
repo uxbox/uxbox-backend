@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS image_collections (
 
   version bigint NOT NULL DEFAULT 0,
 
-  "user" uuid NOT NULL REFERENCES users(id),
+  "user" uuid REFERENCES users(id),
   name text NOT NULL,
 
   deleted boolean NOT NULL DEFAULT false
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS images (
   mimetype text NOT NULL,
 
   version bigint NOT NULL DEFAULT 0,
-  "user" uuid NOT NULL REFERENCES users(id),
+  "user" uuid REFERENCES users(id),
 
   collection uuid REFERENCES image_collections(id)
                   ON DELETE SET NULL
