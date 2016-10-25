@@ -12,6 +12,10 @@
   "Alias for clj-uuid/v4."
   uuid/v4)
 
+(defn namespaced
+  [ns data]
+  (uuid/v5 ns data))
+
 (defn from-string
   "Parse string uuid representation into proper UUID instance."
   [s]
