@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns storages.misc
+(ns storages.fs.misc
   "A local filesystem storage implementation."
   (:require [promesa.core :as p]
             [cuerdas.core :as str]
@@ -14,7 +14,7 @@
             [buddy.core.hash :as hash]
             [storages.proto :as pt]
             [storages.impl :as impl]
-            [storages.fs :as fs])
+            [storages.fs.local :as localfs])
   (:import java.io.InputStream
            java.io.OutputStream
            java.nio.file.Path
@@ -49,7 +49,7 @@
          (p/map (fn [^Path base]
                   (let [base (pt/-path [base prefix])]
                     (->> (pt/-path path)
-                         (fs/normalize-path base))))))))
+                         (localfs/normalize-path base))))))))
 
 (defn scoped
   "Create a composed storage instance that automatically prefixes

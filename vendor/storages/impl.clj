@@ -7,6 +7,7 @@
 (ns storages.impl
   "Implementation details and helpers."
   (:require [storages.proto :as pt]
+            [storages.util :as util]
             [buddy.core.codecs :as codecs]
             [clojure.java.io :as io])
   (:import java.io.File
@@ -16,51 +17,7 @@
            java.net.URI
            java.nio.file.Path
            java.nio.file.Paths
-           java.nio.file.Files
-           java.nio.file.LinkOption
-           java.nio.file.OpenOption
-           java.nio.file.StandardOpenOption
-           java.nio.file.attribute.FileAttribute
-           java.nio.file.attribute.PosixFilePermissions))
-
-;; --- Constants
-
-(def open-opts
-  (->> [StandardOpenOption/CREATE_NEW
-        StandardOpenOption/WRITE]
-       (into-array OpenOption)))
-
-(def link-opts
-  (into-array LinkOption [LinkOption/NOFOLLOW_LINKS]))
-
-(def file-attrs
-  (let [perms (PosixFilePermissions/fromString "rwxr-xr-x")
-        attr (PosixFilePermissions/asFileAttribute perms)]
-    (into-array FileAttribute [attr])))
-
-;; --- Helpers
-
-(defn absolute?
-  [path]
-  (let [^Path path (pt/-path path)]
-    (.isAbsolute path)))
-
-(defn exists?
-  [path]
-  (let [^Path path (pt/-path path)]
-    (Files/exists path link-opts)))
-
-(defn directory?
-  [path]
-  (let [^Path path (pt/-path path)]
-    (Files/isDirectory path link-opts)))
-
-(defn create-dir
-  [path]
-  (let [^Path path (pt/-path path)]
-    (Files/createDirectories path file-attrs)))
-
-;; --- Impl
+           java.nio.file.Files))
 
 (extend-protocol pt/IContent
   String
@@ -122,14 +79,11 @@
 
 (defn- path->input-stream
   [^Path path]
-  (->> (into-array OpenOption [StandardOpenOption/READ])
-       (Files/newInputStream path)))
+  (Files/newInputStream path util/read-open-opts))
 
 (defn- path->output-stream
   [^Path path]
-  (->> (into-array OpenOption [StandardOpenOption/WRITE
-                               StandardOpenOption/CREATE])
-       (Files/newOutputStream path)))
+  (Files/newOutputStream path util/write-open-opts))
 
 (extend-type Path
   io/IOFactory

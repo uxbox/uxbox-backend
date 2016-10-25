@@ -4,13 +4,14 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns storages.fs
+(ns storages.fs.local
   "A local filesystem storage implementation."
   (:require [promesa.core :as p]
             [clojure.java.io :as io]
             [executors.core :as exec]
             [storages.proto :as pt]
-            [storages.impl :as impl])
+            [storages.impl :as impl]
+            [storages.util :as util])
   (:import java.io.InputStream
            java.io.OutputStream
            java.net.URI
@@ -19,7 +20,7 @@
 
 (defn normalize-path
   [^Path base ^Path path]
-  (if (impl/absolute? path)
+  (if (util/absolute? path)
     (throw (ex-info "Suspicios operation: absolute path not allowed."
                     {:path (str path)}))
     (let [^Path fullpath (.resolve base path)
@@ -33,11 +34,11 @@
   [base path content]
   (let [^Path path (pt/-path path)
         ^Path fullpath (normalize-path base path)]
-    (when-not (impl/exists? (.getParent fullpath))
-      (impl/create-dir (.getParent fullpath)))
+    (when-not (util/exists? (.getParent fullpath))
+      (util/make-dir! (.getParent fullpath)))
     (with-open [^InputStream source (pt/-input-stream content)
-                ^OutputStream dest (Files/newOutputStream fullpath
-                                                          impl/open-opts)]
+                ^OutputStream dest (Files/newOutputStream
+                                    fullpath util/write-open-opts)]
       (io/copy source dest)
       path)))
 
@@ -64,7 +65,7 @@
       (p/resolved
        (let [path (->> (pt/-path path)
                        (normalize-path base))]
-         (impl/exists? path)))
+         (util/exists? path)))
       (catch Exception e
         (p/rejected e))))
 
@@ -87,12 +88,12 @@
   [{:keys [basedir baseuri] :as keys}]
   (let [^Path basepath (pt/-path basedir)
         ^URI baseuri (pt/-uri baseuri)]
-    (when (and (impl/exists? basepath)
-               (not (impl/directory? basepath)))
+    (when (and (util/exists? basepath)
+               (not (util/directory? basepath)))
       (throw (ex-info "File already exists." {})))
 
-    (when-not (impl/exists? basepath)
-      (impl/create-dir basepath))
+    (when-not (util/exists? basepath)
+      (util/make-dir! basepath))
 
     (->FileSystemStorage basepath baseuri)))
 

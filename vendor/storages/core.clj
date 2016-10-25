@@ -7,7 +7,6 @@
 (ns storages.core
   "A storages abstraction layer."
   (:require [storages.proto :as pt]
-            [storages.fs :as fs]
             [storages.impl]))
 
 (defn save
