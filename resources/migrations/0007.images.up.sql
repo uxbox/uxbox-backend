@@ -1,48 +1,55 @@
-CREATE TABLE IF NOT EXISTS image_collections (
+-- Tables
+
+CREATE TABLE IF NOT EXISTS images_collections (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "user" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  deleted_at timestamptz DEFAULT NULL,
+  version bigint NOT NULL DEFAULT 0,
+
+  name text NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS images (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "user" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz DEFAULT NULL,
 
   version bigint NOT NULL DEFAULT 0,
-
-  "user" uuid REFERENCES users(id),
-  name text NOT NULL,
-
-  deleted boolean NOT NULL DEFAULT false
-) WITH (OIDS=FALSE);
-
-CREATE TRIGGER image_collections_occ_tgr BEFORE UPDATE ON image_collections
-  FOR EACH ROW EXECUTE PROCEDURE handle_occ();
-
-CREATE TRIGGER image_collections_modified_at_tgr BEFORE UPDATE ON image_collections
-  FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
-
-CREATE TABLE IF NOT EXISTS images (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  deleted_at timestamptz DEFAULT NULL,
 
   width int NOT NULL,
   height int NOT NULL,
   mimetype text NOT NULL,
-
-  version bigint NOT NULL DEFAULT 0,
-  "user" uuid REFERENCES users(id),
-
-  collection uuid REFERENCES image_collections(id)
+  collection uuid REFERENCES images_collections(id)
                   ON DELETE SET NULL
                   DEFAULT NULL,
-
   name text NOT NULL,
-  path text NOT NULL,
+  path text NOT NULL
+);
 
-  deleted boolean NOT NULL DEFAULT false
-) WITH (OIDS=FALSE);
+-- Indexes
+
+CREATE INDEX images_collections_user_idx
+    ON images_collections ("user");
 
 CREATE INDEX images_collection_idx
     ON images (collection);
+
+CREATE INDEX images_user_idx
+    ON images ("user");
+
+-- Triggers
+
+CREATE TRIGGER images_collections_occ_tgr BEFORE UPDATE ON images_collections
+   FOR EACH ROW EXECUTE PROCEDURE handle_occ();
+
+CREATE TRIGGER images_collections_modified_at_tgr BEFORE UPDATE ON images_collections
+   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
 
 CREATE TRIGGER images_occ_tgr BEFORE UPDATE ON images
   FOR EACH ROW EXECUTE PROCEDURE handle_occ();

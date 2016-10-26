@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS txlog (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   payload bytea NOT NULL
-) WITH (OIDS=FALSE);
+);
 
 CREATE OR REPLACE FUNCTION handle_txlog_notify()
   RETURNS TRIGGER AS $notify$
@@ -14,4 +14,4 @@ CREATE OR REPLACE FUNCTION handle_txlog_notify()
 $notify$ LANGUAGE plpgsql;
 
 CREATE TRIGGER txlog_notify_tgr AFTER INSERT ON txlog
-  FOR EACH ROW EXECUTE PROCEDURE handle_txlog_notify();
+   FOR EACH ROW EXECUTE PROCEDURE handle_txlog_notify();

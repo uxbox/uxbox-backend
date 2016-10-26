@@ -110,7 +110,7 @@
               [status response] (th/http-delete user uri)]
           ;; (println "RESPONSE:" status response)
           (t/is (= 204 status))
-          (let [sqlv ["SELECT * FROM pages WHERE \"user\"=? AND deleted=false"
+          (let [sqlv ["SELECT * FROM pages WHERE \"user\"=? AND deleted_at is null"
                       (:id user)]
                 result (sc/fetch conn sqlv)]
             (t/is (empty? result))))))))

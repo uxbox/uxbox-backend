@@ -5,12 +5,13 @@ returning *;
 
 -- :name get-profile :? :1
 select * from users
- where id = :id and deleted = false;
+ where id = :id
+   and deleted_at is null;
 
 -- :name get-profile-by-username :? :1
 select * from users
  where (username = :username or email = :username)
-   and deleted = false;
+   and deleted_at is null;
 
 -- :name user-with-username-exists?
 select exists
@@ -32,16 +33,21 @@ update users
        email = :email,
        fullname = :fullname,
        metadata = :metadata
- where id = :id and deleted = false
+ where id = :id
+   and deleted_at is null
 returning *;
 
 -- :name update-profile-password :! :n
-update users set password = :password
- where id = :id and deleted = false;
+update users
+   set password = :password
+ where id = :id
+   and deleted_at is null
 
 -- :name update-profile-photo :! :n
-update users set photo = :photo
- where id = :id and deleted = false;
+update users
+   set photo = :photo
+ where id = :id
+   and deleted_at is null
 
 -- :name create-recovery-token :! :n
 insert into user_pswd_recovery ("user", token)

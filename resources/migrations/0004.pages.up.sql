@@ -2,44 +2,43 @@
 
 CREATE TABLE IF NOT EXISTS pages (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+  "user" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  project uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+
   created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   modified_at timestamptz NOT NULL DEFAULT clock_timestamp(),
   deleted_at timestamptz DEFAULT NULL,
+  version bigint DEFAULT 0,
 
-  "user" uuid NOT NULL REFERENCES users(id),
-  project uuid NOT NULL REFERENCES projects(id),
   name text NOT NULL,
   data bytea NOT NULL,
-  metadata bytea NOT NULL,
-
-  deleted boolean DEFAULT false,
-  version bigint DEFAULT 0
-) WITH (OIDS=FALSE);
+  metadata bytea NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS pages_history (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  page uuid NOT NULL REFERENCES pages(id),
-  "user" uuid NOT NULL REFERENCES users(id),
+
+  "user" uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  page uuid NOT NULL REFERENCES pages(id) ON DELETE CASCADE,
+
   created_at timestamptz NOT NULL,
   modified_at timestamptz NOT NULL,
+  version bigint NOT NULL DEFAULT 0,
 
   pinned bool NOT NULL DEFAULT false,
   label text NOT NULL DEFAULT '',
+  data bytea NOT NULL
+);
 
-  data bytea NOT NULL,
-  version bigint NOT NULL DEFAULT 0
-) WITH (OIDS=FALSE);
+-- Indexes
+
+CREATE INDEX pages_project_idx ON pages(project);
+CREATE INDEX pages_user_idx ON pages("user");
+CREATE INDEX pages_history_page_idx ON pages_history(page);
+CREATE INDEX pages_history_user_idx ON pages_history("user");
 
 -- Triggers
-
-CREATE OR REPLACE FUNCTION handle_page_delete()
-  RETURNS TRIGGER AS $pagedelete$
-  BEGIN
-    --- Delete all history entries if page is deleted.
-    DELETE FROM pages_history WHERE page = OLD.id;
-    RETURN OLD;
-  END;
-$pagedelete$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION handle_page_update()
   RETURNS TRIGGER AS $pagechange$
@@ -63,22 +62,13 @@ CREATE OR REPLACE FUNCTION handle_page_update()
 $pagechange$ LANGUAGE plpgsql;
 
 CREATE TRIGGER page_on_update_tgr BEFORE UPDATE ON pages
-  FOR EACH ROW EXECUTE PROCEDURE handle_page_update();
-
-CREATE TRIGGER page_on_delete_tgr BEFORE DELETE ON pages
-  FOR EACH ROW EXECUTE PROCEDURE handle_page_delete();
+   FOR EACH ROW EXECUTE PROCEDURE handle_page_update();
 
 CREATE TRIGGER page_occ_tgr BEFORE UPDATE ON pages
-  FOR EACH ROW EXECUTE PROCEDURE handle_occ();
+   FOR EACH ROW EXECUTE PROCEDURE handle_occ();
 
 CREATE TRIGGER pages_modified_at_tgr BEFORE UPDATE ON pages
-  FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
+   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
 
 CREATE TRIGGER pages_history_modified_at_tgr BEFORE UPDATE ON pages
-  FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
-
--- Indexes
-
-CREATE INDEX deleted_pages_idx
-  ON pages USING btree (deleted)
-  WHERE deleted = true;
+   FOR EACH ROW EXECUTE PROCEDURE update_modified_at();
