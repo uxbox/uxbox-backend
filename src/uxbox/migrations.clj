@@ -35,9 +35,6 @@
   "Create initial tables for pages."
   :up (mg/resource "migrations/0004.pages.up.sql"))
 
-(defmigration color-collections-0005
-  "Create initial tables for color collections."
-  :up (mg/resource "migrations/0005.color.collections.up.sql"))
 
 (defmigration emails-queue-0006
   "Create initial tables for emails queue."
@@ -62,7 +59,6 @@
            [:0002 auth-0002]
            [:0003 projects-0003]
            [:0004 pages-0004]
-           [:0005 color-collections-0005]
            [:0006 emails-queue-0006]
            [:0007 images-0007]
            [:0008 icons-0008]]})

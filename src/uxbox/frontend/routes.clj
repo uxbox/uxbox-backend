@@ -18,7 +18,6 @@
             [uxbox.frontend.errors :as errors]
             [uxbox.frontend.projects :as projects]
             [uxbox.frontend.pages :as pages]
-            [uxbox.frontend.colors :as colors]
             [uxbox.frontend.images :as images]
             [uxbox.frontend.icons :as icons]
             [uxbox.frontend.debug-emails :as dbgemails]
@@ -105,7 +104,7 @@
        [:put "library/images/:id" #'images/update-image]
        [:post "library/images" #'images/create-image]
 
-       ;; Image Collections
+       ;; Icon Collections
        [:put "library/icon-collections/:id" #'icons/update-collection]
        [:delete "library/icon-collections/:id" #'icons/delete-collection]
        [:get "library/icon-collections" #'icons/list-collections]
@@ -117,12 +116,6 @@
        [:delete "library/icons/:id" #'icons/delete-icon]
        [:put "library/icons/:id" #'icons/update-icon]
        [:post "library/icons" #'icons/create-icon]
-
-       ;; Color Collections
-       [:put "library/color-collections/:id" #'colors/update-collection]
-       [:delete "library/color-collections/:id" #'colors/delete-collection]
-       [:get "library/color-collections" #'colors/list-collections]
-       [:post "library/color-collections" #'colors/create-collection]
 
        ;; Pages
        [:put "pages/:id/metadata" #'pages/update-page-metadata]
