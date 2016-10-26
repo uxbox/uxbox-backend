@@ -8,6 +8,8 @@
   (:require [clj-uuid :as uuid])
   (:import java.util.UUID))
 
+(def ^:const zero uuid/+null+)
+
 (def random
   "Alias for clj-uuid/v4."
   uuid/v4)
