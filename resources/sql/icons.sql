@@ -39,6 +39,13 @@ select * from icons
    and collection is null
 order by created_at desc;
 
+-- :name get-icon :? :1
+select * from icons
+ where id = :id
+   and deleted_at is null
+   and ("user" = :user or
+        "user" = '00000000-0000-0000-0000-000000000000'::uuid);
+
 -- :name create-icon :<! :1
 insert into icons ("user", name, collection, metadata, content)
 values (:user, :name, :collection, :metadata, :content)
