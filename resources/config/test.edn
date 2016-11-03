@@ -1,9 +1,13 @@
 {:migrations
  {:verbose false}
 
- :storage
- {:basedir "/tmp/uxbox-tests"
+ :media
+ {:basedir "/tmp/uxbox/media"
   :baseuri "http://localhost:6060/media/"}
+
+ :static
+ {:basedir "/tmp/uxbox/static"
+  :baseuri "http://localhost:6060/static/"}
 
  :database
  {:adapter "postgresql"
