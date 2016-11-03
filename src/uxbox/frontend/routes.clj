@@ -20,6 +20,7 @@
             [uxbox.frontend.pages :as pages]
             [uxbox.frontend.images :as images]
             [uxbox.frontend.icons :as icons]
+            [uxbox.frontend.kvstore :as kvstore]
             [uxbox.frontend.debug-emails :as dbgemails]
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
@@ -82,6 +83,11 @@
        [:get "projects-by-token/:token" #'projects/retrieve-project-by-share-token]
 
        [:any #'authorization]
+
+       ;; KVStore
+       [:put "kvstore" #'kvstore/update]
+       [:get "kvstore/:key" #'kvstore/retrieve]
+       [:delete "kvstore/:key" #'kvstore/delete]
 
        ;; Projects
        [:get "projects/:id/pages" #'pages/list-pages-by-project]
