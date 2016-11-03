@@ -2,10 +2,10 @@
   (:require [clojure.test :as t]
             [promesa.core :as p]
             [suricatta.core :as sc]
-            [clj-uuid :as uuid]
             [catacumba.testing :refer (with-server)]
             [buddy.core.codecs :as codecs]
             [uxbox.db :as db]
+            [uxbox.util.uuid :as uuid]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.projects :as uspr]
             [uxbox.services.pages :as uspg]
@@ -42,7 +42,7 @@
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
-          data {:id (uuid/v4)
+          data {:id (uuid/random)
                 :user (:id user)
                 :project (:id proj)
                 :version 0
@@ -68,7 +68,7 @@
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
-          data {:id (uuid/v4)
+          data {:id (uuid/random)
                 :user (:id user)
                 :project (:id proj)
                 :version 0
@@ -94,7 +94,7 @@
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
-          data {:id (uuid/v4)
+          data {:id (uuid/random)
                 :user (:id user)
                 :project (:id proj)
                 :version 0
@@ -142,7 +142,7 @@
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
-          data {:id (uuid/v4)
+          data {:id (uuid/random)
                 :user (:id user)
                 :project (:id proj)
                 :version 0
@@ -184,7 +184,7 @@
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})
-          data {:id (uuid/v4)
+          data {:id (uuid/random)
                 :user (:id user)
                 :project (:id proj)
                 :version 0
