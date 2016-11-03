@@ -7,16 +7,11 @@
 (ns uxbox.util.tempfile
   "A temporal file abstractions."
   (:require [storages.core :as st]
-            [uxbox.util.paths :as paths])
-  (:import java.nio.file.Files
-           java.nio.file.Path
-           java.nio.file.attribute.FileAttribute
-           java.nio.file.attribute.PosixFilePermissions))
+            [storages.util :as path])
+  (:import [java.nio.file Files]))
 
 (defn create
   "Create a temporal file."
   [& {:keys [suffix prefix]}]
-  (let [perms (PosixFilePermissions/fromString "rwxr-xr-x")
-        attr (PosixFilePermissions/asFileAttribute perms)
-        attrs (into-array FileAttribute [attr])]
-    (Files/createTempFile prefix suffix attrs)))
+  (->> (path/make-file-attrs "rwxr-xr-x")
+       (Files/createTempFile prefix suffix)))

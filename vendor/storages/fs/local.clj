@@ -35,7 +35,7 @@
   (let [^Path path (pt/-path path)
         ^Path fullpath (normalize-path base path)]
     (when-not (util/exists? (.getParent fullpath))
-      (util/make-dir! (.getParent fullpath)))
+      (util/create-dir! (.getParent fullpath)))
     (with-open [^InputStream source (pt/-input-stream content)
                 ^OutputStream dest (Files/newOutputStream
                                     fullpath util/write-open-opts)]
@@ -69,6 +69,11 @@
       (catch Exception e
         (p/rejected e))))
 
+  pt/IClearableStorage
+  (-clear [_]
+    (util/delete-dir! base)
+    (util/create-dir! base))
+
   pt/ILocalStorage
   (-lookup [_ path']
     (try
@@ -93,7 +98,7 @@
       (throw (ex-info "File already exists." {})))
 
     (when-not (util/exists? basepath)
-      (util/make-dir! basepath))
+      (util/create-dir! basepath))
 
     (->FileSystemStorage basepath baseuri)))
 

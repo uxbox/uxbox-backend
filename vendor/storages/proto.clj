@@ -22,6 +22,9 @@
   (-delete [_ path] "Delete the file by its path.")
   (-exists? [_ path] "Check if file exists by path."))
 
+(defprotocol IClearableStorage
+  (-clear [_] "clear all contents of the storage"))
+
 (defprotocol IPublicStorage
   (-public-uri [_ path] "Get a public accessible uri for path."))
 

@@ -37,6 +37,11 @@
   [storage path]
   (pt/-delete storage path))
 
+(defn clear!
+  "Clear all contents of the storage."
+  [storage]
+  (pt/-clear storage))
+
 (defn path
   "Create path from string or more than one string."
   ([fst]
