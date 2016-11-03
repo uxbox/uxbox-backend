@@ -2,12 +2,12 @@
   (:require [clojure.test :as t]
             [promesa.core :as p]
             [suricatta.core :as sc]
-            [clj-uuid :as uuid]
             [clojure.java.io :as io]
             [catacumba.testing :refer (with-server)]
-            [buddy.core.codecs :as codecs]
+            [storages.core :as st]
             [uxbox.db :as db]
             [uxbox.sql :as sql]
+            [uxbox.media :as media]
             [uxbox.frontend.routes :as urt]
             [uxbox.services.images :as images]
             [uxbox.services :as usv]
@@ -106,6 +106,33 @@
           (t/is (= 200 status))
           (t/is (= (:user data) (:id user)))
           (t/is (= (:name data) "my stuff")))))))
+
+(t/deftest test-http-copy-image
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)
+          storage media/images-storage
+          filename "sample.jpg"
+          rcs (io/resource "uxbox/tests/_files/sample.jpg")
+          path @(st/save storage filename rcs)
+          data {:user (:id user)
+                :name filename
+                :path (str path)
+                :width 100
+                :height 100
+                :mimetype "image/jpg"
+                :collection nil}
+          img (images/create-image conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/library/images/copy")
+              body {:id (:id img)
+                    :collection nil}
+              params {:body body}
+              [status data] (th/http-put user uri params)]
+          ;; (println "RESPONSE:" status data)
+          (t/is (= 200 status))
+          (let [sqlv (sql/get-images {:user (:id user) :collection nil})
+                result (sc/fetch conn sqlv)]
+            (t/is (= 2 (count result)))))))))
 
 (t/deftest test-http-delete-image
   (with-open [conn (db/connection)]

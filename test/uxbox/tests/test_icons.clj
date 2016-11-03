@@ -111,6 +111,25 @@
           (t/is (= (:user data) (:id user)))
           (t/is (= (:name data) "my stuff")))))))
 
+(t/deftest test-http-copy-icon
+  (with-open [conn (db/connection)]
+    (let [user (th/create-user conn 1)
+          data {:user (:id user)
+                :name "test.svg"
+                :content "<g></g>"
+                :metadata {}
+                :collection nil}
+          icon (icons/create-icon conn data)]
+      (with-server {:handler (urt/app)}
+        (let [uri (str th/+base-url+ "/api/library/icons/copy")
+              body {:id (:id icon) :collection nil}
+              params {:body body}
+              [status data] (th/http-put user uri params)]
+          (println "RESPONSE:" status data)
+          (let [sqlv (sql/get-icons {:user (:id user) :collection nil})
+                result (sc/fetch conn sqlv)]
+            (t/is (= 2 (count result)))))))))
+
 (t/deftest test-http-delete-icon
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)

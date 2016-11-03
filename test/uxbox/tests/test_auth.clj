@@ -48,5 +48,6 @@
             [status data] (th/http-post uri {:body data})]
         ;; (println "RESPONSE:" status data)
         (t/is (= 400 status))
-        (t/is (= (:type data) :auth/wrong-credentials))))))
+        (t/is (= (:type data) :validation))
+        (t/is (= (:code data) :uxbox.services.auth/wrong-credentials))))))
 

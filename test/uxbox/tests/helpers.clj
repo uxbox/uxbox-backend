@@ -6,6 +6,7 @@
             [buddy.core.codecs :as codecs]
             [catacumba.serializers :as sz]
             [mount.core :as mount]
+            [storages.core :as st]
             [suricatta.core :as sc]
             [uxbox.services.auth :as usa]
             [uxbox.services.users :as usu]
@@ -42,6 +43,8 @@
   (try
     (next)
     (finally
+      (st/clear! uxbox.media/media-storage)
+      (st/clear! uxbox.media/static-storage)
       (mount/stop))))
 
 (defn ex-info?
