@@ -27,7 +27,8 @@
   []
   (let [main-secret (:secret cfg/config)]
     (when-not main-secret
-      (throw (ex-info "Missing `:secret` key in config." {})))
+      (ex/raise :code ::missing-secret-key
+                :message "Missing `:secret` key in config."))
     (hash/blake2b-256 main-secret)))
 
 (defstate secret
@@ -54,7 +55,9 @@
   (with-open [conn (db/connection)]
     (let [user (users/find-user-by-username-or-email conn username)]
       (when-not user
-        (throw (ex/ex-info :auth/wrong-credentials {})))
+        (ex/raise :type :validation
+                  :code ::wrong-credentials))
       (if (check-user-password user password)
         {:token (generate-token user)}
-        (throw (ex/ex-info :auth/wrong-credentials {}))))))
+        (ex/raise :type :validation
+                  :code ::wrong-credentials)))))

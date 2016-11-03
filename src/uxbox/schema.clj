@@ -25,9 +25,10 @@
   [spec data]
   (let [result (s/conform spec data)]
     (if (= result ::s/invalid)
-      (throw (ex/ex-info :validation
-                         (s/explain-data spec data)
-                         (s/explain-str spec data)))
+      (ex/raise :type :validation
+                :code ::invalid
+                :message (s/explain-str spec data)
+                :context (s/explain-data spec data))
       result)))
 
 ;; --- Predicates

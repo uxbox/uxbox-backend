@@ -50,11 +50,10 @@
   (let [sqlv1 (sql/user-with-email-exists? {:id id :email email})
         sqlv2 (sql/user-with-username-exists? {:id id :username username})]
     (when (:val (sc/fetch-one conn sqlv1))
-      (throw (ex/ex-info :form/validation
-                         {:email "errors.api.form.email-already-exists"})))
+      (ex/raise :type :validation
+                :code ::email-already-exists))
     (when (:val (sc/fetch-one conn sqlv2))
-      (throw (ex/ex-info :form/validation
-                         {:username "errors.api.form.username-already-exists"})))))
+      (ex/raise ::username-already-exists))))
 
 (defn- update-profile
   [conn {:keys [id username email fullname metadata] :as params}]
@@ -92,8 +91,8 @@
   [conn {:keys [user old-password] :as params}]
   (let [user (find-full-user-by-id conn user)]
     (when-not (hashers/check old-password (:password user))
-      (let [params {:old-password "errors.api.form.old-password-not-match"}]
-        (throw (ex/ex-info :form/validation params))))
+      (ex/raise :type :validation
+                :code ::old-password-not-match))
     params))
 
 (s/def ::update-password
@@ -150,26 +149,24 @@
 
 ;; --- Register User
 
-(defn- check-user-registred
+(defn- check-user-registred!
   "Check if the user identified by username or by email
   is already registred in the platform."
   [conn {:keys [username email]}]
   (let [sqlv1 (sql/user-with-email-exists? {:email email})
         sqlv2 (sql/user-with-username-exists? {:username username})]
     (when (:val (sc/fetch-one conn sqlv1))
-      (throw (ex/ex-info :form/validation
-                         {:email "errors.api.form.email-already-exists"})))
+      (ex/raise :type :validation
+                :code ::email-already-exists))
     (when (:val (sc/fetch-one conn sqlv2))
-      (throw (ex/ex-info :form/validation
-                         {:username "errors.api.form.username-already-exists"})))))
+      (ex/raise :type :validation
+                :code ::username-already-exists))))
 
 (defn- register-user
   "Create the user entry onthe database with limited input
   filling all the other fields with defaults."
   [conn {:keys [username fullname email password] :as params}]
-
-  (check-user-registred conn params)
-
+  (check-user-registred! conn params)
   (let [metadata (blob/encode (t/encode {}))
         password (hashers/encrypt password)
         sqlv (sql/create-profile {:id (uuid/random)
@@ -210,9 +207,9 @@
   [conn token]
   (let [sqlv (sql/get-recovery-token {:token token})
         data (sc/fetch-one conn sqlv)]
-    (if-let [user (:user data)]
-      user
-      (throw (ex/ex-info :service/not-found {:token token})))))
+    (or (:user data)
+        (ex/raise :type :validation
+                  :code ::invalid-token))))
 
 (defn- mark-token-as-used
   [conn token]
@@ -241,8 +238,7 @@
   [conn username]
   (let [user (find-user-by-username-or-email conn username)]
     (when-not user
-      (throw (->> {:username "errors.api.form.user-not-exists"}
-                  (ex/ex-info :form/validation))))
+      (ex/raise :type :validation :code ::user-does-not-exists))
     user))
 
 (defn- request-password-recovery

@@ -12,6 +12,7 @@
             [uxbox.sql :as sql]
             [uxbox.db :as db]
             [uxbox.services.core :as core]
+            [uxbox.util.exceptions :as ex]
             [uxbox.util.transit :as t]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.blob :as blob]

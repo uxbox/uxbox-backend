@@ -14,9 +14,14 @@
 (defmulti query :type)
 
 (defmethod novelty :default
-  [data]
-  (throw (ex/ex-info :not-implemented data)))
+  [{:keys [type] :as data}]
+  (ex/raise :code ::not-implemented
+            :message-category :novelty
+            :message-type type))
 
 (defmethod query :default
   [data]
-  (throw (ex/ex-info :not-implemented data)))
+  (ex/raise :code ::not-implemented
+            :message-category :query
+            :message-type type))
+
