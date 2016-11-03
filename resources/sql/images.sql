@@ -41,9 +41,10 @@ order by created_at desc;
 
 -- :name get-image :? :1
 select * from images
- where "user" = :user
-   and id = :id
-   and deleted_at is null;
+ where id = :id
+   and deleted_at is null
+   and ("user" = :user or
+        "user" = '00000000-0000-0000-0000-000000000000'::uuid);
 
 -- :name create-image :<! :1
 insert into images ("user", name, collection, path, width, height, mimetype)
