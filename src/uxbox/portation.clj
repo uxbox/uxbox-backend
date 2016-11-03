@@ -9,10 +9,10 @@
   (:refer-clojure :exclude [with-open])
   (:require [clojure.java.io :as io]
             [suricatta.core :as sc]
+            [storages.util :as path]
             [uxbox.db :as db]
             [uxbox.sql :as sql]
             [uxbox.util.uuid :as uuid]
-            [uxbox.util.paths :as paths]
             [uxbox.util.closeable :refer (with-open)]
             [uxbox.util.tempfile :as tmpfile]
             [uxbox.util.transit :as t]
@@ -105,7 +105,7 @@
 (defn import!
   "Given a path to the previously exported bundle, try to import it."
   [path]
-  (with-open [istream (io/input-stream (paths/path path))
+  (with-open [istream (io/input-stream (path/path path))
               zstream (snappy/input-stream istream)
               conn (db/connection)]
     (let [reader (t/reader zstream {:type :msgpack})]
