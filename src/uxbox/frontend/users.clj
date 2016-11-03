@@ -9,14 +9,14 @@
             [promesa.core :as p]
             [catacumba.http :as http]
             [storages.core :as st]
+            [storages.util :as path]
             [uxbox.media :as media]
             [uxbox.images :as images]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.services.users :as svu]
             [uxbox.util.response :refer (rsp)]
-            [uxbox.util.uuid :as uuid]
-            [uxbox.util.paths :as paths]))
+            [uxbox.util.uuid :as uuid]))
 
 ;; --- Helpers
 
@@ -80,7 +80,7 @@
 (defn update-photo
   [{user :identity data :data}]
   (letfn [(store-photo [file]
-            (let [filename (paths/base-name file)
+            (let [filename (path/base-name file)
                   storage media/images-storage]
               (st/save storage filename file)))
           (assign-photo [path]
