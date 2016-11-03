@@ -12,35 +12,20 @@
 
 (defmulti handle-exception #(:type (ex-data %)))
 
-(defmethod handle-exception :form/validation
-  [err]
-  (let [response (select-keys (ex-data err) [:type :payload])]
-    (http/bad-request (rsp response))))
-
-(defmethod handle-exception :service/not-found
-  [err]
-  (let [response (select-keys (ex-data err) [:type :payload])]
-    (http/not-found (rsp response))))
-
 (defmethod handle-exception :validation
   [err]
-  (let [message (.getMessage err)
-        {:keys [type payload]} (ex-data err)
-        response {:message message
-                  :type type
-                  :payload payload}]
-    (http/bad-request (rsp response))))
-
-(defmethod handle-exception :auth/wrong-credentials
-  [err]
-  (let [response (select-keys (ex-data err) [:type :payload])]
+  (println "\n*********** stack trace ***********")
+  (.printStackTrace err)
+  (println "\n********* end stack trace *********")
+  (let [response (ex-data err)]
     (http/bad-request (rsp response))))
 
 (defmethod handle-exception :default
   [err]
+  (println "\n*********** stack trace ***********")
   (.printStackTrace err)
-  (let [response (select-keys (ex-data err) [:type :payload])
-        response (assoc response :message (.getMessage err))]
+  (println "\n********* end stack trace *********")
+  (let [response (ex-data err)]
     (http/internal-server-error (rsp response))))
 
 ;; --- Entry Point
