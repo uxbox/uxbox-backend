@@ -77,7 +77,7 @@
   [params]
   (s/assert ::update-profile params)
   (with-open [conn (db/connection)]
-    (update-profile conn params)))
+    (sc/apply-atomic conn update-profile params)))
 
 ;; --- Update Password
 
@@ -273,8 +273,7 @@
   [params]
   (s/assert ::recover-password params)
   (with-open [conn (db/connection)]
-    (sc/atomic conn
-      (recover-password conn params))))
+    (sc/apply-atomic conn recover-password params)))
 
 ;; --- Query Helpers
 
