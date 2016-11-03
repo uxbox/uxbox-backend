@@ -99,6 +99,7 @@
        [:get "library/image-collections/images" #'images/list-images]
 
        ;; Images
+       [:put "library/images/copy" #'images/copy-image]
        [:delete "library/images/:id" #'images/delete-image]
        [:get "library/images/:id" #'images/retrieve-image]
        [:put "library/images/:id" #'images/update-image]

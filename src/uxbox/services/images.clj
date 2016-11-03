@@ -7,14 +7,18 @@
 (ns uxbox.services.images
   "Images library related services."
   (:require [clojure.spec :as s]
+            [promesa.core :as p]
             [suricatta.core :as sc]
             [buddy.core.codecs :as codecs]
             [storages.core :as st]
+            [storages.util :as path]
             [uxbox.config :as ucfg]
             [uxbox.schema :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
+            [uxbox.media :as media]
             [uxbox.services.core :as core]
+            [uxbox.util.exceptions :as ex]
             [uxbox.util.transit :as t]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.data :as data])
@@ -105,8 +109,8 @@
 (defn retrieve-image
   [conn {:keys [user id]}]
   (let [sqlv (sql/get-image {:user user :id id})]
-    (->> (sc/fetch-one conn sqlv)
-         (data/normalize-attrs))))
+    (some-> (sc/fetch-one conn sqlv)
+            (data/normalize-attrs))))
 
 (s/def ::retrieve-image
   (s/keys :req-un [::user ::us/id]))
@@ -165,6 +169,33 @@
   (s/assert ::update-image params)
   (with-open [conn (db/connection)]
     (update-image conn params)))
+
+;; --- Copy Image
+
+(s/def ::copy-image
+  (s/keys :req-un [::us/id ::collection ::user]))
+
+(declare retrieve-image)
+
+(defn- copy-image
+  [conn {:keys [user id collection]}]
+  (let [image (retrieve-image conn {:id id :user user})
+        storage media/images-storage]
+    (when-not image
+      (ex/raise :type :validation
+                :code ::image-does-not-exists))
+    (let [path @(st/lookup storage (:path image))
+          filename (path/base-name path)
+          path @(st/save storage filename path)
+          image (assoc image :path (str path))
+          image (dissoc image :id)]
+      (create-image conn image))))
+
+(defmethod core/novelty :copy-image
+  [params]
+  (s/assert ::copy-image params)
+  (with-open [conn (db/connection)]
+    (sc/apply-atomic conn copy-image params)))
 
 ;; --- Delete Image
 

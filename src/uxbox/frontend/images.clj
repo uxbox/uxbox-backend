@@ -9,13 +9,13 @@
             [promesa.core :as p]
             [catacumba.http :as http]
             [storages.core :as st]
+            [storages.util :as path]
             [uxbox.media :as media]
             [uxbox.images :as images]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.util.response :refer (rsp)]
-            [uxbox.util.uuid :as uuid]
-            [uxbox.util.paths :as paths]))
+            [uxbox.util.uuid :as uuid]))
 
 ;; --- Constants & Config
 
@@ -116,7 +116,7 @@
   (let [{:keys [file id width height
                 mimetype collection]} (us/conform ::create-image data)
         id (or id (uuid/random))
-        filename (paths/base-name file)
+        filename (path/base-name file)
         storage media/images-storage]
     (letfn [(persist-image-entry [path]
               (sv/novelty {:id id
@@ -150,6 +150,20 @@
                        :type :update-image
                        :user user)]
     (->> (sv/novelty message)
+         (p/map populate-thumbnails)
+         (p/map populate-urls)
+         (p/map #(http/ok (rsp %))))))
+
+;; --- Copy Image
+
+(s/def ::copy-image
+  (s/keys :req-un [::us/id ::collection]))
+
+(defn copy-image
+  [{user :identity data :data}]
+  (let [data (us/conform ::copy-image data)
+        params (assoc data :user user :type :copy-image)]
+    (->> (sv/novelty params)
          (p/map populate-thumbnails)
          (p/map populate-urls)
          (p/map #(http/ok (rsp %))))))
