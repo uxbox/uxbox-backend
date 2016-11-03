@@ -114,6 +114,7 @@
        [:get "library/icon-collections/icons" #'icons/list-icons]
 
        ;; Icons
+       [:put "library/icons/copy" #'icons/copy-icon]
        [:delete "library/icons/:id" #'icons/delete-icon]
        [:put "library/icons/:id" #'icons/update-icon]
        [:post "library/icons" #'icons/create-icon]

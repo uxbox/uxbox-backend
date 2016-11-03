@@ -80,7 +80,35 @@
   [params]
   (s/assert ::update-icon-collection params)
   (with-open [conn (db/connection)]
-    (update-collection conn params)))
+    (sc/apply-atomic conn update-collection params)))
+
+;; --- Copy Icon
+
+(s/def ::copy-icon
+  (s/keys :req-un [:us/id ::collection ::user]))
+
+(defn- retrieve-icon
+  [conn {:keys [user id]}]
+  (let [sqlv (sql/get-icon {:user user :id id})]
+    (some->> (sc/fetch-one conn sqlv)
+             (data/normalize-attrs))))
+
+(declare create-icon)
+
+(defn- copy-icon
+  [conn {:keys [user id collection]}]
+  (let [icon (retrieve-icon conn {:id id :user user})]
+    (when-not icon
+      (ex/raise :type :validation
+                :code ::icon-does-not-exists))
+    (let [params (dissoc icon :id)]
+      (create-icon conn params))))
+
+(defmethod core/novelty :copy-icon
+  [params]
+  (s/assert ::copy-icon params)
+  (with-open [conn (db/connection)]
+    (sc/apply-atomic conn copy-icon params)))
 
 ;; --- List Collections
 

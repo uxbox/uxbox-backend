@@ -12,8 +12,7 @@
             [uxbox.schema :as us]
             [uxbox.services :as sv]
             [uxbox.util.response :refer (rsp)]
-            [uxbox.util.uuid :as uuid]
-            [uxbox.util.paths :as paths]))
+            [uxbox.util.uuid :as uuid]))
 
 ;; --- Constants & Config
 
@@ -114,6 +113,20 @@
                        :id (uuid/from-string (:id params))
                        :type :update-icon
                        :user user)]
+    (->> (sv/novelty message)
+         (p/map #(http/ok (rsp %))))))
+
+;; --- Copy Icon
+
+(s/def ::copy-icon
+  (s/keys :req-un [:us/id ::collection]))
+
+(defn copy-icon
+  [{user :identity data :data}]
+  (let [data (us/conform ::copy-icon data)
+        message (assoc data
+                       :user user
+                       :type :copy-icon)]
     (->> (sv/novelty message)
          (p/map #(http/ok (rsp %))))))
 
