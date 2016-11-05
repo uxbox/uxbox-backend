@@ -20,7 +20,7 @@
             :message-type type))
 
 (defmethod query :default
-  [data]
+  [{:keys [type] :as data}]
   (ex/raise :code ::not-implemented
             :message-category :query
             :message-type type))
