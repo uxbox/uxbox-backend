@@ -23,6 +23,6 @@
   (with-open [conn (db/connection)]
     (sc/atomic conn
       (let [sql (str "DELETE FROM projects "
-                     " WHERE deleted=true AND "
+                     " WHERE deleted_at is not null AND "
                      "       (now()-deleted_at)::interval > '10 day'::interval;")]
         (sc/execute conn sql)))))
