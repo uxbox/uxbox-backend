@@ -2,7 +2,7 @@
 insert into kvstore (key, value, "user")
 values (:key, :value, :user)
     on conflict ("user", key)
-    do update set value = :value
+    do update set value = :value, version = :version
 returning *;
 
 -- :name retrieve-kvstore :? :1

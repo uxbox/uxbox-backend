@@ -15,6 +15,7 @@
             [uxbox.util.response :refer (rsp)]
             [uxbox.util.uuid :as uuid]))
 
+(s/def ::version integer?)
 (s/def ::key string?)
 (s/def ::value any?)
 
@@ -33,7 +34,8 @@
 
 ;; --- Update (or Create)
 
-(s/def ::update (s/keys :req-un [::key ::value]))
+(s/def ::update (s/keys :req-un [::key ::value]
+                        :opt-un [::version]))
 
 (defn update
   [{user :identity data :data}]

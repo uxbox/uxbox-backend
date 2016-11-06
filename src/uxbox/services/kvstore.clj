@@ -19,6 +19,7 @@
             [uxbox.util.blob :as blob]
             [uxbox.util.uuid :as uuid]))
 
+(s/def ::version integer?)
 (s/def ::key string?)
 (s/def ::value any?)
 (s/def ::user uuid?)
@@ -32,12 +33,14 @@
 ;; --- Update KVStore
 
 (s/def ::update-kvstore
-  (s/keys :req-un [::key ::value ::user]))
+  (s/keys :req-un [::key ::value ::user]
+          :opt-un [::version]))
 
 (defn update-kvstore
-  [conn {:keys [user key value] :as data}]
+  [conn {:keys [user key value version] :as data}]
   (let [opts {:user user
               :key key
+              :version version
               :value (-> value t/encode blob/encode)}
         sqlv (sql/update-kvstore opts)]
     (some->> (sc/fetch-one conn sqlv)
