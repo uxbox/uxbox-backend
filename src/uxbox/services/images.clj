@@ -187,7 +187,9 @@
     (let [path @(st/lookup storage (:path image))
           filename (path/base-name path)
           path @(st/save storage filename path)
-          image (assoc image :path (str path))
+          image (assoc image
+                       :path (str path)
+                       :collection collection)
           image (dissoc image :id)]
       (create-image conn image))))
 
