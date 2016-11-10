@@ -19,7 +19,7 @@
             [uxbox.util.blob :as blob]
             [uxbox.util.uuid :as uuid]))
 
-
+(s/def ::token string?)
 (s/def ::data string?)
 (s/def ::user uuid?)
 (s/def ::project uuid?)
@@ -114,8 +114,6 @@
     (when-let [id (:id project)]
       (let [pages (vec (pages/get-pages-for-project conn id))]
         (assoc project :pages pages)))))
-
-(s/def ::token string?)
 
 (defmethod core/query :retrieve-project-by-share-token
   [{:keys [token]}]
