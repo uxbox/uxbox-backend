@@ -29,7 +29,7 @@
                           :dst :thumbnail
                           :size [300 110]
                           :quality 92
-                          :format "jpg"})
+                          :format "webp"})
 
 (def populate-thumbnails
   #(images/populate-thumbnails % +thumbnail-options+))
