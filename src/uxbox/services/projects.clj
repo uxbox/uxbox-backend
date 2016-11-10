@@ -16,6 +16,7 @@
             [uxbox.services.pages :as pages]
             [uxbox.util.data :as data]
             [uxbox.util.transit :as t]
+            [uxbox.util.blob :as blob]
             [uxbox.util.uuid :as uuid]))
 
 
@@ -82,18 +83,26 @@
 
 ;; --- List Projects
 
-(defn get-projects-for-user
+(declare decode-page-metadata)
+(declare decode-page-data)
+
+(defn get-projects
   [conn user]
   (let [sqlv (sql/get-projects {:user user})]
     (->> (sc/fetch conn sqlv)
-         (map data/normalize-attrs)
-         (map data/strip-delete-attrs))))
+         (map data/normalize)
+
+         ;; This is because the project comes with
+         ;; the first page preloaded and it need
+         ;; to be decoded.
+         (map decode-page-metadata)
+         (map decode-page-data))))
 
 (defmethod core/query :list-projects
   [{:keys [user] :as params}]
   (s/assert ::user user)
   (with-open [conn (db/connection)]
-    (get-projects-for-user conn user)))
+    (get-projects conn user)))
 
 ;; --- Retrieve Project by share token
 
@@ -121,5 +130,20 @@
   (s/assert ::project project)
   (let [sqlv (sql/get-share-tokens-for-project {:project project})]
     (->> (sc/fetch conn sqlv)
-         (map data/normalize-attrs)
-         (map data/strip-delete-attrs))))
+         (map data/normalize))))
+
+;; Helpers
+
+(defn- decode-page-metadata
+  [{:keys [page-metadata] :as result}]
+  (s/assert ::us/bytes page-metadata)
+  (merge result (when page-metadata
+                  {:page-metadata (blob/decode->str page-metadata)})))
+
+(defn- decode-page-data
+  [{:keys [page-data] :as result}]
+  (s/assert ::us/bytes page-data)
+  (merge result (when page-data
+                  {:page-data (blob/decode->str page-data)})))
+
+
