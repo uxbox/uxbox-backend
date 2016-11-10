@@ -35,7 +35,7 @@
 
 (defn strip-delete-attrs
   [m]
-  (dissoc m :deleted :deleted-at))
+  (dissoc m :deleted-at))
 
 (defn normalize
   "Perform a common normalization transformation

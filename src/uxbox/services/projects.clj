@@ -31,8 +31,7 @@
   (let [id (or id (uuid/random))
         sqlv (sql/create-project {:id id :user user :name name})]
     (some-> (sc/fetch-one conn sqlv)
-            (data/normalize-attrs)
-            (data/strip-delete-attrs))))
+            (data/normalize))))
 
 (s/def ::create-project
   (s/keys :req-un [::user ::us/name]
@@ -53,8 +52,7 @@
                                   :id id
                                   :user user})]
     (some-> (sc/fetch-one conn sqlv)
-            (data/normalize-attrs)
-            (data/strip-delete-attrs))))
+            (data/normalize))))
 
 (s/def ::update-project
   (s/merge ::create-project (s/keys :req-un [::us/version])))
@@ -110,7 +108,7 @@
   [conn token]
   (let [sqlv (sql/get-project-by-share-token {:token token})
         project (some-> (sc/fetch-one conn sqlv)
-                        (data/normalize-attrs))]
+                        (data/normalize))]
     (when-let [id (:id project)]
       (let [pages (vec (pages/get-pages-for-project conn id))]
         (assoc project :pages pages)))))
