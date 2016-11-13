@@ -25,8 +25,8 @@
 
 ;; --- Create Page
 
-(s/def ::data string?)
-(s/def ::metadata string?)
+(s/def ::data any?)
+(s/def ::metadata any?)
 (s/def ::project ::us/id)
 (s/def ::create-page
   (s/keys :req-un [::data ::metadata ::project ::us/name]
@@ -84,7 +84,6 @@
         (p/then (fn [v] (http/no-content))))))
 
 ;; --- Retrieve Page History
-
 
 (s/def ::max (s/and ::us/integer-string ::us/positive-integer))
 (s/def ::since ::us/integer-string)

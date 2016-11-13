@@ -24,10 +24,10 @@
 (declare decode-page-metadata)
 (declare encode-data)
 
-(s/def ::data string?)
+(s/def ::data any?)
 (s/def ::user uuid?)
 (s/def ::project uuid?)
-(s/def ::metadata string?)
+(s/def ::metadata any?)
 (s/def ::max integer?)
 (s/def ::pinned boolean?)
 (s/def ::since integer?)

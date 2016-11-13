@@ -42,7 +42,7 @@
 ;; --- Update Profile
 
 (s/def ::fullname string?)
-(s/def ::metadata string?)
+(s/def ::metadata any?)
 (s/def ::update-profile
   (s/keys :req-un [::us/id ::us/username ::us/email
                    ::fullname ::metadata]))
