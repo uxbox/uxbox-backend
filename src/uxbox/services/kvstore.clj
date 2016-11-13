@@ -33,8 +33,7 @@
 ;; --- Update KVStore
 
 (s/def ::update-kvstore
-  (s/keys :req-un [::key ::value ::user]
-          :opt-un [::version]))
+  (s/keys :req-un [::key ::value ::user ::version]))
 
 (defn update-kvstore
   [conn {:keys [user key value version] :as data}]
