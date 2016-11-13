@@ -132,13 +132,11 @@
 
 (defn- decode-page-metadata
   [{:keys [page-metadata] :as result}]
-  (s/assert ::us/bytes page-metadata)
   (merge result (when page-metadata
                   {:page-metadata (-> page-metadata blob/decode t/decode)})))
 
 (defn- decode-page-data
   [{:keys [page-data] :as result}]
-  (s/assert ::us/bytes page-data)
   (merge result (when page-data
                   {:page-data (-> page-data blob/decode t/decode)})))
 
