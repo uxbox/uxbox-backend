@@ -10,11 +10,29 @@
   (:import java.io.ByteArrayInputStream
            java.io.ByteArrayOutputStream))
 
+;; --- Point Handling
+
+(defrecord Point [x y])
+
+(def point-write-handler
+  (t/write-handler
+   (constantly "point")
+   #(into {} %)))
+
+(def point-read-handler
+  (t/read-handler map->Point))
+
+;; --- Handlers
+
 (def ^:private +reader-handlers+
-  dt/+read-handlers+)
+  (merge dt/+read-handlers+
+         {"point" point-read-handler}))
 
 (def ^:private +write-handlers+
-  dt/+write-handlers+)
+  (merge dt/+write-handlers+
+         {Point point-write-handler}))
+
+;; --- Public Api
 
 (defn reader
   ([istream]

@@ -11,7 +11,6 @@
             [uxbox.services.auth :as usa]
             [uxbox.services.users :as usu]
             [uxbox.util.transit :as transit]
-            [uxbox.util.paths :as paths]
             [uxbox.migrations :as umg]
             [uxbox.media :as media]
             [uxbox.db :as db]

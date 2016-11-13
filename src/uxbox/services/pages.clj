@@ -40,8 +40,8 @@
               :user user
               :project project
               :name name
-              :data (blob/encode data)
-              :metadata (blob/encode metadata)}
+              :data (-> data t/encode blob/encode)
+              :metadata (-> metadata t/encode blob/encode)}
         sqlv (sql/create-page opts)]
     (->> (sc/fetch-one conn sqlv)
          (data/normalize-attrs)
@@ -68,8 +68,8 @@
               :project project
               :name name
               :version version
-              :data (blob/encode data)
-              :metadata (blob/encode metadata)}
+              :data (-> data t/encode blob/encode)
+              :metadata (-> metadata t/encode blob/encode)}
         sqlv (sql/update-page opts)]
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs)
@@ -95,7 +95,7 @@
               :project project
               :name name
               :version version
-              :metadata (blob/encode metadata)}
+              :metadata (-> metadata t/encode blob/encode)}
         sqlv (sql/update-page-metadata opts)]
     (some-> (sc/fetch-one conn sqlv)
             (data/normalize-attrs)
@@ -208,13 +208,13 @@
   [{:keys [metadata] :as result}]
   (s/assert ::us/bytes metadata)
   (merge result (when metadata
-                  {:metadata (blob/decode->str metadata)})))
+                  {:metadata (-> metadata blob/decode t/decode)})))
 
 (defn- decode-page-data
   [{:keys [data] :as result}]
   (s/assert ::us/bytes data)
   (merge result (when data
-                  {:data (blob/decode->str data)})))
+                  {:data (-> data blob/decode t/decode)})))
 
 (defn get-page-by-id
   [conn id]

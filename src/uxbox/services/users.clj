@@ -30,7 +30,7 @@
 
 (s/def ::user uuid?)
 (s/def ::fullname string?)
-(s/def ::metadata string?)
+(s/def ::metadata any?)
 (s/def ::old-password string?)
 (s/def ::path string?)
 
@@ -58,7 +58,7 @@
 (defn- update-profile
   [conn {:keys [id username email fullname metadata] :as params}]
   (check-profile-existence! conn params)
-  (let [metadata (blob/encode metadata)
+  (let [metadata (-> metadata t/encode blob/encode)
         sqlv (sql/update-profile {:username username
                                   :fullname fullname
                                   :metadata metadata
@@ -124,8 +124,6 @@
 
 ;; --- Create User
 
-(s/def ::metadata string?)
-
 (s/def ::create-user
   (s/keys :req-un [::metadata ::fullname ::us/email ::us/password]
           :opt-un [::us/id]))
@@ -134,7 +132,7 @@
   [conn {:keys [id username password email fullname metadata] :as data}]
   (s/assert ::create-user data)
   (let [id (or id (uuid/random))
-        metadata (blob/encode metadata)
+        metadata (-> metadata t/encode blob/encode)
         password (hashers/encrypt password)
         sqlv (sql/create-profile {:id id
                                   :fullname fullname
@@ -167,7 +165,7 @@
   filling all the other fields with defaults."
   [conn {:keys [username fullname email password] :as params}]
   (check-user-registred! conn params)
-  (let [metadata (blob/encode (t/encode {}))
+  (let [metadata (-> nil t/encode blob/encode)
         password (hashers/encrypt password)
         sqlv (sql/create-profile {:id (uuid/random)
                                   :fullname fullname
@@ -309,7 +307,7 @@
 (defn- decode-user-data
   [{:keys [metadata] :as result}]
   (merge result (when metadata
-                  {:metadata (blob/decode->str metadata)})))
+                  {:metadata (-> metadata blob/decode t/decode)})))
 
 (defn trim-user-attrs
   "Only selects a publicy visible user attrs."

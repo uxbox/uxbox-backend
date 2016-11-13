@@ -7,22 +7,15 @@
 (ns uxbox.util.blob
   "A generic blob storage encoding. Mainly used for
   page data, page options and txlog payload storage."
-  (:require [buddy.core.codecs :as codecs]
-            [uxbox.util.snappy :as snappy]))
+  (:require [uxbox.util.snappy :as snappy]))
 
 (defn encode
   "Encode data into compressed blob."
-  [^String data]
+  [data]
   (snappy/compress data))
 
 (defn decode
   "Decode blob into string."
   [^bytes data]
   (snappy/uncompress data))
-
-(defn decode->str
-  "A convenience function that encodes data as string."
-  [^bytes data]
-  (-> (snappy/uncompress data)
-      (codecs/bytes->str)))
 
