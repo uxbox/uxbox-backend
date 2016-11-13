@@ -17,12 +17,12 @@
     (let [{:keys [id] :as user} (th/create-user conn 1)]
 
       ;; Not exists at this moment
-      (t/is (nil? (kvs/retrieve-kvstore conn {:user id :key "foo"})))
+      (t/is (nil? (kvs/retrieve-kvstore conn {:user id :key "foo" :version -1})))
 
       ;; Creating new one should work as expected
       (with-server {:handler (urt/app)}
         (let [uri (str th/+base-url+ "/api/kvstore")
-              body {:key "foo" :value "bar"}
+              body {:key "foo" :value "bar" :version -1}
               params {:body body}
               [status data] (th/http-put user uri params)]
           (println "RESPONSE:" status data)
@@ -33,18 +33,18 @@
       ;; Should exists
       (let [data (kvs/retrieve-kvstore conn {:user id :key "foo"})]
         (t/is (= (:key data) "foo"))
-        (t/is (= (:value data) "bar")))
+        (t/is (= (:value data) "bar"))
 
-      ;; Overwriting shoudl work
-      (with-server {:handler (urt/app)}
-        (let [uri (str th/+base-url+ "/api/kvstore")
-              body {:key "foo" :value "baz"}
-              params {:body body}
-              [status data] (th/http-put user uri params)]
-          (println "RESPONSE:" status data)
-          (t/is (= 200 status))
-          (t/is (= (:key data) "foo"))
-          (t/is (= (:value data) "baz"))))
+        ;; Overwriting should work
+        (with-server {:handler (urt/app)}
+          (let [uri (str th/+base-url+ "/api/kvstore")
+                body (assoc data :key "foo" :value "baz")
+                params {:body body}
+                [status data] (th/http-put user uri params)]
+            (println "RESPONSE:" status data)
+            (t/is (= 200 status))
+            (t/is (= (:key data) "foo"))
+            (t/is (= (:value data) "baz")))))
 
       ;; Should exists and match the overwritten value
       (let [data (kvs/retrieve-kvstore conn {:user id :key "foo"})]
