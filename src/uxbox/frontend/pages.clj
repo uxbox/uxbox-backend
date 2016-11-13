@@ -61,8 +61,7 @@
 ;; --- Update Page Metadata
 
 (s/def ::update-page-metadata
-  (s/keys :req-un [::metadata ::project ::us/name]
-          :opt-un [::us/id]))
+  (s/keys :req-un [::us/id ::metadata ::project ::us/name]))
 
 (defn update-page-metadata
   [{user :identity params :route-params data :data}]
