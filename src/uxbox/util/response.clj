@@ -24,6 +24,7 @@
            ratpack.http.MutableHeaders
            clojure.lang.Murmur3))
 
+;; TODO: consider replacing murmu3 with blake2b for avoid posible false positives
 (def digest (comp str #(Murmur3/hashUnencodedChars ^String %) codecs/bytes->str))
 
 (defn- etag-match?
