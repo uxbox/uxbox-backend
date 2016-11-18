@@ -26,8 +26,9 @@
 
 (defn generate-token
   [user]
-  (let [data {:id (:id user)}]
-    (jwt/encrypt data secret +auth-opts+)))
+  (let [data {:id (:id user)}
+        opts (:auth-options cfg/config)]
+    (jwt/encrypt data cfg/secret opts)))
 
 (s/def ::scope string?)
 (s/def ::login
