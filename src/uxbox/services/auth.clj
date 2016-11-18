@@ -18,22 +18,6 @@
             [uxbox.services.users :as users]
             [uxbox.util.exceptions :as ex]))
 
-(def ^:const +auth-opts+
-  {:alg :a256kw :enc :a256cbc-hs512})
-
-;; --- State
-
-(defn- initialize-auth-secret
-  []
-  (let [main-secret (:secret cfg/config)]
-    (when-not main-secret
-      (ex/raise :code ::missing-secret-key
-                :message "Missing `:secret` key in config."))
-    (hash/blake2b-256 main-secret)))
-
-(defstate secret
-  :start (initialize-auth-secret))
-
 ;; --- Login
 
 (defn- check-user-password
