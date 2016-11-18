@@ -8,10 +8,13 @@
   "A configuration management."
   (:require [mount.core :refer [defstate]]
             [environ.core :refer (env)]
+            [buddy.core.hash :as hash]
             [clojure.java.io :as io]
             [clojure.edn :as edn]
+            [uxbox.util.exceptions :as ex]
             [uxbox.util.data :refer [deep-merge]]))
 
+;; --- Configuration Loading & Parsing
 
 (def ^:dynamic *default-config-path* "config/default.edn")
 (def ^:dynamic *local-config-path* "config/local.edn")
@@ -33,3 +36,17 @@
 
 (defstate config
   :start (read-config))
+
+;; --- Secret Loading & Parsing
+
+(defn- initialize-secret
+  [config]
+  (let [secret (:secret config)]
+    (when-not secret
+      (ex/raise :code ::missing-secret-key
+                :message "Missing `:secret` key in config."))
+    (hash/blake2b-256 secret)))
+
+(defstate secret
+  :start (initialize-secret config))
+
