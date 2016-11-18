@@ -20,18 +20,11 @@
   []
   (let [builtin (io/resource *default-config-path*)
         local (io/resource *local-config-path*)
-        external (io/file (:uxbox-config env))
-        config (deep-merge (edn/read-string (slurp builtin))
-                           (when local (edn/read-string (slurp local)))
-                           (when (and external (.exists external))
-                             (edn/read-string (slurp external))))]
-    (if (s/valid? ::config config)
-      config
-      (let [message (s/explain-str ::config config)]
-        ;; (println message)
-        (ex/raise :type :unexpected
-                  :code ::invalid
-                  :message message)))))
+        external (io/file (:uxbox-config env))]
+    (deep-merge (edn/read-string (slurp builtin))
+                (when local (edn/read-string (slurp local)))
+                (when (and external (.exists external))
+                  (edn/read-string (slurp external))))))
 
 (defn read-test-config
   []
