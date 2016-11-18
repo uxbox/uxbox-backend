@@ -22,6 +22,7 @@
                  [funcool/catacumba "1.2.0"]
 
                  [org.clojure/data.xml "0.1.0-beta2"]
+                 [org.jsoup/jsoup "1.10.1"]
 
                  [hiccup "1.0.5"]
                  [org.im4java/im4java "1.4.0"]
