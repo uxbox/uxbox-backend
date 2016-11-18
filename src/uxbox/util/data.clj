@@ -42,3 +42,11 @@
   for a entity (database retrieved) data structure."
   [m]
   (-> m normalize-attrs strip-delete-attrs))
+
+(defn deep-merge
+  [& maps]
+  (letfn [(merge' [& maps]
+            (if (every? map? maps)
+              (apply merge-with merge' maps)
+              (last maps)))]
+    (apply merge' (remove nil? maps))))

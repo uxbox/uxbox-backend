@@ -6,35 +6,37 @@
 
 (ns uxbox.config
   "A configuration management."
-  (:require [mount.core :as mount :refer (defstate)]
+  (:require [mount.core :refer [defstate]]
             [environ.core :refer (env)]
             [clojure.java.io :as io]
-            [clojure.edn :as edn]))
+            [clojure.edn :as edn]
+            [uxbox.util.data :refer [deep-merge]]))
 
-(defn deep-merge
-  [& maps]
-  (if (every? map? maps)
-    (apply merge-with deep-merge maps)
-    (last maps)))
 
-(def ^:const +default-config+
-  "config/default.edn")
+(def ^:dynamic *default-config-path* "config/default.edn")
+(def ^:dynamic *local-config-path* "config/local.edn")
 
 (defn read-config
   []
-  (let [defaults (edn/read-string (slurp (io/resource +default-config+)))
-        local (if-let [path (:uxbox-config env)]
-                (io/file path)
-                (io/resource "config/local.edn"))]
-    (if local
-      (deep-merge defaults (edn/read-string (slurp local)))
-      defaults)))
+  (let [builtin (io/resource *default-config-path*)
+        local (io/resource *local-config-path*)
+        external (io/file (:uxbox-config env))
+        config (deep-merge (edn/read-string (slurp builtin))
+                           (when local (edn/read-string (slurp local)))
+                           (when (and external (.exists external))
+                             (edn/read-string (slurp external))))]
+    (if (s/valid? ::config config)
+      config
+      (let [message (s/explain-str ::config config)]
+        ;; (println message)
+        (ex/raise :type :unexpected
+                  :code ::invalid
+                  :message message)))))
 
 (defn read-test-config
   []
-  (let [defaults (edn/read-string (slurp (io/resource +default-config+)))
-        local (io/resource "config/test.edn")]
-    (deep-merge defaults (edn/read-string (slurp local)))))
+  (binding [*local-config-path* "config/test.edn"]
+    (read-config)))
 
 (defstate config
   :start (read-config))
