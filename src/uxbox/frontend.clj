@@ -53,98 +53,99 @@
 ;; --- Routes
 
 (defn routes
-  []
-  (let [props {:secret sauth/secret
-               :options sauth/+auth-opts+}]
-    (ct/routes
-     [[:any (cauth/auth (cauth/jwe-backend props))]
-      [:any (cmisc/autoreloader)]
+  ([] (routes cfg/config))
+  ([config]
+   (let [auth-opts {:secret cfg/secret
+                    :options (:auth-options cfg/config)}]
+     (ct/routes
+      [[:any (cauth/auth (cauth/jwe-backend auth-opts))]
+       [:any (cmisc/autoreloader)]
 
-      [:get "api" #'welcome-api]
-      [:assets "media" {:dir "public/media"}]
-      [:assets "static" {:dir "public/static"}]
+       [:get "api" #'welcome-api]
+       [:assets "media" {:dir "public/media"}]
+       [:assets "static" {:dir "public/static"}]
 
-      [:prefix "debug"
-       [:any debug-only]
-       [:get "emails" #'dbgemails/list-emails]
-       [:get "emails/email" #'dbgemails/show-email]]
+       [:prefix "debug"
+        [:any debug-only]
+        [:get "emails" #'dbgemails/list-emails]
+        [:get "emails/email" #'dbgemails/show-email]]
 
-      [:prefix "api"
-       [:any (cmisc/cors cors-conf)]
-       [:any (cparse/body-params)]
-       [:error #'errors/handler]
+       [:prefix "api"
+        [:any (cmisc/cors cors-conf)]
+        [:any (cparse/body-params)]
+        [:error #'errors/handler]
 
-       [:post "auth/token" #'auth/login]
-       [:post "auth/register" #'users/register-user]
-       [:get  "auth/recovery/:token" #'users/validate-recovery-token]
-       [:post "auth/recovery" #'users/request-recovery]
-       [:put  "auth/recovery" #'users/recover-password]
+        [:post "auth/token" #'auth/login]
+        [:post "auth/register" #'users/register-user]
+        [:get  "auth/recovery/:token" #'users/validate-recovery-token]
+        [:post "auth/recovery" #'users/request-recovery]
+        [:put  "auth/recovery" #'users/recover-password]
 
-       [:get "projects-by-token/:token" #'projects/retrieve-project-by-share-token]
-       [:any #'auth/authorization]
+        [:get "projects-by-token/:token" #'projects/retrieve-project-by-share-token]
+        [:any #'auth/authorization]
 
-       ;; KVStore
-       [:put "kvstore" #'kvstore/update]
-       [:get "kvstore/:key" #'kvstore/retrieve]
-       [:delete "kvstore/:key" #'kvstore/delete]
+        ;; KVStore
+        [:put "kvstore" #'kvstore/update]
+        [:get "kvstore/:key" #'kvstore/retrieve]
+        [:delete "kvstore/:key" #'kvstore/delete]
 
-       ;; Projects
-       [:get "projects/:id/pages" #'pages/list-pages-by-project]
-       [:put "projects/:id" #'projects/update-project]
-       [:delete "projects/:id" #'projects/delete-project]
-       [:post "projects" #'projects/create-project]
-       [:get "projects" #'projects/list-projects]
+        ;; Projects
+        [:get "projects/:id/pages" #'pages/list-pages-by-project]
+        [:put "projects/:id" #'projects/update-project]
+        [:delete "projects/:id" #'projects/delete-project]
+        [:post "projects" #'projects/create-project]
+        [:get "projects" #'projects/list-projects]
 
-       ;; Image Collections
-       [:put "library/image-collections/:id" #'images/update-collection]
-       [:delete "library/image-collections/:id" #'images/delete-collection]
-       [:get "library/image-collections" #'images/list-collections]
-       [:post "library/image-collections" #'images/create-collection]
-       [:get "library/image-collections/:id/images" #'images/list-images]
-       [:get "library/image-collections/images" #'images/list-images]
+        ;; Image Collections
+        [:put "library/image-collections/:id" #'images/update-collection]
+        [:delete "library/image-collections/:id" #'images/delete-collection]
+        [:get "library/image-collections" #'images/list-collections]
+        [:post "library/image-collections" #'images/create-collection]
+        [:get "library/image-collections/:id/images" #'images/list-images]
+        [:get "library/image-collections/images" #'images/list-images]
 
-       ;; Images
-       [:put "library/images/copy" #'images/copy-image]
-       [:delete "library/images/:id" #'images/delete-image]
-       [:get "library/images/:id" #'images/retrieve-image]
-       [:put "library/images/:id" #'images/update-image]
-       [:post "library/images" #'images/create-image]
+        ;; Images
+        [:put "library/images/copy" #'images/copy-image]
+        [:delete "library/images/:id" #'images/delete-image]
+        [:get "library/images/:id" #'images/retrieve-image]
+        [:put "library/images/:id" #'images/update-image]
+        [:post "library/images" #'images/create-image]
 
-       ;; Icon Collections
-       [:put "library/icon-collections/:id" #'icons/update-collection]
-       [:delete "library/icon-collections/:id" #'icons/delete-collection]
-       [:get "library/icon-collections" #'icons/list-collections]
-       [:post "library/icon-collections" #'icons/create-collection]
-       [:get "library/icon-collections/:id/icons" #'icons/list-icons]
-       [:get "library/icon-collections/icons" #'icons/list-icons]
+        ;; Icon Collections
+        [:put "library/icon-collections/:id" #'icons/update-collection]
+        [:delete "library/icon-collections/:id" #'icons/delete-collection]
+        [:get "library/icon-collections" #'icons/list-collections]
+        [:post "library/icon-collections" #'icons/create-collection]
+        [:get "library/icon-collections/:id/icons" #'icons/list-icons]
+        [:get "library/icon-collections/icons" #'icons/list-icons]
 
-       ;; Icons
-       [:put "library/icons/copy" #'icons/copy-icon]
-       [:delete "library/icons/:id" #'icons/delete-icon]
-       [:put "library/icons/:id" #'icons/update-icon]
-       [:post "library/icons" #'icons/create-icon]
+        ;; Icons
+        [:put "library/icons/copy" #'icons/copy-icon]
+        [:delete "library/icons/:id" #'icons/delete-icon]
+        [:put "library/icons/:id" #'icons/update-icon]
+        [:post "library/icons" #'icons/create-icon]
 
-       ;; Pages
-       [:put "pages/:id/metadata" #'pages/update-page-metadata]
-       [:get "pages/:id/history" #'pages/retrieve-page-history]
-       [:put "pages/:id/history/:hid" #'pages/update-page-history]
-       [:put "pages/:id" #'pages/update-page]
-       [:delete "pages/:id" #'pages/delete-page]
-       [:post "pages" #'pages/create-page]
+        ;; Pages
+        [:put "pages/:id/metadata" #'pages/update-page-metadata]
+        [:get "pages/:id/history" #'pages/retrieve-page-history]
+        [:put "pages/:id/history/:hid" #'pages/update-page-history]
+        [:put "pages/:id" #'pages/update-page]
+        [:delete "pages/:id" #'pages/delete-page]
+        [:post "pages" #'pages/create-page]
 
-       ;; Profile
-       [:get "profile/me" #'users/retrieve-profile]
-       [:put "profile/me" #'users/update-profile]
-       [:put "profile/me/password" #'users/update-password]
-       [:post "profile/me/photo" #'users/update-photo]]])))
+        ;; Profile
+        [:get "profile/me" #'users/retrieve-profile]
+        [:put "profile/me" #'users/update-profile]
+        [:put "profile/me/password" #'users/update-password]
+        [:post "profile/me/photo" #'users/update-photo]]]))))
 
 ;; --- State Initialization
 
 (defn- start-server
-  []
-  (let [config (:server cfg/config)]
-    (ct/run-server (routes) config)))
+  [config]
+  (let [config (:http config)]
+    (ct/run-server (routes config) config)))
 
 (defstate server
-  :start (start-server)
+  :start (start-server cfg/config)
   :stop (.stop server))
