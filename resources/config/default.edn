@@ -11,12 +11,14 @@
   :tls false       ;; Enables TLS encryption if value is truthy.
   :noop true}
 
+ :auth-options {:alg :a256kw :enc :a128cbc-hs256}
+
  :email {:reply-to "no-reply@uxbox.io"
          :from "no-reply@uxbox.io"}
 
- :server {:port 6060
-          :max-body-size 52428800
-          :debug true}
+ :http {:port 6060
+        :max-body-size 52428800
+        :debug true}
 
  :media
  {:basedir "resources/public/media"
