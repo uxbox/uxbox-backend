@@ -22,13 +22,13 @@
 (defn database-reset
   [next]
   (-> (mount/only #{#'uxbox.config/config
+                    #'uxbox.config/secret
                     #'uxbox.db/datasource
                     #'uxbox.migrations/migrations
                     #'uxbox.media/static-storage
                     #'uxbox.media/media-storage
                     #'uxbox.media/images-storage
-                    #'uxbox.media/thumbnails-storage
-                    #'uxbox.services.auth/secret})
+                    #'uxbox.media/thumbnails-storage})
       (mount/swap {#'uxbox.config/config +config+})
       (mount/start))
   (with-open [conn (db/connection)]
