@@ -6,8 +6,11 @@
 
 (ns uxbox.util.transit
   (:require [cognitect.transit :as t]
+            [catacumba.handlers.parse :as cparse]
             [uxbox.util.time :as dt])
-  (:import java.io.ByteArrayInputStream
+  (:import ratpack.http.TypedData
+           ratpack.handling.Context
+           java.io.ByteArrayInputStream
            java.io.ByteArrayOutputStream))
 
 ;; --- Handlers
@@ -18,7 +21,7 @@
 (def ^:private +write-handlers+
   dt/+write-handlers+)
 
-;; --- Public Api
+;; --- Low-Level Api
 
 (defn reader
   ([istream]
@@ -40,6 +43,16 @@
 (defn write!
   [writer data]
   (t/write writer data))
+
+
+;; --- Catacumba Extension
+
+(defmethod cparse/parse-body :application/transit+json
+  [^Context ctx ^TypedData body]
+  (let [reader (reader (.getInputStream body) {:type :json})]
+    (read! reader)))
+
+;; --- High-Level Api
 
 (defn decode
   ([data]
