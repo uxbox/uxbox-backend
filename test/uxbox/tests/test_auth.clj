@@ -5,7 +5,7 @@
             [catacumba.testing :refer (with-server)]
             [buddy.hashers :as hashers]
             [uxbox.db :as db]
-            [uxbox.frontend.routes :as urt]
+            [uxbox.frontend :as uft]
             [uxbox.services.users :as usu]
             [uxbox.services :as usv]
             [uxbox.tests.helpers :as th]))
@@ -20,7 +20,7 @@
               :email "user1@uxbox.io"}
         user (with-open [conn (db/connection)]
                (usu/create-user conn data))]
-    (with-server {:handler (urt/app)}
+    (with-server {:handler (uft/routes)}
       (let [data {:username "user1"
                   :password "user1"
                   :metadata "1"
@@ -39,7 +39,7 @@
               :email "user1@uxbox.io"}
         user (with-open [conn (db/connection)]
                (usu/create-user conn data))]
-    (with-server {:handler (urt/app)}
+    (with-server {:handler (uft/routes)}
       (let [data {:username "user1"
                   :password "user2"
                   :metadata "2"

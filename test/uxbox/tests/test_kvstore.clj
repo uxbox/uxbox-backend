@@ -6,7 +6,7 @@
             [buddy.core.codecs :as codecs]
             [uxbox.db :as db]
             [uxbox.util.uuid :as uuid]
-            [uxbox.frontend.routes :as urt]
+            [uxbox.frontend :as uft]
             [uxbox.services.kvstore :as kvs]
             [uxbox.tests.helpers :as th]))
 
@@ -20,7 +20,7 @@
       (t/is (nil? (kvs/retrieve-kvstore conn {:user id :key "foo" :version -1})))
 
       ;; Creating new one should work as expected
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/kvstore")
               body {:key "foo" :value "bar" :version -1}
               params {:body body}
@@ -36,7 +36,7 @@
         (t/is (= (:value data) "bar"))
 
         ;; Overwriting should work
-        (with-server {:handler (urt/app)}
+        (with-server {:handler (uft/routes)}
           (let [uri (str th/+base-url+ "/api/kvstore")
                 body (assoc data :key "foo" :value "baz")
                 params {:body body}
@@ -52,7 +52,7 @@
         (t/is (= (:value data) "baz")))
 
       ;; Delete should work
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/kvstore/foo")
               [status data] (th/http-delete user uri)]
           (println "RESPONSE:" status data)

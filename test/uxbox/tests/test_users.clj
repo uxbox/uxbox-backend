@@ -7,7 +7,7 @@
             [suricatta.core :as sc]
             [catacumba.testing :refer (with-server)]
             [uxbox.db :as db]
-            [uxbox.frontend.routes :as urt]
+            [uxbox.frontend :as uft]
             [uxbox.services.users :as usu]
             [uxbox.services :as usv]
             [uxbox.tests.helpers :as th]))
@@ -17,7 +17,7 @@
 (t/deftest test-http-retrieve-profile
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/profile/me")
               [status data] (th/http-get user uri)]
           ;; (println "RESPONSE:" status data)
@@ -31,7 +31,7 @@
 (t/deftest test-http-update-profile
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/profile/me")
               data (assoc user
                           :fullname "Full Name"
@@ -50,7 +50,7 @@
 (t/deftest test-http-update-profile-photo
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/profile/me/photo")
               params [{:name "sample.jpg"
                        :part-name "file"
@@ -61,7 +61,7 @@
           (t/is (= 204 status)))))))
 
 (t/deftest test-http-register-user
-  (with-server {:handler (urt/app)}
+  (with-server {:handler (uft/routes)}
     (let [uri (str th/+base-url+ "/api/auth/register")
           data {:fullname "Full Name"
                 :username "user222"
@@ -74,7 +74,7 @@
 (t/deftest test-http-validate-recovery-token
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [token (#'usu/request-password-recovery conn "user1")
               uri1 (str th/+base-url+ "/api/auth/recovery/not-existing")
               uri2 (str th/+base-url+ "/api/auth/recovery/" token)
@@ -94,7 +94,7 @@
       ;; Initially no tokens exists
       (t/is (nil? res))
 
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/auth/recovery")
               data {:username "user1"}
               [status data] (th/http-post user uri {:body data})]
@@ -108,7 +108,7 @@
 (t/deftest test-http-validate-recovery-token
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [token (#'usu/request-password-recovery conn (:username user))
               uri (str th/+base-url+ "/api/auth/recovery")
               data {:token token :password "mytestpassword"}

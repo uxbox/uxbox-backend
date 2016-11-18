@@ -6,7 +6,7 @@
             [buddy.core.codecs :as codecs]
             [uxbox.db :as db]
             [uxbox.util.uuid :as uuid]
-            [uxbox.frontend.routes :as urt]
+            [uxbox.frontend :as uft]
             [uxbox.services.projects :as uspr]
             [uxbox.services.pages :as uspg]
             [uxbox.services :as usv]
@@ -22,7 +22,7 @@
   (with-open [conn (db/connection)]
     (let [user (th/create-user conn 1)
           proj (uspr/create-project conn {:user (:id user) :name "proj1"})]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/pages")
               params {:body {:project (:id proj)
                              :name "page1"
@@ -53,7 +53,7 @@
                 :height 200
                 :layout "mobil"}
           page (uspg/create-page conn data)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ (str "/api/pages/" (:id page)))
               params {:body (assoc page :data "3")}
               [status page'] (th/http-put user uri params)]
@@ -79,7 +79,7 @@
                 :height 200
                 :layout "mobil"}
           page (uspg/create-page conn data)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ (str "/api/pages/" (:id page) "/metadata"))
               params {:body (assoc page :data "3")}
               [status page'] (th/http-put user uri params)]
@@ -105,7 +105,7 @@
                 :height 200
                 :layout "mobil"}
           page (uspg/create-page conn data)]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ (str "/api/pages/" (:id page)))
               [status response] (th/http-delete user uri)]
           ;; (println "RESPONSE:" status response)
@@ -130,7 +130,7 @@
                 :layout "mobil"}
           page1 (uspg/create-page conn (assoc data :project (:id proj1)))
           page2 (uspg/create-page conn (assoc data :project (:id proj2)))]
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ (str "/api/projects/" (:id proj1) "/pages"))
               [status response] (th/http-get user uri)]
           ;; (println "RESPONSE:" status response)
@@ -163,7 +163,7 @@
         (t/is (= (count result) 100)))
 
       ;; Check retrieve all items
-      (with-server {:handler (urt/app)}
+      (with-server {:handler (uft/routes)}
         (let [uri (str th/+base-url+ "/api/pages/" (:id page) "/history")
               [status result] (th/http-get user uri nil)]
           ;; (println "RESPONSE:" status result)
@@ -206,7 +206,7 @@
             result (sc/fetch conn [sql (:id data)])
             item (first result)]
 
-        (with-server {:handler (urt/app)}
+        (with-server {:handler (uft/routes)}
           (let [uri (str th/+base-url+
                          "/api/pages/" (:id page)
                          "/history/" (:id item))

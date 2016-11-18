@@ -6,15 +6,16 @@
 
 (ns uxbox.frontend.auth
   (:require [clojure.spec :as s]
+            [catacumba.core :as ct]
             [catacumba.http :as http]
             [promesa.core :as p]
             [uxbox.schema :as us]
             [uxbox.services :as sv]
+            [uxbox.util.uuid :as uuid]
             [uxbox.util.response :refer (rsp)]))
 
 (s/def ::scope string?)
-(s/def ::login
-  (s/keys :req-un [::us/username ::us/password ::scope]))
+(s/def ::login (s/keys :req-un [::us/username ::us/password ::scope]))
 
 (defn login
   [{data :data}]
@@ -22,3 +23,11 @@
         message (assoc data :type :login)]
     (->> (sv/novelty message)
          (p/map #(http/ok (rsp %))))))
+
+;; TODO: improve authorization
+
+(defn authorization
+  [{:keys [identity] :as context}]
+  (if identity
+    (ct/delegate {:identity (uuid/from-string (:id identity))})
+    (http/forbidden (rsp nil))))
