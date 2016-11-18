@@ -12,7 +12,7 @@
             [buddy.sign.jwe :as jwe]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.emails :as emails]
             [uxbox.services.core :as core]
             [uxbox.util.transit :as t]

@@ -9,7 +9,7 @@
   (:require [storages.core :as st]
             [storages.util :as path]
             [clojure.spec :as s]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.media :as media]
             [uxbox.util.images :as images]
             [uxbox.util.data :refer (dissoc-in)]))

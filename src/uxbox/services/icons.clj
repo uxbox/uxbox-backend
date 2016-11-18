@@ -8,7 +8,7 @@
   "Icons library related services."
   (:require [clojure.spec :as s]
             [suricatta.core :as sc]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
             [uxbox.services.core :as core]

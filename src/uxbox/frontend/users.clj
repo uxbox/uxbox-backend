@@ -12,7 +12,7 @@
             [storages.util :as path]
             [uxbox.media :as media]
             [uxbox.images :as images]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.services :as sv]
             [uxbox.services.users :as svu]
             [uxbox.util.response :refer (rsp)]

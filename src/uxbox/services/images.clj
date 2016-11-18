@@ -13,7 +13,7 @@
             [storages.core :as st]
             [storages.util :as path]
             [uxbox.config :as ucfg]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
             [uxbox.media :as media]

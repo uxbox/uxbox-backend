@@ -9,7 +9,7 @@
             [catacumba.core :as ct]
             [catacumba.http :as http]
             [promesa.core :as p]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.services :as sv]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.response :refer (rsp)]))

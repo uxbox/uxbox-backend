@@ -4,7 +4,7 @@
 ;;
 ;; Copyright (c) 2016 Andrey Antukh <niwi@niwi.nz>
 
-(ns uxbox.schema
+(ns uxbox.util.spec
   (:refer-clojure :exclude [keyword uuid vector boolean map set])
   (:require [clojure.spec :as s]
             [cuerdas.core :as str]

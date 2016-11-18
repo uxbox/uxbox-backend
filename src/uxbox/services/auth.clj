@@ -12,7 +12,7 @@
             [buddy.sign.jwt :as jwt]
             [buddy.core.hash :as hash]
             [uxbox.config :as cfg]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.db :as db]
             [uxbox.services.core :as core]
             [uxbox.services.users :as users]

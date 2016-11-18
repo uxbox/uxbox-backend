@@ -11,7 +11,7 @@
             [uxbox.config :as ucfg]
             [uxbox.sql :as sql]
             [uxbox.db :as db]
-            [uxbox.schema :as us]
+            [uxbox.util.spec :as us]
             [uxbox.services.core :as core]
             [uxbox.util.time :as dt]
             [uxbox.util.data :as data]
