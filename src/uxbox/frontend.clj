@@ -13,7 +13,6 @@
             [catacumba.handlers.parse :as cparse]
             [catacumba.handlers.misc :as cmisc]
             [uxbox.config :as cfg]
-            [uxbox.services.auth :as sauth]
             [uxbox.frontend.auth :as auth]
             [uxbox.frontend.users :as users]
             [uxbox.frontend.errors :as errors]
