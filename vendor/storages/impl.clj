@@ -99,3 +99,17 @@
   (make-output-stream [path opts]
     (let [^OutputStream os (path->output-stream path)]
       (io/make-output-stream os opts))))
+
+(extend-type ratpack.http.TypedData
+  io/IOFactory
+  (make-reader [td opts]
+    (let [^InputStream is (.getInputStream td)]
+      (io/make-reader is opts)))
+  (make-writer [path opts]
+    (throw (UnsupportedOperationException. "read only object")))
+  (make-input-stream [td opts]
+    (let [^InputStream is (.getInputStream td)]
+      (io/make-input-stream is opts)))
+  (make-output-stream [path opts]
+    (throw (UnsupportedOperationException. "read only object"))))
+
