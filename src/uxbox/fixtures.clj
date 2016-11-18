@@ -57,10 +57,10 @@
                     {:id (mk-uuid "page" i)
                      :user (mk-uuid "user" ui)
                      :project (mk-uuid "project" pi)
-                     :data (data-encode nil)
-                     :metadata (data-encode {:width 1024
-                                             :height 768
-                                             :layout "tablet"})
+                     :data nil
+                     :metadata {:width 1024
+                                :height 768
+                                :layout "tablet"}
                      :name (str "page " i)}))
 
 (def num-users 50)
