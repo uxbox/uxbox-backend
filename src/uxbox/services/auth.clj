@@ -6,7 +6,6 @@
 
 (ns uxbox.services.auth
   (:require [clojure.spec :as s]
-            [mount.core :as mount :refer (defstate)]
             [suricatta.core :as sc]
             [buddy.hashers :as hashers]
             [buddy.sign.jwt :as jwt]
