@@ -1,7 +1,7 @@
 (ns uxbox.tests.test-svgparse
   (:require [clojure.test :as t]
             [clojure.java.io :as io]
-            [catacumba.testing :refer (with-server)]
+            [catacumba.testing :refer [with-server]]
             [uxbox.frontend :as uft]
             [uxbox.services :as usv]
             [uxbox.services.svgparse :as svg]

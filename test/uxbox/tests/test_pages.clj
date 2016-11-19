@@ -198,7 +198,7 @@
 
       (dotimes [i 10]
         (let [page (uspg/get-page-by-id conn (:id data))]
-          (uspg/update-page conn (assoc page :data (th/data-encode (str i))))))
+          (uspg/update-page conn (assoc page :data (str i)))))
 
       ;; Check inserted history
       (let [sql (str "SELECT * FROM pages_history "
