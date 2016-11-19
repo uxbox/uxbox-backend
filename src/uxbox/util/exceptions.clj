@@ -7,26 +7,6 @@
 (ns uxbox.util.exceptions
   "A helpers for work with exceptions.")
 
-(defn ex-info?
-  [exc]
-  (instance? clojure.lang.ExceptionInfo exc))
-
-(defn check-by-type
-  [type]
-  (fn [exc]
-    (if (ex-info? exc)
-      (let [data (ex-data exc)]
-        (= type (:type data)))
-      false)))
-
-(defn check-by-code
-  [code]
-  (fn [exc]
-    (if (ex-info? exc)
-      (let [data (ex-data exc)]
-        (= code (:code data)))
-      false)))
-
 (defn error
   [& {:keys [type code message] :or {type :unexpected} :as payload}]
   {:pre [(keyword? type) (keyword? code)]}
