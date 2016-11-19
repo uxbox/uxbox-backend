@@ -7,16 +7,21 @@
 (ns uxbox.services.svgparse
   (:require [clojure.spec :as s]
             [cuerdas.core :as str]
-            [suricatta.core :as sc]
-            [buddy.hashers :as hashers]
-            [buddy.sign.jwt :as jwt]
-            [buddy.core.hash :as hash]
-            [uxbox.config :as cfg]
             [uxbox.util.spec :as us]
-            [uxbox.db :as db]
             [uxbox.services.core :as core]
             [uxbox.util.exceptions :as ex])
-  (:import org.jsoup.Jsoup))
+  (:import org.jsoup.Jsoup
+           java.io.InputStream))
+
+(s/def ::content string?)
+(s/def ::width number?)
+(s/def ::height number?)
+(s/def ::name string?)
+(s/def ::view-box (s/coll-of number? :min-count 4 :max-count 4))
+(s/def ::svg-entity (s/keys :req-un [::content ::width ::height ::view-box]
+                            :opt-un [::name]))
+
+;; --- Implementation
 
 (defn- parse-double
   [data]
@@ -45,18 +50,46 @@
     (reduce assoc-attr {} attrs)))
 
 (defn- parse-svg
-  [element]
-  (let [innerxml (.html element)
-        attrs (parse-attrs element)]
-    (merge {:content innerxml} attrs)))
+  [data]
+  (try
+    (let [document (Jsoup/parse data)
+          svgelement (some-> (.body document)
+                             (.getElementsByTag "svg")
+                             (first))
+          innerxml (.html svgelement)
+          attrs (parse-attrs svgelement)]
+      (merge {:content innerxml} attrs))
+    (catch java.lang.IllegalArgumentException e
+      (ex/raise :type :validation
+                :code ::invalid-input
+                :message "Input does not seems to be a valid svg."))
+    (catch java.lang.NullPointerException e
+      (ex/raise :type :validation
+                :code ::invalid-input
+                :message "Input does not seems to be a valid svg."))
+    (catch Exception e
+      (.printStackTrace e)
+      (ex/raise :code ::unexpected))))
+
+;; --- Public Api
+
+(defn parse-string
+  "Parse SVG from a string."
+  [data]
+  {:pre [(string? data)]}
+  (let [result (parse-svg data)]
+    (if (s/valid? ::svg-entity result)
+      result
+      (ex/raise :type :validation
+                :code ::invalid-result
+                :message "The result does not conform valid svg entity."))))
 
 (defn parse
   [data]
+  {:pre [(instance? InputStream data)]}
+  (parse-string (slurp data)))
+
+(defmethod core/query :parse-svg
+  [{:keys [data] :as params}]
   {:pre [(string? data)]}
-  (let [document (Jsoup/parse data)
-        body-element (.body document)
-        svg-element (first (.getElementsByTag body-element "svg"))]
-    (when svg-element
-      (parse-svg svg-element))))
-
-
+  (parse-string data))

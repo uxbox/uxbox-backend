@@ -14,41 +14,47 @@
             [uxbox.migrations :as umg]
             [uxbox.media :as media]
             [uxbox.db :as db]
-            [uxbox.config :as ucfg]))
+            [uxbox.config :as cfg]))
 
 (def +base-url+ "http://localhost:5050")
-(def +config+ (ucfg/read-test-config))
+
+(defn state-init
+  [next]
+  (let [config (cfg/read-test-config)]
+    (-> (mount/only #{#'uxbox.config/config
+                      #'uxbox.config/secret
+                      #'uxbox.db/datasource
+                      #'uxbox.migrations/migrations
+                      #'uxbox.media/static-storage
+                      #'uxbox.media/media-storage
+                      #'uxbox.media/images-storage
+                      #'uxbox.media/thumbnails-storage})
+        (mount/swap {#'uxbox.config/config config})
+        (mount/start))
+    (try
+      (next)
+      (finally
+        (mount/stop)))))
 
 (defn database-reset
   [next]
-  (-> (mount/only #{#'uxbox.config/config
-                    #'uxbox.config/secret
-                    #'uxbox.db/datasource
-                    #'uxbox.migrations/migrations
-                    #'uxbox.media/static-storage
-                    #'uxbox.media/media-storage
-                    #'uxbox.media/images-storage
-                    #'uxbox.media/thumbnails-storage})
-      (mount/swap {#'uxbox.config/config +config+})
-      (mount/start))
-  (with-open [conn (db/connection)]
-    (let [sql (str "SELECT table_name FROM information_schema.tables "
-                   " WHERE table_schema = 'public' AND table_name != 'migrations';")
-          result (->> (sc/fetch conn sql)
-                      (map :table_name))]
-      (sc/execute conn (str "TRUNCATE "
-                            (apply str (interpose ", " result))
-                            " CASCADE;"))))
-  (try
-    (next)
-    (finally
-      (st/clear! uxbox.media/media-storage)
-      (st/clear! uxbox.media/static-storage)
-      (mount/stop))))
-
-(defn ex-info?
-  [v]
-  (instance? clojure.lang.ExceptionInfo v))
+  (state-init
+   (fn []
+     (with-open [conn (db/connection)]
+       (let [sql (str "SELECT table_name "
+                      "  FROM information_schema.tables "
+                      " WHERE table_schema = 'public' "
+                      "   AND table_name != 'migrations';")
+             result (->> (sc/fetch conn sql)
+                         (map :table_name))]
+         (sc/execute conn (str "TRUNCATE "
+                               (apply str (interpose ", " result))
+                               " CASCADE;"))))
+     (try
+       (next)
+       (finally
+         (st/clear! uxbox.media/media-storage)
+         (st/clear! uxbox.media/static-storage))))))
 
 (defmacro await
   [expr]
@@ -147,3 +153,30 @@
               :fullname (str "User " i)
               :email (str "user" i "@uxbox.io")}]
     (usu/create-user conn data)))
+
+(defmacro try-on
+  [& body]
+  `(try
+     (let [result# (do ~@body)]
+       [nil result#])
+     (catch Throwable e#
+       [e# nil])))
+
+(defn exception?
+  [v]
+  (instance? Throwable v))
+
+(defn ex-info?
+  [v]
+  (instance? clojure.lang.ExceptionInfo v))
+
+(defn ex-of-type?
+  [e type]
+  (let [data (ex-data e)]
+    (= type (:type data))))
+
+(defn ex-with-code?
+  [e code]
+  (let [data (ex-data e)]
+    (= code (:code data))))
+
