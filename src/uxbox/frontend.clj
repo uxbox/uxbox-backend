@@ -21,6 +21,7 @@
             [uxbox.frontend.images :as images]
             [uxbox.frontend.icons :as icons]
             [uxbox.frontend.kvstore :as kvstore]
+            [uxbox.frontend.svgparse :as svgparse]
             [uxbox.frontend.debug-emails :as dbgemails]
             [uxbox.util.response :refer [rsp]]
             [uxbox.util.uuid :as uuid]))
@@ -81,6 +82,10 @@
         [:put  "auth/recovery" #'users/recover-password]
 
         [:get "projects-by-token/:token" #'projects/retrieve-project-by-share-token]
+
+        ;; SVG Parse
+        [:post "svg/parse" #'svgparse/parse]
+
         [:any #'auth/authorization]
 
         ;; KVStore
