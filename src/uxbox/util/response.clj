@@ -15,17 +15,21 @@
   negotiation that is coming to catacumba."
   (:require [catacumba.impl.handlers :as ch]
             [catacumba.impl.context :as ctx]
+            [buddy.core.hash :as hash]
             [buddy.core.codecs :as codecs]
+            [buddy.core.codecs.base64 :as b64]
             [uxbox.util.transit :as t])
   (:import ratpack.handling.Context
            ratpack.http.Response
            ratpack.http.Request
            ratpack.http.Headers
-           ratpack.http.MutableHeaders
-           clojure.lang.Murmur3))
+           ratpack.http.MutableHeaders))
 
-;; TODO: consider replacing murmu3 with blake2b for avoid posible false positives
-(def digest (comp str #(Murmur3/hashUnencodedChars ^String %) codecs/bytes->str))
+(defn digest
+  [^bytes data]
+  (-> (hash/blake2b-256 data)
+      (b64/encode true)
+      (codecs/bytes->str)))
 
 (defn- etag-match?
   [^Request request ^String new-tag]
