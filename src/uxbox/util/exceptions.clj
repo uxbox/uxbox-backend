@@ -28,10 +28,13 @@
       false)))
 
 (defn error
-  [& {:keys [type code] :or {type :unexpected} :as payload}]
+  [& {:keys [type code message] :or {type :unexpected} :as payload}]
   {:pre [(keyword? type) (keyword? code)]}
-  (let [payload (assoc payload :type type)]
-    (ex-info (pr-str code) payload)))
+  (let [message (if message
+                  (str message " / " (pr-str code) "")
+                  (pr-str code))
+        payload (assoc payload :type type)]
+    (ex-info message payload)))
 
 (defmacro raise
   [& args]
