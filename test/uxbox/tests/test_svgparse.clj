@@ -17,6 +17,7 @@
       (t/is (contains? result :height))
       (t/is (contains? result :view-box))
       (t/is (contains? result :name))
+      (t/is (contains? result :content))
       (t/is (= 500.0 (:width result)))
       (t/is (= 500.0 (:height result)))
       (t/is (= [0.0 0.0 500.00001 500.00001] (:view-box result)))
@@ -29,6 +30,7 @@
       (t/is (contains? result :height))
       (t/is (contains? result :view-box))
       (t/is (contains? result :name))
+      (t/is (contains? result :content))
       (t/is (= 500.0 (:width result)))
       (t/is (= 500.0 (:height result)))
       (t/is (= [0.0 0.0 500.0 500.00001] (:view-box result)))
@@ -52,4 +54,36 @@
       (t/is (th/exception? e))
       (t/is (th/ex-info? e))
       (t/is (th/ex-with-code? e :uxbox.services.svgparse/invalid-result))))
+
+  (t/testing "valid http request"
+    (let [image (slurp (io/resource "uxbox/tests/_files/sample2.svg"))
+          path "/api/svg/parse"]
+      (with-server {:handler (uft/routes)}
+        (let [rsp (th/request {:method :post
+                               :path path
+                               :body image
+                               :raw? true})]
+          (t/is (= 200 (:status rsp)))
+          (t/is (contains? (:body rsp) :width))
+          (t/is (contains? (:body rsp) :height))
+          (t/is (contains? (:body rsp) :view-box))
+          (t/is (contains? (:body rsp) :name))
+          (t/is (contains? (:body rsp) :content))
+          (t/is (= 500.0 (:width (:body rsp))))
+          (t/is (= 500.0 (:height (:body rsp))))
+          (t/is (= [0.0 0.0 500.0 500.00001] (:view-box (:body rsp))))
+          (t/is (= "play.svg" (:name (:body rsp))))))))
+
+  (t/testing "invalid http request"
+    (let [path "/api/svg/parse"
+          image "<svg></svg>"]
+      (with-server {:handler (uft/routes)}
+        (let [rsp (th/request {:method :post
+                               :path path
+                               :body image
+                               :raw? true})]
+          (t/is (= 400 (:status rsp)))
+          (t/is (= :validation (get-in rsp [:body :type])))
+          (t/is (= ::svg/invalid-result (get-in rsp [:body :code])))))))
+
   )
