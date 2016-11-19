@@ -19,7 +19,7 @@
                  [funcool/struct "1.0.0"]
                  [funcool/suricatta "1.2.0"]
                  [funcool/promesa "1.6.0"]
-                 [funcool/catacumba "1.2.0"]
+                 [funcool/catacumba "2.0.0-SNAPSHOT"]
 
                  [org.clojure/data.xml "0.1.0-beta2"]
                  [org.jsoup/jsoup "1.10.1"]
