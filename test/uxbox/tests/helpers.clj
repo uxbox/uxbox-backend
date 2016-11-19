@@ -1,7 +1,6 @@
 (ns uxbox.tests.helpers
   (:refer-clojure :exclude [await])
-  (:require [clojure.test :as t]
-            [clj-http.client :as http]
+  (:require [clj-http.client :as http]
             [buddy.hashers :as hashers]
             [buddy.core.codecs :as codecs]
             [catacumba.serializers :as sz]
@@ -10,7 +9,7 @@
             [suricatta.core :as sc]
             [uxbox.services.auth :as usa]
             [uxbox.services.users :as usu]
-            [uxbox.util.transit :as transit]
+            [uxbox.util.transit :as t]
             [uxbox.migrations :as umg]
             [uxbox.media :as media]
             [uxbox.db :as db]
@@ -67,7 +66,7 @@
   [{:keys [status headers body]}]
   (if (= (get headers "content-type") "application/transit+json")
     [status (-> (codecs/str->bytes body)
-                (transit/decode))]
+                (t/decode))]
     [status body]))
 
 (defn http-get
@@ -87,7 +86,7 @@
   ([uri params]
    (http-post nil uri params))
   ([user uri {:keys [body] :as params}]
-   (let [body (-> (transit/encode body)
+   (let [body (-> (t/encode body)
                   (codecs/bytes->str))
          headers (merge
                   {"content-type" "application/transit+json"}
@@ -115,7 +114,7 @@
   ([uri params]
    (http-put nil uri params))
   ([user uri {:keys [body] :as params}]
-   (let [body (-> (transit/encode body)
+   (let [body (-> (t/encode body)
                   (codecs/bytes->str))
          headers (merge
                   {"content-type" "application/transit+json"}
@@ -139,10 +138,38 @@
        (catch clojure.lang.ExceptionInfo e
          (strip-response (ex-data e)))))))
 
-(defn data-encode
-  [data]
-  (-> (transit/encode data)
-      (codecs/bytes->str)))
+(defn- decode-response
+  [{:keys [status headers body] :as response}]
+  (if (= (get headers "content-type") "application/transit+json")
+    (assoc response :body (-> (codecs/str->bytes body)
+                              (t/decode)))
+    response))
+
+(defn request
+  [{:keys [path method body user headers raw?]
+    :or {raw? false}
+    :as request}]
+  {:pre [(string? path) (keyword? method)]}
+  (let [body (if (and body (not raw?))
+               (-> (t/encode body)
+                   (codecs/bytes->str))
+               body)
+        headers (cond-> headers
+                  body (assoc "content-type" "application/transit+json")
+                  raw? (assoc "content-type" "application/octet-stream")
+                  user (assoc "authorization"
+                              (str "Token " (usa/generate-token user))))
+        params {:headers headers :body body}
+        uri (str +base-url+ path)]
+    (try
+      (let [response (case method
+                       :get (http/get uri (dissoc params :body))
+                       :post (http/post uri params)
+                       :put (http/put uri params)
+                       :delete (http/delete uri params))]
+        (decode-response response))
+      (catch clojure.lang.ExceptionInfo e
+        (decode-response (ex-data e))))))
 
 (defn create-user
   "Helper for create users"
