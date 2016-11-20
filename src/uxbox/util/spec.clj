@@ -46,6 +46,10 @@
   [v]
   (instance? java.nio.file.Path v))
 
+(defn regex?
+  [v]
+  (instance? java.util.regex.Pattern v))
+
 ;; --- Conformers
 
 (defn- uuid-conformer
