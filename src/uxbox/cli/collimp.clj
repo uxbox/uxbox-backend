@@ -6,8 +6,8 @@
 
 (ns uxbox.cli.collimp
   "Collection importer command line helper."
-  (:require [clojure.pprint :refer (pprint)]
-            [clojure.edn :as edn]
+  (:require [clojure.spec :as s]
+            [clojure.pprint :refer [pprint]]
             [clojure.java.io :as io]
             [mount.core :as mount]
             [cuerdas.core :as str]
@@ -16,24 +16,30 @@
             [storages.util :as fs]
             [uxbox.config]
             [uxbox.db :as db]
-            [uxbox.cli.sql :as sql]
             [uxbox.migrations]
             [uxbox.media :as media]
+            [uxbox.cli.sql :as sql]
+            [uxbox.util.spec :as us]
+            [uxbox.util.cli :as cli]
             [uxbox.util.uuid :as uuid]
             [uxbox.util.data :as data])
   (:import [java.io Reader PushbackReader]
            [javax.imageio ImageIO]))
 
-;; --- Constants
+;; --- Constants & Specs
 
 (def ^:const +imates-uuid-ns+ #uuid "3642a582-565f-4070-beba-af797ab27a6e")
 
+(s/def ::name string?)
+(s/def ::type keyword?)
+(s/def ::path string?)
+(s/def ::regex us/regex?)
+
+(s/def ::import-entry
+  (s/keys :req-un [::name ::type ::path ::regex]))
+
 ;; --- CLI Helpers
 
-(defn exit
-  ([] (exit 0))
-  ([code]
-   (System/exit code)))
 
 (defn printerr
   [& args]
@@ -100,10 +106,9 @@
         sqlv (sql/create-image params)]
     (sc/execute conn sqlv)))
 
-(defn- import-image-from-path
+(defn- import-image
   [conn id fpath]
-  {:pre [(uuid? id)
-         (fs/path? fpath)]}
+  {:pre [(uuid? id) (fs/path? fpath)]}
   (let [imageid (uuid/namespaced +imates-uuid-ns+ (str id fpath))]
     (if-let [image (retrieve-image conn imageid)]
       (do
@@ -111,51 +116,35 @@
         (create-image conn id imageid fpath))
       (create-image conn id imageid fpath))))
 
-(defn- process-images-entry-by-dir
-  [conn {:keys [path id regex] :as entry}]
-  {:pre [(fs/path? path)
-         (uuid? id)
-         (instance? java.util.regex.Pattern regex)]}
-  (doseq [fpath (fs/list-files path)]
-    (when (re-matches regex (str fpath))
-      (import-image-from-path conn id fpath))))
-
-(defn- process-images-entry-by-list
-  [conn {:keys [data id] :as entry}]
-  {:pre [(uuid? id)
-         (set? data)]}
-  (doseq [item data]
-    (import-image-from-path conn id name (fs/path item))))
-
 (defn- process-images-entry
-  [conn {:keys [type] :as entry}]
-  {:pre [(keyword? type)]}
-  (let [id (create-image-collection conn entry)
-        entry (assoc entry :id id)]
-    (case type
-      :dir (process-images-entry-by-dir conn entry)
-      :list (process-images-entry-by-list conn entry))))
+  [conn {:keys [path regex] :as entry}]
+  {:pre [(s/valid? ::import-entry entry)]}
+  (let [id (create-image-collection conn entry)]
+    (doseq [fpath (fs/list-files path)]
+      (when (re-matches regex (str fpath))
+        (import-image conn id fpath)))))
 
 ;; --- Entry Point
 
-(defn- check-path
+(defn- check-path!
   [path]
   (when-not path
-    (printerr "No path is provided.")
-    (exit -1))
+    (cli/print-err! "No path is provided.")
+    (cli/exit! -1))
   (when-not (fs/exists? path)
-    (printerr "Path does not exists.")
-    (exit -1))
+    (cli/print-err! "Path does not exists.")
+    (cli/exit! -1))
   (when (fs/directory? path)
-    (printerr "The provided path is a directory.")
-    (exit -1))
+    (cli/print-err! "The provided path is a directory.")
+    (cli/exit! -1))
   (fs/path path))
 
 (defn- read-import-file
   [path]
-  (let [path (check-path path)
+  (let [path (check-path! path)
+        parent (fs/parent path)
         reader (pushback-reader (io/reader path))]
-    (read reader)))
+    [parent (read reader)]))
 
 (defn- start-system
   []
@@ -169,15 +158,15 @@
   (mount/stop))
 
 (defn- run-importer
-  [data]
+  [directory data]
   (println "Running importer on:")
   (pprint data))
 
 (defn main
   [& [path]]
-  (let [data (read-import-file path)]
+  (let [[directory data] (read-import-file path)]
     (start-system)
     (try
-      (run-importer data)
+      (run-importer directory data)
       (finally
         (stop-system)))))
