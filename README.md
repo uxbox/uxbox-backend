@@ -1,11 +1,6 @@
 # UXBox Backend #
 
-[![Travis Badge](https://img.shields.io/travis/uxbox/uxbox-backend/master.svg)](https://travis-ci.org/uxbox/uxbox-backend "Travis Badge")
-
-
-## Development Environment ##
-
-Read the documentation on [uxbox-docker][1] repository.
+**Merged into `uxbox` repository**, this repository is not going to be maintained.
 
 
 ## License ##
